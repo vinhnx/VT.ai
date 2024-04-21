@@ -4,7 +4,13 @@ This is a Python application built using the Chainlit library, which provides a 
 
 ## Screenshot
 
+### Multi LLM providers selection with LiteLLM
+
 ![demo](./src/vtai/resources/screenshot/1.jpg)
+
+### Multi modal conversation routing with SemanticRouter
+
+![demo](./src/vtai/resources/screenshot/2.jpg)
 
 ## Features
 
