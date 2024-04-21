@@ -1,14 +1,25 @@
+import os
+from getpass import getpass
+
 import chainlit as cl
 import config as conf
 import litellm
-
 from chainlit.input_widget import Select
 from llm_profile_builder import build_llm_profile
+from semantic_router.layer import RouteLayer
+from constants import SemanticRouterType
 
+# check for OpenAI API key, default default we will use GPT-3.5-turbo model
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
+    "Enter OpenAI API Key: "
+)
+
+# map litellm model aliases
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
 
-# TODO: use semantic router for routing LLM, for example, chat or multimodal -> (dall e, whisper)
-# https://github.com/aurelio-labs/semantic-router?tab=readme-ov-file
+
+# semanticrouter - Semantic Router is a superfast decision-making layer for LLMs and agents
+route_layer = RouteLayer.from_json("semantic_route_layers.json")
 
 
 @cl.on_chat_start
@@ -64,34 +75,77 @@ async def on_message(message: cl.Message):
     model = str(cl.user_session.get(conf.SETTINGS_LLM_MODEL) or conf.DEFAULT_MODEL)
     msg = cl.Message(content="", author=model)
     await msg.send()
+    query = message.content
 
     messages.append(
         {
             "role": "user",
-            "content": message.content,
+            "content": query,
         }
     )
 
-    # trigger async litellm model with message
-    response = await litellm.acompletion(
-        model=model,
-        messages=messages,
-        stream=True,
-    )
+    route_choice = route_layer(query)
+    route_choice_name = route_choice.name
 
-    async for chunk in response:
-        if chunk:
-            content = chunk.choices[0].delta.content
-            if content:
-                await msg.stream_token(content)
+    # detemine conversation routing
+    if route_choice_name == SemanticRouterType.IMAGE_GEN:
+        image_gen_model = "dall-e-3"
+        image_response = litellm.image_generation(
+            prompt=query,
+            model=image_gen_model,
+        )
 
-    messages.append(
-        {
-            "role": "assistant",
-            "content": msg.content,
-        }
-    )
-    await msg.update()
+        image_gen_data = image_response["data"][0]
+        image_url = image_gen_data["url"]
+        revised_prompt = image_gen_data["revised_prompt"]
+
+        image = cl.Image(
+            url=image_url,
+            name=query,
+            display="inline",
+        )
+        revised_prompt_text = cl.Text(
+            name="Description", content=revised_prompt, display="inline"
+        )
+
+        msg = cl.Message(
+            author=image_gen_model,
+            content="Sure, here it is!",
+            elements=[
+                image,
+                revised_prompt_text,
+            ],
+        )
+        await msg.send()
+
+        messages.append(
+            {
+                "role": "assistant",
+                "content": revised_prompt,
+            }
+        )
+
+    else:
+        # trigger async litellm model with message
+        response = await litellm.acompletion(
+            model=model,
+            messages=messages,
+            stream=True,
+        )
+
+        async for chunk in response:
+            if chunk:
+                content = chunk.choices[0].delta.content
+                if content:
+                    await msg.stream_token(content)
+
+        messages.append(
+            {
+                "role": "assistant",
+                "content": msg.content,
+            }
+        )
+        await msg.update()
 
 
 @cl.on_settings_update

@@ -6,14 +6,14 @@ SETTINGS_LLM_PARAMS_MAX_TOKENS = "settings_max_tokens"
 SETTINGS_LLM_PARAMS_STOP_SEQUENCE = "settings_stop_sequence"
 
 # set models alias mapping
-DEFAULT_MODEL = "openrouter/mistralai/mistral-7b-instruct:free"
+DEFAULT_MODEL = "gpt-3.5-turbo"
 MODEL_ALIAS_MAP = {
-    "Groq - Llama 3 8b": "groq/llama3-8b-8192",
-    "Groq - Llama 3 70b": "groq/llama3-70b-8192",
-    "Groq - Mixtral 8x7b": "groq/mixtral-8x7b-32768",
     "OpenAI - GPT 3.5 Turbo": "gpt-3.5-turbo",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
     "OpenAI - GPT 4": "gpt-4",
+    "Groq - Llama 3 8b": "groq/llama3-8b-8192",
+    "Groq - Llama 3 70b": "groq/llama3-70b-8192",
+    "Groq - Mixtral 8x7b": "groq/mixtral-8x7b-32768",
     "Cohere - Command": "command",
     "Cohere - Command-R": "command-r",
     "Cohere - Command-Light": "command-light",
@@ -29,6 +29,8 @@ MODEL_ALIAS_MAP = {
 }
 
 ICONS_PROVIDER_MAP = {
+    "dall-e-3": "./src/vtai/resources/chatgpt-icon.png",
+    "dall-e-2": "./src/vtai/resources/chatgpt-icon.png",
     "gpt-4": "./src/vtai/resources/chatgpt-icon.png",
     "gpt-4-turbo": "./src/vtai/resources/chatgpt-icon.png",
     "gpt-3.5-turbo": "./src/vtai/resources/chatgpt-icon.png",

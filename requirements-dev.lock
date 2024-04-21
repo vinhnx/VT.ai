@@ -11,6 +11,7 @@
 aiofiles==23.2.1
     # via chainlit
 aiohttp==3.9.5
+    # via cohere
     # via litellm
     # via python-graphql-client
 aiosignal==1.3.1
@@ -29,6 +30,8 @@ asyncer==0.0.2
     # via chainlit
 attrs==23.2.0
     # via aiohttp
+backoff==2.2.1
+    # via cohere
 bidict==0.23.1
     # via python-socketio
 cachetools==5.3.3
@@ -47,6 +50,12 @@ click==8.1.7
     # via chainlit
     # via litellm
     # via uvicorn
+cohere==4.57
+    # via semantic-router
+colorama==0.4.6
+    # via semantic-router
+colorlog==6.8.2
+    # via semantic-router
 dataclasses-json==0.5.14
     # via chainlit
 deprecated==1.2.14
@@ -62,6 +71,8 @@ fastapi==0.110.2
     # via fastapi-socketio
 fastapi-socketio==0.0.10
     # via chainlit
+fastavro==1.9.4
+    # via cohere
 filelock==3.13.4
     # via huggingface-hub
 filetype==1.2.0
@@ -120,7 +131,8 @@ idna==3.7
     # via httpx
     # via requests
     # via yarl
-importlib-metadata==7.0.0
+importlib-metadata==6.11.0
+    # via cohere
     # via litellm
     # via opentelemetry-api
 jinja2==3.1.3
@@ -142,8 +154,11 @@ mypy-extensions==1.0.0
     # via typing-inspect
 nest-asyncio==1.6.0
     # via chainlit
+numpy==1.26.4
+    # via semantic-router
 openai==1.23.2
     # via litellm
+    # via semantic-router
 opentelemetry-api==1.24.0
     # via opentelemetry-exporter-otlp-proto-grpc
     # via opentelemetry-exporter-otlp-proto-http
@@ -198,6 +213,7 @@ pydantic==2.7.0
     # via google-generativeai
     # via literalai
     # via openai
+    # via semantic-router
 pydantic-core==2.18.1
     # via pydantic
 pyjwt==2.8.0
@@ -217,17 +233,25 @@ python-socketio==5.11.2
     # via fastapi-socketio
 pyyaml==6.0.1
     # via huggingface-hub
-regex==2024.4.16
+    # via semantic-router
+regex==2023.12.25
+    # via semantic-router
     # via tiktoken
 requests==2.31.0
+    # via cohere
     # via google-api-core
     # via huggingface-hub
     # via litellm
     # via opentelemetry-exporter-otlp-proto-http
     # via python-graphql-client
+    # via requests-mock
     # via tiktoken
+requests-mock==1.12.1
+    # via semantic-router
 rsa==4.9
     # via google-auth
+semantic-router==0.0.34
+    # via vtai
 setuptools==69.5.1
     # via opentelemetry-instrumentation
 simple-websocket==1.0.0
@@ -243,6 +267,7 @@ syncer==2.0.3
     # via chainlit
 tiktoken==0.6.0
     # via litellm
+    # via semantic-router
 tokenizers==0.19.1
     # via litellm
 tomli==2.0.1
@@ -268,6 +293,7 @@ uptrace==1.24.0
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==2.2.1
+    # via cohere
     # via requests
 uvicorn==0.25.0
     # via chainlit
