@@ -20,13 +20,12 @@ This is a Python application built using the Chainlit library, which provides a 
 3. Start Python virtual environment `python3 -m venv .venv`
 4. Activate venv `source .venv/bin/activate`
 5. Install the required dependencies: `pip install -r requirements.txt`
-6. Run the app with opional hot reload `chainlit run src/vtai/app.py -w`
 
 ## Usage
 
 1. Set up the required configuration files (`config.py` and `llm_profile_builder.py`) with your LLM models and settings.
-2. Run the application: `python app.py`
-3. Open the provided URL in your web browser.
+2. Run the app with opional hot reload `chainlit run src/vtai/app.py -w`
+3. Open the provided URL in your web browser. `localhost:8000`
 4. Select an LLM model from the available options.
 5. Customize the LLM parameters (optional).
 6. Start chatting with the LLM or upload files for multi-modal processing.
