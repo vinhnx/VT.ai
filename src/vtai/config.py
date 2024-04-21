@@ -1,5 +1,9 @@
-# keys
-LLM_MODEL_USER_SESSION_KEY = "llm_model"
+# settings
+SETTINGS_LLM_MODEL = "settings_llm_model"
+SETTINGS_LLM_PARAMS_TEMPERATURE = "settings_temperature"
+SETTINGS_LLM_PARAMS_TOP_P = "settings_top_p"
+SETTINGS_LLM_PARAMS_MAX_TOKENS = "settings_max_tokens"
+SETTINGS_LLM_PARAMS_STOP_SEQUENCE = "settings_stop_sequence"
 
 # set models alias mapping
 DEFAULT_MODEL = "openrouter/mistralai/mistral-7b-instruct:free"
