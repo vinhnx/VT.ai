@@ -23,12 +23,14 @@ This is a Python application built using the Chainlit library, which provides a 
 
 ## Usage
 
+1. Rename `.env.example` file to `.env` for private LLM providers API keys configuration
+1. Setup each key. And then save.
 1. Set up the required configuration files (`config.py` and `llm_profile_builder.py`) with your LLM models and settings.
-2. Run the app with opional hot reload `chainlit run src/vtai/app.py -w`
-3. Open the provided URL in your web browser. `localhost:8000`
-4. Select an LLM model from the available options.
-5. Customize the LLM parameters (optional).
-6. Start chatting with the LLM or upload files for multi-modal processing.
+1. Run the app with opional hot reload `chainlit run src/vtai/app.py -w`
+1. Open the provided URL in your web browser. `localhost:8000`
+1. Select an LLM model from the available options.
+1. Customize the LLM parameters (optional).
+1. Start chatting with the LLM or upload files for multi-modal processing.
 
 ## Dependencies
 
