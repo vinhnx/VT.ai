@@ -6,6 +6,7 @@ SETTINGS_LLM_PARAMS_TOP_P = "settings_top_p"
 SETTINGS_LLM_PARAMS_MAX_TOKENS = "settings_max_tokens"
 SETTINGS_LLM_PARAMS_STOP_SEQUENCE = "settings_stop_sequence"
 SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING = "settings_use_dynamic_conversation_routing"
+SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE = True
 
 # set models alias mapping
 

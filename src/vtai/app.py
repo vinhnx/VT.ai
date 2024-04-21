@@ -14,6 +14,9 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
     "Enter OpenAI API Key: "
 )
 
+# TODO: support Vision LLAVA, GPT, GEMINI
+# TODO: support Audio transcript: WHISPER
+
 # map litellm model aliases
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
 
@@ -55,7 +58,8 @@ async def on_message(message: cl.Message):
     )
 
     use_dynamic_conversation_routing = (
-        cl.user_session.get(conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING) or False
+        cl.user_session.get(conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING)
+        or conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE
     )
 
     if use_dynamic_conversation_routing:
@@ -130,8 +134,8 @@ async def build_settings():
             Switch(
                 id=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
                 label="Use dynamic conversation routing",
-                description="[Beta] You can turn on this option to enable dynamic conversation routing. For example, when in a middle of the chat when you ask something like `Help me generate a cute dog image`, the app will automatically use Image Generation LLM Model selection to generate a image for you, using OpenAI DALL·E 3. Note: this action requires OpenAI API key",
-                initial=False,
+                description=f"[Beta] You can turn on this option to enable dynamic conversation routing. For example, when in a middle of the chat when you ask something like `Help me generate a cute dog image`, the app will automatically use Image Generation LLM Model selection to generate a image for you, using OpenAI DALL·E 3. Note: this action requires OpenAI API key. Default is {conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE}",
+                initial=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE,
             ),
         ]
     ).send()
@@ -142,7 +146,7 @@ async def build_settings():
 async def handle_trigger_async_image_gen(messages, query):
     image_gen_model = conf.DEFAULT_IMAGE_GEN_MODEL
     message = cl.Message(
-        content=f"I will use `{image_gen_model}` model to generate an image for you. Please wait a moment..",
+        content=f"Sure, I will use `{image_gen_model}` model to generate the image for you. Please wait a moment..",
         author=image_gen_model,
     )
     await message.send()
