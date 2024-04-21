@@ -1,13 +1,13 @@
 [project]
 name = "vtai"
 version = "0.1.0"
-description = "VT.ai - Simple LLM chat frontend"
+description = "VT.ai - Full-stack multi-modalities LLMs chat application"
 authors = [{ name = "Vinh Nguyen", email = "" }]
 dependencies = [
     "litellm>=1.35.17",
     "chainlit>=1.0.504",
     "google-generativeai>=0.5.2",
-    "semantic-router==0.0.34",
+    "semantic-router[fastembed]==0.0.20",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
