@@ -20,6 +20,7 @@ This is a Python application built using the Chainlit library, which provides a 
 3. Start Python virtual environment `python3 -m venv .venv`
 4. Activate venv `source .venv/bin/activate`
 5. Install the required dependencies: `pip install -r requirements.txt`
+6. Run the app with opional hot reload `chainlit run src/vtai/app.py -w`
 
 ## Usage
 
