@@ -1,12 +1,20 @@
 # settings
 SETTINGS_LLM_MODEL = "settings_llm_model"
+SETTINGS_IMAGE_GEN_LLM_MODEL = "settings_image_gen_llm_model"
 SETTINGS_LLM_PARAMS_TEMPERATURE = "settings_temperature"
 SETTINGS_LLM_PARAMS_TOP_P = "settings_top_p"
 SETTINGS_LLM_PARAMS_MAX_TOKENS = "settings_max_tokens"
 SETTINGS_LLM_PARAMS_STOP_SEQUENCE = "settings_stop_sequence"
 
 # set models alias mapping
+
 DEFAULT_MODEL = "gpt-3.5-turbo"
+DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
+
+IMAGE_GEN_MODELS_ALIAS_MAP = {
+    "OpenAI - DALL·E 3": "dall-e-3",
+}
+
 MODEL_ALIAS_MAP = {
     "OpenAI - GPT 3.5 Turbo": "gpt-3.5-turbo",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
@@ -30,7 +38,6 @@ MODEL_ALIAS_MAP = {
 
 ICONS_PROVIDER_MAP = {
     "dall-e-3": "./src/vtai/resources/chatgpt-icon.png",
-    "dall-e-2": "./src/vtai/resources/chatgpt-icon.png",
     "gpt-4": "./src/vtai/resources/chatgpt-icon.png",
     "gpt-4-turbo": "./src/vtai/resources/chatgpt-icon.png",
     "gpt-3.5-turbo": "./src/vtai/resources/chatgpt-icon.png",
@@ -54,3 +61,6 @@ ICONS_PROVIDER_MAP = {
 
 NAMES = list(MODEL_ALIAS_MAP.keys())
 MODELS = list(MODEL_ALIAS_MAP.values())
+
+IMAGE_GEN_NAMES = list(IMAGE_GEN_MODELS_ALIAS_MAP.keys())
+IMAGE_GEN_MODELS = list(IMAGE_GEN_MODELS_ALIAS_MAP.values())

@@ -32,10 +32,16 @@ async def start_chat():
         [
             Select(
                 id=conf.SETTINGS_LLM_MODEL,
-                label="Choose LLM Model",
+                label="Chat LLM Model",
                 values=conf.MODELS,
-                initial_index=0,
-            )
+                initial_value=conf.DEFAULT_MODEL,
+            ),
+            Select(
+                id=conf.SETTINGS_IMAGE_GEN_LLM_MODEL,
+                label="Image Generation LLM Model",
+                values=conf.IMAGE_GEN_MODELS,
+                initial_value=conf.DEFAULT_IMAGE_GEN_MODEL,
+            ),
         ]
     ).send()
 
@@ -89,8 +95,19 @@ async def on_message(message: cl.Message):
 
     # detemine conversation routing
     if route_choice_name == SemanticRouterType.IMAGE_GEN:
-        image_gen_model = "dall-e-3"
-        image_response = litellm.image_generation(
+        image_gen_model = (
+            cl.user_session.get(conf.SETTINGS_IMAGE_GEN_LLM_MODEL)
+            or conf.DEFAULT_IMAGE_GEN_MODEL
+        )
+        print(f"image_gen_model: {image_gen_model}")
+
+        message = cl.Message(
+            content=f"I will use `{image_gen_model}` model to generate an image for you. Please wait a moment..",
+            author=image_gen_model,
+        )
+        await message.send()
+
+        image_response = await litellm.aimage_generation(
             prompt=query,
             model=image_gen_model,
         )
@@ -108,15 +125,15 @@ async def on_message(message: cl.Message):
             name="Description", content=revised_prompt, display="inline"
         )
 
-        msg = cl.Message(
+        message = cl.Message(
             author=image_gen_model,
-            content="Sure, here it is!",
+            content="The image is completed, here it is!",
             elements=[
                 image,
                 revised_prompt_text,
             ],
         )
-        await msg.send()
+        await message.send()
 
         messages.append(
             {
@@ -150,7 +167,8 @@ async def on_message(message: cl.Message):
 
 @cl.on_settings_update
 async def setup_agent(settings):
+    print(f"setup_agent: {settings}")
+    cl.user_session.set(conf.SETTINGS_LLM_MODEL, settings[conf.SETTINGS_LLM_MODEL])
     cl.user_session.set(
-        conf.SETTINGS_LLM_MODEL,
-        settings[conf.SETTINGS_LLM_MODEL],
+        conf.SETTINGS_IMAGE_GEN_LLM_MODEL, settings[conf.SETTINGS_IMAGE_GEN_LLM_MODEL]
     )
