@@ -1,6 +1,6 @@
 [project]
 # Whether to enable telemetry (default: true). No personal data is collected.
-enable_telemetry = true
+enable_telemetry = false
 
 
 # List of environment variables to be provided by each user to use the app.
@@ -30,26 +30,26 @@ latex = false
 
 # Authorize users to upload files with messages
 [features.multi_modal]
-    enabled = true
-    accept = ["*/*"]
-    max_files = 20
-    max_size_mb = 500
+enabled = true
+accept = ["text/plain"]
+max_files = 20
+max_size_mb = 500
 
 # Allows user to use speech to text
 [features.speech_to_text]
-    enabled = false
-    # See all languages here https://github.com/JamesBrill/react-speech-recognition/blob/HEAD/docs/API.md#language-string
-    # language = "en-US"
+enabled = true
+# See all languages here https://github.com/JamesBrill/react-speech-recognition/blob/HEAD/docs/API.md#language-string
+language = "en-US"
 
 [UI]
 # Name of the app and chatbot.
-name = "Chatbot"
+name = "VT.ai"
 
 # Show the readme while the thread is empty.
-show_readme_as_default = true
+show_readme_as_default = false
 
 # Description of the app and chatbot. This is used for HTML tags.
-# description = ""
+description = "Simple LLM chat frontend"
 
 # Large size content are by default collapsed for a cleaner ui
 default_collapse_content = true
@@ -58,7 +58,7 @@ default_collapse_content = true
 default_expand_messages = false
 
 # Hide the chain of thought details from the user in the UI.
-hide_cot = false
+hide_cot = true
 
 # Link to your github repo. This will add a github button in the UI's header.
 # github = ""
@@ -72,7 +72,7 @@ hide_cot = false
 # custom_js = "/public/test.js"
 
 # Specify a custom font url.
-# custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
 
 # Specify a custom build directory for the frontend.
 # This can be used to customize the frontend code.
@@ -81,25 +81,26 @@ hide_cot = false
 
 # Override default MUI light theme. (Check theme.ts)
 [UI.theme]
-    #font_family = "Inter, sans-serif"
-[UI.theme.light]
-    #background = "#FAFAFA"
-    #paper = "#FFFFFF"
+font_family = "Inter, sans-serif"
 
-    [UI.theme.light.primary]
-        #main = "#F80061"
-        #dark = "#980039"
-        #light = "#FFE7EB"
+[UI.theme.light]
+background = "#FAFAFA"
+paper = "#FFFFFF"
+
+[UI.theme.light.primary]
+main = "#F80061"
+dark = "#980039"
+light = "#FFE7EB"
 
 # Override default MUI dark theme. (Check theme.ts)
 [UI.theme.dark]
-    #background = "#FAFAFA"
-    #paper = "#FFFFFF"
+# background = "#FAFAFA"
+# paper = "#FFFFFF"
 
-    [UI.theme.dark.primary]
-        #main = "#F80061"
-        #dark = "#980039"
-        #light = "#FFE7EB"
+[UI.theme.dark.primary]
+main = "#F80061"
+dark = "#980039"
+light = "#FFE7EB"
 
 
 [meta]

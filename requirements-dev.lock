@@ -31,6 +31,8 @@ attrs==23.2.0
     # via aiohttp
 bidict==0.23.1
     # via python-socketio
+cachetools==5.3.3
+    # via google-auth
 certifi==2024.2.2
     # via httpcore
     # via httpx
@@ -69,17 +71,44 @@ frozenlist==1.4.1
     # via aiosignal
 fsspec==2024.3.1
     # via huggingface-hub
+google-ai-generativelanguage==0.6.2
+    # via google-generativeai
+google-api-core==2.18.0
+    # via google-ai-generativelanguage
+    # via google-api-python-client
+    # via google-generativeai
+google-api-python-client==2.126.0
+    # via google-generativeai
+google-auth==2.29.0
+    # via google-ai-generativelanguage
+    # via google-api-core
+    # via google-api-python-client
+    # via google-auth-httplib2
+    # via google-generativeai
+google-auth-httplib2==0.2.0
+    # via google-api-python-client
+google-generativeai==0.5.2
+    # via vtai
 googleapis-common-protos==1.63.0
+    # via google-api-core
+    # via grpcio-status
     # via opentelemetry-exporter-otlp-proto-grpc
     # via opentelemetry-exporter-otlp-proto-http
 grpcio==1.62.2
+    # via google-api-core
+    # via grpcio-status
     # via opentelemetry-exporter-otlp-proto-grpc
+grpcio-status==1.62.2
+    # via google-api-core
 h11==0.14.0
     # via httpcore
     # via uvicorn
     # via wsproto
 httpcore==1.0.5
     # via httpx
+httplib2==0.22.0
+    # via google-api-python-client
+    # via google-auth-httplib2
 httpx==0.27.0
     # via chainlit
     # via literalai
@@ -147,18 +176,34 @@ packaging==23.2
     # via huggingface-hub
     # via literalai
     # via marshmallow
+proto-plus==1.23.0
+    # via google-ai-generativelanguage
+    # via google-api-core
 protobuf==4.25.3
+    # via google-ai-generativelanguage
+    # via google-api-core
+    # via google-generativeai
     # via googleapis-common-protos
+    # via grpcio-status
     # via opentelemetry-proto
+    # via proto-plus
+pyasn1==0.6.0
+    # via pyasn1-modules
+    # via rsa
+pyasn1-modules==0.4.0
+    # via google-auth
 pydantic==2.7.0
     # via chainlit
     # via fastapi
+    # via google-generativeai
     # via literalai
     # via openai
 pydantic-core==2.18.1
     # via pydantic
 pyjwt==2.8.0
     # via chainlit
+pyparsing==3.1.2
+    # via httplib2
 python-dotenv==1.0.1
     # via chainlit
     # via litellm
@@ -175,11 +220,14 @@ pyyaml==6.0.1
 regex==2024.4.16
     # via tiktoken
 requests==2.31.0
+    # via google-api-core
     # via huggingface-hub
     # via litellm
     # via opentelemetry-exporter-otlp-proto-http
     # via python-graphql-client
     # via tiktoken
+rsa==4.9
+    # via google-auth
 setuptools==69.5.1
     # via opentelemetry-instrumentation
 simple-websocket==1.0.0
@@ -200,10 +248,12 @@ tokenizers==0.19.1
 tomli==2.0.1
     # via chainlit
 tqdm==4.66.2
+    # via google-generativeai
     # via huggingface-hub
     # via openai
 typing-extensions==4.11.0
     # via fastapi
+    # via google-generativeai
     # via huggingface-hub
     # via openai
     # via opentelemetry-sdk
@@ -215,6 +265,8 @@ typing-inspect==0.9.0
     # via dataclasses-json
 uptrace==1.24.0
     # via chainlit
+uritemplate==4.1.1
+    # via google-api-python-client
 urllib3==2.2.1
     # via requests
 uvicorn==0.25.0
