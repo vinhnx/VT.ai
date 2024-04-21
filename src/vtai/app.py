@@ -5,17 +5,14 @@ import chainlit as cl
 import config as conf
 import litellm
 from chainlit.input_widget import Select, Switch
+from constants import SemanticRouterType
 from llm_profile_builder import build_llm_profile
 from semantic_router.layer import RouteLayer
-from constants import SemanticRouterType
 
 # check for OpenAI API key, default default we will use GPT-3.5-turbo model
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
     "Enter OpenAI API Key: "
 )
-
-# TODO: support Vision LLAVA, GPT, GEMINI
-# TODO: support Audio transcript: WHISPER
 
 # map litellm model aliases
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
@@ -39,22 +36,11 @@ async def start_chat():
 
 @cl.on_message
 async def on_message(message: cl.Message):
+    # retrive message memory
     messages = cl.user_session.get("message_history") or []
 
     if len(message.elements) > 0:
-        # multi-modal: upload files to process
-        for element in message.elements:
-            with open(element.path, "r") as uploaded_file:
-                content = uploaded_file.read()
-
-            messages.append(
-                {
-                    "role": "user",
-                    "content": content,
-                }
-            )
-            confirm_message = cl.Message(content=f"Uploaded file: {element.name}")
-            await confirm_message.send()
+        await handle_files_upload(message, messages)
 
     model = str(cl.user_session.get(conf.SETTINGS_LLM_MODEL) or conf.DEFAULT_MODEL)
     msg = cl.Message(content="", author=model)
@@ -73,18 +59,7 @@ async def on_message(message: cl.Message):
     )
 
     if use_dynamic_conversation_routing:
-        route_choice = route_layer(query)
-        route_choice_name = route_choice.name
-
-        # detemine conversation routing
-        if route_choice_name == SemanticRouterType.IMAGE_GEN:
-            await handle_trigger_async_image_gen(messages, query)
-        else:
-            await handle_trigger_async_chat(
-                llm_model=model,
-                messages=messages,
-                current_message=msg,
-            )
+        await handle_dynamic_conversation_routing(messages, model, msg, query)
 
     else:
         await handle_trigger_async_chat(
@@ -207,3 +182,33 @@ async def handle_trigger_async_image_gen(messages, query):
     )
 
     await message.send()
+
+
+async def handle_files_upload(message, messages):
+    for element in message.elements:
+        with open(element.path, "r") as uploaded_file:
+            content = uploaded_file.read()
+
+        messages.append(
+            {
+                "role": "user",
+                "content": content,
+            }
+        )
+        confirm_message = cl.Message(content=f"Uploaded file: {element.name}")
+        await confirm_message.send()
+
+
+async def handle_dynamic_conversation_routing(messages, model, msg, query):
+    route_choice = route_layer(query)
+    route_choice_name = route_choice.name
+
+    # detemine conversation routing
+    if route_choice_name == SemanticRouterType.IMAGE_GEN:
+        await handle_trigger_async_image_gen(messages, query)
+    else:
+        await handle_trigger_async_chat(
+            llm_model=model,
+            messages=messages,
+            current_message=msg,
+        )
