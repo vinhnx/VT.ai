@@ -86,17 +86,15 @@ async def setup_agent(settings):
 
 async def handle_trigger_async_chat(llm_model, messages, current_message):
     # trigger async litellm model with message
-    response = await litellm.acompletion(
+    stream = await litellm.acompletion(
         model=llm_model,
         messages=messages,
         stream=True,
     )
 
-    async for chunk in response:
-        if chunk:
-            content = chunk.choices[0].delta.content
-            if content:
-                await current_message.stream_token(content)
+    async for part in stream:
+        if token := part.choices[0].delta.content or "":
+            await current_message.stream_token(token)
 
     messages.append(
         {
