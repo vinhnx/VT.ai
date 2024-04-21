@@ -15,5 +15,3 @@ class SemanticRouterType(str, Enum):
     """
 
     IMAGE_GEN = "image-gen"
-    CHITCHAT = "chitchat"
-    TEXT_GEN = "text-gen"

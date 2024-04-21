@@ -84,9 +84,8 @@ async def on_message(message: cl.Message):
         }
     )
 
-    use_dynamic_conversation_routing = (
-        cl.user_session.get(conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING)
-        or conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE
+    use_dynamic_conversation_routing = cl.user_session.get(
+        conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
     )
 
     if use_dynamic_conversation_routing:
