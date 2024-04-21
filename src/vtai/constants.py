@@ -15,3 +15,4 @@ class SemanticRouterType(str, Enum):
     """
 
     IMAGE_GEN = "image-gen"
+    VISION = "vision"

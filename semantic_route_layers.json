@@ -3,6 +3,39 @@
     "encoder_name": "BAAI/bge-small-en-v1.5",
     "routes": [
         {
+            "name": "vision",
+            "utterances": [
+                "What's in this image?",
+                "Describe the contents of this picture",
+                "Tell me what you see in this image",
+                "Identify the objects and elements in this scene",
+                "What's happening in this visual?",
+                "Give me a detailed description of this picture",
+                "Analyze the components of this image for me",
+                "Break down the different parts of this scene",
+                "List the key features you notice in this image",
+                "Explain what's depicted in this visual representation"
+            ],
+            "description": null,
+            "function_schema": null,
+            "llm": null,
+            "score_threshold": 0.5
+        },
+        {
+            "name": "chitchat",
+            "utterances": [
+                "how's the weather today?",
+                "how are things going?",
+                "lovely weather today",
+                "the weather is horrendous",
+                "let's go to the chippy"
+            ],
+            "description": null,
+            "function_schema": null,
+            "llm": null,
+            "score_threshold": 0.5
+        },
+        {
             "name": "image-gen",
             "utterances": [
                 "a image of a cute puppy playing in a meadow",
@@ -45,69 +78,6 @@
                 "generate another image of a dog running on the beach",
                 "a image of a cat grooming itself with its paw",
                 "a photo of a dog wearing a colorful bandana"
-            ],
-            "description": null,
-            "function_schema": null,
-            "llm": null,
-            "score_threshold": 0.5
-        },
-        {
-            "name": "text-gen",
-            "utterances": [
-                "write a short story about a magical adventure",
-                "generate a poem about the beauty of nature",
-                "create a persuasive essay on the importance of education",
-                "write a funny limerick about a mischievous cat",
-                "generate a fictional news article about a time-traveling scientist",
-                "create a children's book story about a friendly monster",
-                "write a descriptive paragraph about a breathtaking sunset",
-                "generate a blog post about the latest tech gadgets",
-                "create a motivational speech to inspire a team",
-                "write a creative writing piece about a dystopian future",
-                "generate a restaurant review for a famous dining establishment",
-                "create a travel guide for a picturesque city you've visited",
-                "write a short script for a romantic comedy scene",
-                "generate a literary analysis of a classic novel",
-                "create a song lyrics about overcoming challenges",
-                "write a fantasy story about a brave knight on a quest",
-                "generate a product description for a revolutionary new invention",
-                "create a compelling book synopsis to captivate readers",
-                "write a thought-provoking essay on the ethics of artificial intelligence",
-                "generate a detailed character backstory for a complex protagonist"
-            ],
-            "description": null,
-            "function_schema": null,
-            "llm": null,
-            "score_threshold": 0.5
-        },
-        {
-            "name": "chitchat",
-            "utterances": [
-                "how's the weather today?",
-                "how are things going?",
-                "lovely weather today",
-                "the weather is horrendous",
-                "let's go to the chippy",
-                "write a short story about",
-                "can we talk?",
-                "what's new?",
-                "how was your day?",
-                "did you catch the game last night?",
-                "have you seen any good movies lately?",
-                "what's your favorite book?",
-                "tell me a joke",
-                "what are your plans for the weekend?",
-                "have you been anywhere interesting lately?",
-                "what's your favorite type of music?",
-                "do you have any hobbies?",
-                "what's your favorite holiday?",
-                "what's the best place you've ever traveled to?",
-                "do you prefer dogs or cats?",
-                "what's your favorite food?",
-                "what's the funniest thing that happened to you recently?",
-                "how's your family doing?",
-                "what's your dream job?",
-                "what's the craziest thing you've ever done?"
             ],
             "description": null,
             "function_schema": null,

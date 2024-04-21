@@ -214,6 +214,8 @@ packaging==23.2
     # via onnxruntime
 pathspec==0.12.1
     # via black
+pillow==10.3.0
+    # via vtai
 platformdirs==4.2.0
     # via black
 proto-plus==1.23.0
