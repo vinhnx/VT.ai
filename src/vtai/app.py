@@ -2,12 +2,14 @@ import os
 from getpass import getpass
 
 import chainlit as cl
-import config as conf
 import litellm
+import llms_config as conf
 from chainlit.input_widget import Select, Switch
 from constants import SemanticRouterType
+from litellm.utils import trim_messages
 from llm_profile_builder import build_llm_profile
 from semantic_router.layer import RouteLayer
+from url_extractor import extract_url
 
 # check for OpenAI API key, default default we will use GPT-3.5-turbo model
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
@@ -32,7 +34,8 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
 # TODO: customize https://docs.chainlit.io/customisation/overview
 # TODO: config https://docs.chainlit.io/backend/config/overview
 # TODO: sync/async https://docs.chainlit.io/guides/sync-async
-
+# TODO: function call https://docs.litellm.ai/docs/completion/function_call
+# TODO https://docs.litellm.ai/docs/completion/reliable_completions
 # ---
 # Advanced
 # TODO: Auth https://docs.chainlit.io/authentication/overview
@@ -55,21 +58,25 @@ async def start_chat():
     await build_llm_profile(conf.ICONS_PROVIDER_MAP)
 
     # settings configuration
-    settings = await build_settings()
+    settings = await __build_settings()
 
     # set selected LLM model for current settion's model
-    config_chat_session(settings)
+    __config_chat_session(settings)
 
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    # retrive message memory
+    # retrieve message memory
     messages = cl.user_session.get("message_history") or []
 
     if len(message.elements) > 0:
-        await handle_files_upload(message, messages)
+        await __handle_files_upload(message, messages)
+    else:
+        await __handle_conversation(message, messages)
 
-    model = str(cl.user_session.get(conf.SETTINGS_LLM_MODEL) or conf.DEFAULT_MODEL)
+
+async def __handle_conversation(message, messages):
+    model = __get_settings(conf.SETTINGS_CHAT_MODEL)
     msg = cl.Message(content="", author=model)
     await msg.send()
 
@@ -81,15 +88,14 @@ async def on_message(message: cl.Message):
         }
     )
 
-    use_dynamic_conversation_routing = cl.user_session.get(
+    use_dynamic_conversation_routing = __get_settings(
         conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
     )
-
-    if use_dynamic_conversation_routing:
-        await handle_dynamic_conversation_routing(messages, model, msg, query)
+    if use_dynamic_conversation_routing is True:
+        await __handle_dynamic_conversation_routing(messages, model, msg, query)
 
     else:
-        await handle_trigger_async_chat(
+        await __handle_trigger_async_chat(
             llm_model=model,
             messages=messages,
             current_message=msg,
@@ -97,23 +103,29 @@ async def on_message(message: cl.Message):
 
 
 @cl.on_settings_update
-async def setup_agent(settings):
-    print(f"setup_agent: {settings}")
-    cl.user_session.set(conf.SETTINGS_LLM_MODEL, settings[conf.SETTINGS_LLM_MODEL])
-
+async def update_settings(settings):
+    cl.user_session.set(conf.SETTINGS_CHAT_MODEL, settings[conf.SETTINGS_CHAT_MODEL])
+    cl.user_session.set(
+        conf.SETTINGS_VISION_MODEL, settings[conf.SETTINGS_VISION_MODEL]
+    )
     cl.user_session.set(
         conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
         settings[conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING],
     )
 
 
-async def handle_trigger_async_chat(llm_model, messages, current_message):
+async def __handle_trigger_async_chat(llm_model, messages, current_message):
     # trigger async litellm model with message
-    stream = await litellm.acompletion(
-        model=llm_model,
-        messages=messages,
-        stream=True,
-    )
+    try:
+        stream = await litellm.acompletion(
+            model=llm_model,
+            messages=messages,
+            stream=True,
+        )
+
+    except Exception as e:
+        await __handle_exception_error(llm_model, messages, current_message, e)
+        return
 
     async for part in stream:
         if token := part.choices[0].delta.content or "":
@@ -125,13 +137,35 @@ async def handle_trigger_async_chat(llm_model, messages, current_message):
             "content": current_message.content,
         }
     )
+
     await current_message.update()
 
 
-def config_chat_session(settings):
+async def __handle_exception_error(llm_model, messages, current_message, e):
+    action = await cl.AskActionMessage(
+        author=llm_model,
+        content=f"""
+        Something went wrong, please try again.
+        
+        Error type: {type(e)}, Error: {e}
+        """,
+        actions=[
+            cl.Action(
+                name="regenerate", value="regenerate", label="Regenerate response"
+            )
+        ],
+    ).send()
+
+    if action and action.get("value") == "regenerate":
+        await __handle_trigger_async_chat(llm_model, messages, current_message)
+
+    print(f"Error type: {type(e)}, Error: {e}")
+
+
+def __config_chat_session(settings):
     cl.user_session.set(
-        conf.SETTINGS_LLM_MODEL,
-        settings[conf.SETTINGS_LLM_MODEL],
+        conf.SETTINGS_CHAT_MODEL,
+        settings[conf.SETTINGS_CHAT_MODEL],
     )
 
     # prompt
@@ -143,14 +177,20 @@ def config_chat_session(settings):
     cl.user_session.set("message_history", [system_message])
 
 
-async def build_settings():
+async def __build_settings():
     settings = await cl.ChatSettings(
         [
             Select(
-                id=conf.SETTINGS_LLM_MODEL,
-                label="Chat LLM Model",
+                id=conf.SETTINGS_CHAT_MODEL,
+                label="Chat Model",
                 values=conf.MODELS,
                 initial_value=conf.DEFAULT_MODEL,
+            ),
+            Select(
+                id=conf.SETTINGS_VISION_MODEL,
+                label="Vision Model",
+                values=conf.VISION_MODEL_MODELS,
+                initial_value=conf.DEFAULT_VISION_MODEL,
             ),
             Switch(
                 id=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
@@ -158,13 +198,19 @@ async def build_settings():
                 description=f"[Beta] You can turn on this option to enable dynamic conversation routing. For example, when in a middle of the chat when you ask something like `Help me generate a cute dog image`, the app will automatically use Image Generation LLM Model selection to generate a image for you, using OpenAI DALL·E 3. Note: this action requires OpenAI API key. Default is {conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE}",
                 initial=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE,
             ),
+            Switch(
+                id=conf.SETTINGS_TRIMMED_MESSAGES,
+                label="Trimming Input Messages",
+                description="Ensure messages does not exceed a model's token limit",
+                initial=conf.SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE,
+            ),
         ]
     ).send()
 
     return settings
 
 
-async def handle_trigger_async_image_gen(messages, query):
+async def __handle_trigger_async_image_gen(messages, query):
     image_gen_model = conf.DEFAULT_IMAGE_GEN_MODEL
     message = cl.Message(
         content=f"Sure, I will use `{image_gen_model}` model to generate the image for you. Please wait a moment..",
@@ -172,10 +218,15 @@ async def handle_trigger_async_image_gen(messages, query):
     )
     await message.send()
 
-    image_response = await litellm.aimage_generation(
-        prompt=query,
-        model=image_gen_model,
-    )
+    try:
+        image_response = await litellm.aimage_generation(
+            prompt=query,
+            model=image_gen_model,
+        )
+
+    except Exception as e:
+        await __handle_exception_error(image_gen_model, messages, current_message, e)
+        return
 
     image_gen_data = image_response["data"][0]
     image_url = image_gen_data["url"]
@@ -199,41 +250,155 @@ async def handle_trigger_async_image_gen(messages, query):
         ],
     )
 
+    await message.send()
+
+
+async def __handle_files_upload(message, messages):
+    if not message.elements:
+        await cl.Message(content="No file attached").send()
+        return
+
+    prompt = message.content
+
+    # Processing files
+    for file in message.elements:
+        if "image" in file.mime:
+            # Read the first image
+
+            path = file.path
+            with open(path, "r") as f:
+                pass
+
+            await __handle_vision(path, prompt=prompt, messages=messages, is_local=True)
+            break
+
+        elif "text" in file.mime:
+            with open(file.path, "r") as uploaded_file:
+                content = uploaded_file.read()
+
+            messages.append(
+                {
+                    "role": "user",
+                    "content": content,
+                }
+            )
+
+            await __handle_conversation(message, messages)
+            break
+
+        else:
+            await cl.Message(
+                content=f"The file `{file.name}` with type: `{file.mime}` is currently not supported. Please try another file.",
+            ).send()
+
+
+async def __handle_dynamic_conversation_routing(messages, model, msg, query):
+    route_choice = route_layer(query)
+    route_choice_name = route_choice.name
+
+    should_trimmed_messages = __get_settings(conf.SETTINGS_TRIMMED_MESSAGES)
+    if should_trimmed_messages:
+        messages = trim_messages(messages, model)
+
+    # determine conversation routing
+    if route_choice_name == SemanticRouterType.IMAGE_GENERATION:
+        await __handle_trigger_async_image_gen(messages, query)
+
+    elif route_choice_name == SemanticRouterType.VISION_IMAGE_PROCESSING:
+        urls = extract_url(query)
+        if len(urls) > 0:
+            url = urls[0]
+            await __handle_vision(
+                input_image=url, prompt=query, messages=messages, is_local=False
+            )
+
+    else:
+        await __handle_trigger_async_chat(
+            llm_model=model,
+            messages=messages,
+            current_message=msg,
+        )
+
+
+async def __handle_vision(
+    input_image,
+    prompt,
+    messages,
+    is_local=False,
+):
+    vision_model = (
+        conf.DEFAULT_VISION_MODEL
+        if is_local
+        else __get_settings(conf.SETTINGS_VISION_MODEL)
+    )
+
+    supports_vision = litellm.supports_vision(model=vision_model)
+
+    if supports_vision is False:
+        print(f"Unsupported vision model: {vision_model}")
+        await cl.Message(
+            content=f"The model `{vision_model}`, doesn't support Vision capability. You choose a different model in Settings.",
+        ).send()
+        return
+
+    message = cl.Message(
+        content=f"Sure, I will use `{vision_model}` model to identify the image for you. Please wait a moment..",
+        author=vision_model,
+    )
+
+    await message.send()
+    vresponse = await litellm.acompletion(
+        model=vision_model,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": input_image}},
+                ],
+            }
+        ],
+    )
+
+    description = vresponse.choices[0].message.content
     messages.append(
         {
             "role": "assistant",
-            "content": revised_prompt,
+            "content": description,
         }
+    )
+    messages.append(
+        {
+            "role": "user",
+            "content": prompt,
+        }
+    )
+
+    if is_local:
+        image = cl.Image(
+            path=input_image,
+            name=prompt,
+            display="inline",
+        )
+    else:
+        image = cl.Image(
+            url=input_image,
+            name=prompt,
+            display="inline",
+        )
+
+    revised_prompt_text = cl.Text(name="Explain", content=description, display="inline")
+    message = cl.Message(
+        author=vision_model,
+        content="",
+        elements=[
+            image,
+            revised_prompt_text,
+        ],
     )
 
     await message.send()
 
 
-async def handle_files_upload(message, messages):
-    for element in message.elements:
-        with open(element.path, "r") as uploaded_file:
-            content = uploaded_file.read()
-
-        messages.append(
-            {
-                "role": "user",
-                "content": content,
-            }
-        )
-        confirm_message = cl.Message(content=f"Uploaded file: {element.name}")
-        await confirm_message.send()
-
-
-async def handle_dynamic_conversation_routing(messages, model, msg, query):
-    route_choice = route_layer(query)
-    route_choice_name = route_choice.name
-
-    # detemine conversation routing
-    if route_choice_name == SemanticRouterType.IMAGE_GEN:
-        await handle_trigger_async_image_gen(messages, query)
-    else:
-        await handle_trigger_async_chat(
-            llm_model=model,
-            messages=messages,
-            current_message=msg,
-        )
+def __get_settings(key):
+    return cl.user_session.get("chat_settings")[key]

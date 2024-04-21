@@ -1,5 +1,8 @@
+import os
+from getpass import getpass
+
 from semantic_router import Route
-from semantic_router.encoders import FastEmbedEncoder
+from semantic_router.encoders import OpenAIEncoder
 from semantic_router.layer import RouteLayer
 
 # usage:
@@ -8,10 +11,40 @@ from semantic_router.layer import RouteLayer
 # ```
 # then semantic_route_layers.json file will be updated
 
+# check for OpenAI API key, default default we will use GPT-3.5-turbo model
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
+    "Enter OpenAI API Key: "
+)
+
 routes = [
     Route(
-        name="vision",
+        name="text-processing",
         utterances=[
+            "Summarize this text for me",
+            "Can you extract the key points from this passage?",
+            "Provide a summary of this article",
+            "Give me a concise overview of this document",
+            "Distill the main ideas from this text",
+            "Analyze the sentiment of this review",
+            "What is the overall tone of this piece?",
+            "Detect the emotion expressed in this message",
+            "Classify the topic of this text",
+            "Categorize this content into a specific domain",
+            "Translate this text to Spanish",
+            "Convert this document to French",
+            "Rephrase this sentence in simpler terms",
+            "Simplify this paragraph for easier reading",
+            "Explain this technical jargon in plain language",
+            "Find and correct any grammar errors in this text",
+            "Check this writing for spelling mistakes",
+            "Edit this document for style and clarity",
+        ],
+    ),
+    Route(
+        name="vision-image-processing",
+        utterances=[
+            "Explain this image",
+            "Explain this image with url",
             "What's in this image?",
             "Describe the contents of this picture",
             "Tell me what you see in this image",
@@ -25,17 +58,27 @@ routes = [
         ],
     ),
     Route(
-        name="chitchat",
+        name="casual-conversation",
         utterances=[
-            "how's the weather today?",
-            "how are things going?",
-            "lovely weather today",
-            "the weather is horrendous",
-            "let's go to the chippy",
+            "How's your day going?",
+            "Did you catch the game last night?",
+            "I'm so ready for the weekend",
+            "Any fun plans coming up?",
+            "The weather has been gorgeous lately",
+            "Have you tried that new restaurant downtown?",
+            "I've been binge-watching this great new show",
+            "I could use a vacation, how about you?",
+            "My commute was a nightmare this morning",
+            "I'm thinking of picking up a new hobby, any ideas?",
+            "Did you hear about the latest celebrity gossip?",
+            "I can't believe how quickly the time flies",
+            "I'm already counting down to the holidays!",
+            "You'll never guess what happened to me today",
+            "Do you have any book recommendations?",
         ],
     ),
     Route(
-        name="image-gen",
+        name="image-generation",
         utterances=[
             "a image of a cute puppy playing in a meadow",
             "a image of a majestic mountain landscape at sunset",
@@ -79,8 +122,28 @@ routes = [
             "a photo of a dog wearing a colorful bandana",
         ],
     ),
+    Route(
+        name="curious",
+        utterances=[
+            "Tell me something interesting",
+            "What's something fascinating you've learned recently?",
+            "Share an intriguing fact with me",
+            "I'm curious to know more about...",
+            "Enlighten me on the topic of...",
+            "Can you explain the concept of...?",
+            "I've always wondered about...",
+            "How does ... work?",
+            "What's the story behind...?",
+            "I'm really interested in learning about...",
+            "Teach me something new today",
+            "Give me a fun trivia fact",
+            "What's the most mind-blowing thing you know?",
+            "Hit me with some knowledge I don't have yet",
+            "I love learning new things, what can you tell me?",
+        ],
+    ),
 ]
 
-encoder = FastEmbedEncoder(name="BAAI/bge-small-en-v1.5")
+encoder = OpenAIEncoder()
 layer = RouteLayer(encoder=encoder, routes=routes)
 layer.to_json("semantic_route_layers.json")

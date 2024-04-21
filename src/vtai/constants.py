@@ -14,5 +14,8 @@ class SemanticRouterType(str, Enum):
     It' must be mapped together.
     """
 
-    IMAGE_GEN = "image-gen"
-    VISION = "vision"
+    IMAGE_GENERATION = "image-generation"
+    TEXT_PROCESSING = "text-processing"
+    CASUAL_CONVERSATION = "casual-conversation"
+    CURIOUS = "curious"
+    VISION_IMAGE_PROCESSING = "vision-image-processing"

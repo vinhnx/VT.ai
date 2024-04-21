@@ -1,5 +1,6 @@
 # settings
-SETTINGS_LLM_MODEL = "settings_llm_model"
+SETTINGS_CHAT_MODEL = "settings_chat_model"
+SETTINGS_VISION_MODEL = "settings_vision_model"
 SETTINGS_IMAGE_GEN_LLM_MODEL = "settings_image_gen_llm_model"
 SETTINGS_LLM_PARAMS_TEMPERATURE = "settings_temperature"
 SETTINGS_LLM_PARAMS_TOP_P = "settings_top_p"
@@ -14,6 +15,7 @@ SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE = True
 
 DEFAULT_MODEL = "gpt-3.5-turbo"
 DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
+DEFAULT_VISION_MODEL = "gemini/gemini-pro-vision"
 
 IMAGE_GEN_MODELS_ALIAS_MAP = {
     "OpenAI - DALL·E 3": "dall-e-3",
@@ -77,3 +79,6 @@ MODELS = list(MODEL_ALIAS_MAP.values())
 
 IMAGE_GEN_NAMES = list(IMAGE_GEN_MODELS_ALIAS_MAP.keys())
 IMAGE_GEN_MODELS = list(IMAGE_GEN_MODELS_ALIAS_MAP.values())
+
+VISION_MODEL_NAMES = list(VISION_MODEL_MAP.keys())
+VISION_MODEL_MODELS = list(VISION_MODEL_MAP.values())
