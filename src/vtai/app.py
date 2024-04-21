@@ -14,8 +14,35 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
     "Enter OpenAI API Key: "
 )
 
+# ---
+# MY TODO LIST
+# TODO: multi-modal drag and drop https://docs.chainlit.io/advanced-features/multi-modal
+# TODO: https://github.com/Chainlit/cookbook/tree/main/llava
+# TODO: Disabling Multi-Modal Functionality. If you wish to disable this feature (which would prevent users from attaching files to their messages), you can do so by setting features.multi_modal=false in your Chainlit config file.
 # TODO: support Vision LLAVA, GPT, GEMINI
 # TODO: support Audio transcript: WHISPER
+# TODO: token count, model name https://docs.litellm.ai/docs/completion/output
+# TODO: error handling https://docs.litellm.ai/docs/exception_mapping
+# TODO: retry/regenerate response
+# TODO: action: https://docs.chainlit.io/api-reference/ask/ask-for-action
+# TODO: chat response Whisper like ChatGPT.!
+# TODO: footer "vt.ai can make mistakes. Consider checking important information."
+# TODO: TaskList https://docs.chainlit.io/api-reference/elements/tasklist
+# TODO: https://docs.chainlit.io/api-reference/data-persistence/custom-data-layer
+# TODO: "Chat Profiles are useful if you want to let your users choose from a list of predefined configured assistants. For example, you can define a chat profile for a support chat, a sales chat, or a chat for a specific product." https://docs.chainlit.io/advanced-features/chat-profiles
+# TODO: toast https://docs.chainlit.io/concepts/action#toaster
+# TODO: callback https://docs.chainlit.io/concepts/action#define-a-python-callback
+# TODO: customize https://docs.chainlit.io/customisation/overview
+# TODO: config https://docs.chainlit.io/backend/config/overview
+# TODO: sync/async https://docs.chainlit.io/guides/sync-async
+
+# ---
+# Advanced
+# TODO: Auth https://docs.chainlit.io/authentication/overview
+# TODO: Data persistence https://docs.chainlit.io/data-persistence/overview
+# TODO: custom endpoint https://docs.chainlit.io/backend/custom-endpoint
+# TODO: deploy https://docs.chainlit.io/deployment/tutorials
+# TODO: copilot chat widget https://docs.chainlit.io/deployment/copilot
 
 # map litellm model aliases
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
