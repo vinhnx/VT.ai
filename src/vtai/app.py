@@ -2,7 +2,7 @@ import chainlit as cl
 import config as conf
 import litellm
 
-from chainlit.input_widget import Select, Slider, Tags
+from chainlit.input_widget import Select
 from llm_profile_builder import build_llm_profile
 
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
