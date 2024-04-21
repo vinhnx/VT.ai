@@ -7,6 +7,9 @@ from llm_profile_builder import build_llm_profile
 
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
 
+# TODO: use semantic router for routing LLM, for example, chat or multimodal -> (dall e, whisper)
+# https://github.com/aurelio-labs/semantic-router?tab=readme-ov-file
+
 
 @cl.on_chat_start
 async def start_chat():
