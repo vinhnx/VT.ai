@@ -2,7 +2,7 @@ import os
 from getpass import getpass
 
 from semantic_router import Route
-from semantic_router.encoders import OpenAIEncoder
+from semantic_router.encoders import OpenAIEncoder, FastEmbedEncoder
 from semantic_router.layer import RouteLayer
 
 # usage:
@@ -12,9 +12,6 @@ from semantic_router.layer import RouteLayer
 # then semantic_route_layers.json file will be updated
 
 # check for OpenAI API key, default default we will use GPT-3.5-turbo model
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
-    "Enter OpenAI API Key: "
-)
 
 routes = [
     Route(
@@ -144,6 +141,11 @@ routes = [
     ),
 ]
 
-encoder = OpenAIEncoder()
+encoder = FastEmbedEncoder()  # OpenAIEncoder(name="text-embedding-3-small")
+if encoder is OpenAIEncoder:
+    os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
+        "Enter OpenAI API Key: "
+    )
+
 layer = RouteLayer(encoder=encoder, routes=routes)
 layer.to_json("semantic_route_layers.json")
