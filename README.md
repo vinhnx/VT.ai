@@ -1,18 +1,33 @@
+# VT.ai
+
 <p align="center">
-  <em>VT.ai - Multi-modalities LLMs chat application</em>
+  <em>Multi-modal Large Language Models Chat Application</em>
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[![GitHub User's stars](https://img.shields.io/github/stars/vinhnx)](https://github.com/vinhnx)
-[![HackerNews User Karma](https://img.shields.io/hackernews/user-karma/vinhnx)](https://news.ycombinator.com/user?id=vinhnx)
-[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/vinhnx)](https://x.com/vinhnx)
+[![GitHub Stars](https://img.shields.io/github/stars/vinhnx?style=social)](https://github.com/vinhnx)
+[![HackerNews Karma](https://img.shields.io/hackernews/user-karma/vinhnx?style=social)](https://news.ycombinator.com/user?id=vinhnx)
+[![Twitter Follow](https://img.shields.io/twitter/follow/vinhnx?style=social)](https://twitter.com/vinhnx)
 
 ---
 
-VT.ai is a Python application built using the Chainlit library, providing a chat interface for interacting with large language models (LLMs) from various providers. This application supports multi-modal conversations, allowing users to upload files and leverage LLMs for text, image, and vision processing.
+## Introduction
+
+VT.ai is a Python application that provides a user-friendly chat interface for interacting with Large Language Models (LLMs) from various providers. The application supports multi-modal conversations, allowing users to seamlessly integrate text, images, and vision processing in their interactions with the LLMs.
 
 ---
+
+## Key Features
+
+-   **Multi-Provider Support:** Choose from a list of LLM providers, including OpenAI, Anthropic, and Google, with more to come.
+-   **Multi-Modal Conversations:** Upload text and image files for a rich, multi-modal experience.
+-   **Real-time Responses:** Stream responses from the LLM as they are generated.
+-   **Dynamic Settings:** Adjust model parameters such as temperature and top-p during the chat session.
+-   **Clean and Fast Interface:** Built using Chainlit, ensuring a smooth and intuitive user experience.
+-   **Advanced Conversation Routing:** Leveraging SemanticRouter for accurate and efficient modality selection.
+
+## Screenshots
 
 ### Multi LLM Providers Selection with LiteLLM
 
@@ -22,72 +37,48 @@ VT.ai is a Python application built using the Chainlit library, providing a chat
 
 ![Multi-modal Conversation](./src/vtai/resources/screenshot/2.jpg)
 
-## Prerequisites
+## Getting Started
 
-This project uses `rye` as the Python dependencies management tool. Before installing the dependencies, make sure you have `rye` installed:
+### Prerequisites
 
-Install `rye`
+-   Python 3.7 or higher
+-   Rye as the Python dependencies manager (installation guide below)
 
-```
-curl -sSf https://rye-up.com/get | bash
-```
+### Installation
 
-> Rye ships an env file which should be sourced to update PATH automatically.
->
-> ```
-> echo 'source "$HOME/.rye/env"' >> ~/.zprofile
-> ```
->
-> In some setups `.zprofile` is not sourced, in which case you can add it to your .zshrc:
->
-> ```
-> echo 'source "$HOME/.rye/env"' >> ~/.zshrc
-> ```
->
-> There is a quite a bit to shims and their behavior. Make sure to read up on shims to learn more.
+1. Clone the repository: `git clone https://github.com/vinhnx/VT.ai.git` (optional: rename the cloned directory to `vtai`)
+2. Navigate to the project directory: `cd vtai`
+3. Install Rye (Python packages manager):
+    ```
+    curl -sSf https://rye-up.com/get | bash
+    ```
+4. Source the Rye env file to update PATH (add this to your shell configuration file, e.g., `.zprofile` or `.zshrc`):
+    ```
+    source "$HOME/.rye/env"
+    ```
+5. Start dependencies sync: `rye sync`
+6. Activate the Python virtual environment: `source .venv/bin/activate`
+7. Run the app: `chainlit run src/vtai/app.py -w`
 
-Ref: https://rye-up.com/guide/installation/#add-shims-to-path
-
-## Features
-
-- Clean and fast front-end by [Chainlit](https://github.com/Chainlit/chainlit)
--   Select an LLM model from a list of available models (OpenAI, Anthropic, Google, and more). Using [LiteLLM](https://github.com/BerriAI/litellm) for  uniyfin LLMs Input/Output Format.
--   Upload files (text, images) for multi-modal processing
--   Stream responses from the LLM in real-time
--   Update settings (model, temperature, top-p, etc.) during the chat session
--   Dynamic conversation routing using [SemanticRouter](https://github.com/aurelio-labs/semantic-router) for accurate modality selection
--   Multi-modal input/output integration (text, images)
-
-## Installation
-
-1. Clone the repository and rename it as `vtai` (optional): `git clone https://github.com/vinhnx/VT.ai.git vtai`
-1. Navigate to the project directory: `cd vtai`
-1. Install `rye` (Python packages manager), [guide](https://github.com/vinhnx/VT.ai/blob/main/README.md#prerequisites)
-1. Start dependencies sync: `rye sync`
-1. Activate Python virtual environment: `source .venv/bin/activate`
-1. Run the app: `chainlit run src/vtai/app.py -w`
-
-## Usage
+### Usage
 
 1. Rename the `.env.example` file to `.env` and configure your private LLM provider API keys.
 2. Set up the required configuration files (`config.py` and `llm_profile_builder.py`) with your LLM models and settings.
 3. Run the app with optional hot reload: `chainlit run src/vtai/app.py -w`
 4. Open the provided URL in your web browser (e.g., `localhost:8000`).
-5. Select an LLM model from the available options.
-6. Customize the LLM parameters (optional).
-7. Start chatting with the LLM or upload files for multi-modal processing.
+5. Select an LLM model and start chatting or uploading files for multi-modal processing.
 
-## Dependencies
+## Technical Overview
 
-This application relies on the following main dependencies:
+### Dependencies
 
--   [chainlit](https://github.com/Chainlit/chainlit): A library for building chat applications with language models.
--   [litellm](https://github.com/BerriAI/litellm): A library for interacting with large language models.
--   [semantic-router](https://github.com/aurelio-labs/semantic-router): A library for fast and accurate decision-making in conversation routing.
+-   [Chainlit](https://github.com/Chainlit/chainlit): A powerful library for building chat applications with LLMs, providing a clean and fast front-end.
+-   [LiteLLM](https://github.com/BerriAI/litellm): A versatile library for interacting with LLMs, abstracting away the complexities of different providers.
+-   [SemanticRouter](https://github.com/aurelio-labs/semantic-router): A high-performance library for accurate conversation routing, enabling dynamic modality selection.
 
-## Contributing
+### Contributing
 
-If you'd like to contribute to this project, please follow these steps:
+Contributions are welcome! Here's how you can contribute:
 
 1. Fork the repository
 2. Create a new branch: `git checkout -b my-new-feature`
@@ -97,10 +88,10 @@ If you'd like to contribute to this project, please follow these steps:
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License.
 
 ## Contact
 
-If you have any questions or suggestions, feel free to reach out:
+For questions, suggestions, or feedback, feel free to reach out:
 
 -   Twitter: [@vinhnx](https://twitter.com/vinhnx)
