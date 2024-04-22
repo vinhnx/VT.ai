@@ -24,7 +24,8 @@ This is a Python application built using the Chainlit library, which provides a 
 1. Clone the repository and rename it as `vtai` (optional): `git clone https://github.com/vinhnx/VT.ai.git vtai`
 1. Navigate to the project directory: `cd vtai`
 1. Install `rye` (Python packages manager), guide: https://github.com/astral-sh/rye?tab=readme-ov-file#installation
-1. Activate Python virtual environment and start dependencies sync: `rye sync`
+1. Start dependencies sync: `rye sync`
+2. Activate Python virtual environment: `source .venv/bin/activate`
 1. Run the app: `chainlit run src/vtai/app.py -w`
 
 ## Usage
