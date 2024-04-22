@@ -14,7 +14,7 @@ VT.ai is a Python application built using the Chainlit library, providing a chat
 
 ---
 
-### Multi LLM Providers Selection with LitELLM
+### Multi LLM Providers Selection with LiteLLM
 
 ![Multi LLM Providers](./src/vtai/resources/screenshot/1.jpg)
 
