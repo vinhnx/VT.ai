@@ -50,11 +50,12 @@ Ref: https://rye-up.com/guide/installation/#add-shims-to-path
 
 ## Features
 
--   Select an LLM model from a list of available models (OpenAI, Anthropic, Google, and more)
+- Clean and fast front-end by [Chainlit](https://github.com/Chainlit/chainlit)
+-   Select an LLM model from a list of available models (OpenAI, Anthropic, Google, and more). Using [LiteLLM](https://github.com/BerriAI/litellm) for  uniyfin LLMs Input/Output Format.
 -   Upload files (text, images) for multi-modal processing
 -   Stream responses from the LLM in real-time
 -   Update settings (model, temperature, top-p, etc.) during the chat session
--   Dynamic conversation routing using SemanticRouter for accurate modality selection
+-   Dynamic conversation routing using [SemanticRouter](https://github.com/aurelio-labs/semantic-router) for accurate modality selection
 -   Multi-modal input/output integration (text, images)
 
 ## Installation
@@ -80,9 +81,9 @@ Ref: https://rye-up.com/guide/installation/#add-shims-to-path
 
 This application relies on the following main dependencies:
 
--   `chainlit`: A library for building chat applications with language models.
--   `litellm`: A library for interacting with large language models.
--   `semantic-router`: A library for fast and accurate decision-making in conversation routing.
+-   [chainlit](https://github.com/Chainlit/chainlit): A library for building chat applications with language models.
+-   [litellm](https://github.com/BerriAI/litellm): A library for interacting with large language models.
+-   [semantic-router](https://github.com/aurelio-labs/semantic-router): A library for fast and accurate decision-making in conversation routing.
 
 ## Contributing
 
