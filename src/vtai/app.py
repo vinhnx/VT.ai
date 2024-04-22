@@ -136,35 +136,22 @@ async def __handle_trigger_async_chat(llm_model, messages, current_message):
         if token := part.choices[0].delta.content or "":
             await current_message.stream_token(token)
 
+    content = current_message.content
     messages.append(
         {
             "role": "assistant",
-            "content": current_message.content,
+            "content": content,
         }
     )
 
     await current_message.update()
 
 
-async def __handle_exception_error(llm_model, messages, current_message, e):
-    action = await cl.AskActionMessage(
-        author=llm_model,
-        content=f"""
-        Something went wrong, please try again.
-
-        Error type: {type(e)}, Error: {e}
-        """,
-        actions=[
-            cl.Action(
-                name="regenerate", value="regenerate", label="Regenerate response"
-            )
-        ],
-    ).send()
-
-    if action and action.get("value") == "regenerate":
-        await __handle_trigger_async_chat(llm_model, messages, current_message)
-
+async def __handle_exception_error(e):
     print(f"Error type: {type(e)}, Error: {e}")
+    await cl.Message(
+        content=f"Something went wrong. Error type: {type(e)}, Error: {e}",
+    ).send()
 
 
 def __config_chat_session(settings):
