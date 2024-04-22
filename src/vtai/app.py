@@ -11,6 +11,11 @@ from llm_profile_builder import build_llm_profile
 from semantic_router.layer import RouteLayer
 from url_extractor import extract_url
 
+import dotenv
+
+dotenv.load_dotenv()
+
+
 # check for OpenAI API key, default default we will use GPT-3.5-turbo model
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
     "Enter OpenAI API Key: "
@@ -18,9 +23,7 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
 
 # ---
 # MY TODO LIST
-# TODO: multi-modal drag and drop https://docs.chainlit.io/advanced-features/multi-modal
 # TODO: https://github.com/Chainlit/cookbook/tree/main/llava
-# TODO: Disabling Multi-Modal Functionality. If you wish to disable this feature (which would prevent users from attaching files to their messages), you can do so by setting features.multi_modal=false in your Chainlit config file.
 # TODO: support Vision LLAVA, GPT, GEMINI
 # TODO: support Audio transcript: WHISPER
 # TODO: token count, model name https://docs.litellm.ai/docs/completion/output

@@ -1,9 +1,12 @@
 import os
 from getpass import getpass
 
+import dotenv
 from semantic_router import Route
-from semantic_router.encoders import OpenAIEncoder, FastEmbedEncoder
+from semantic_router.encoders import FastEmbedEncoder, OpenAIEncoder
 from semantic_router.layer import RouteLayer
+
+dotenv.load_dotenv()
 
 # usage:
 # ```
@@ -148,4 +151,4 @@ if encoder is OpenAIEncoder:
     )
 
 layer = RouteLayer(encoder=encoder, routes=routes)
-layer.to_json("semantic_route_layers.json")
+layer.to_json("./src/vtai/semantic_route_layers.json")
