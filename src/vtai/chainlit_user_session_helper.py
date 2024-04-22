@@ -1,7 +1,7 @@
 import chainlit as cl
 
 
-def set_single_user_session_value(key):
+def set_user_session_value_with_same_key(key):
     cl.user_session.set(key, key)
 
 
