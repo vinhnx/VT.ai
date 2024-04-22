@@ -1,22 +1,27 @@
 import os
+import tempfile
 from getpass import getpass
 
 import chainlit as cl
+import dotenv
 import litellm
 import llms_config as conf
 from chainlit.input_widget import Select, Switch
 from constants import SemanticRouterType
 from litellm.utils import trim_messages
 from llm_profile_builder import build_llm_profile
+from openai import OpenAI
 from semantic_router.layer import RouteLayer
 from url_extractor import extract_url
-
-import dotenv
 
 dotenv.load_dotenv()
 
 
-# check for OpenAI API key, default default we will use GPT-3.5-turbo model
+litellm.model_alias_map = conf.MODEL_ALIAS_MAP
+route_layer = RouteLayer.from_json("./src/vtai/semantic_route_layers.json")
+openai_client = OpenAI(max_retries=2)
+temp_dir = tempfile.TemporaryDirectory()
+#  properties
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
     "Enter OpenAI API Key: "
 )
@@ -47,13 +52,6 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
 # TODO: deploy https://docs.chainlit.io/deployment/tutorials
 # TODO: copilot chat widget https://docs.chainlit.io/deployment/copilot
 
-# map litellm model aliases
-litellm.model_alias_map = conf.MODEL_ALIAS_MAP
-
-
-# semanticrouter - Semantic Router is a superfast decision-making layer for LLMs and agents
-route_layer = RouteLayer.from_json("semantic_route_layers.json")
-
 
 @cl.on_chat_start
 async def start_chat():
@@ -80,6 +78,7 @@ async def on_message(message: cl.Message):
 
 async def __handle_conversation(message, messages):
     model = __get_settings(conf.SETTINGS_CHAT_MODEL)
+
     msg = cl.Message(content="", author=model)
     await msg.send()
 
@@ -116,9 +115,18 @@ async def update_settings(settings):
         conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
         settings[conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING],
     )
+    cl.user_session.set(conf.SETTINGS_TTS_MODEL, settings[conf.SETTINGS_TTS_MODEL])
+    cl.user_session.set(
+        conf.SETTINGS_TTS_VOICE_PRESET_MODEL,
+        settings[conf.SETTINGS_TTS_VOICE_PRESET_MODEL],
+    )
+    cl.user_session.set(
+        conf.SETTINGS_ENABLE_TTS_RESPONSE,
+        settings[conf.SETTINGS_ENABLE_TTS_RESPONSE],
+    )
 
 
-async def __handle_trigger_async_chat(llm_model, messages, current_message):
+async def __handle_trigger_async_chat(llm_model, messages, current_message: cl.Message):
     # trigger async litellm model with message
     try:
         stream = await litellm.acompletion(
@@ -144,14 +152,20 @@ async def __handle_trigger_async_chat(llm_model, messages, current_message):
         }
     )
 
+    enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+    if enable_tts_response:
+        current_message.actions = [
+            cl.Action(name="speak_response", value=content, label="Speak response")
+        ]
+
     await current_message.update()
 
 
-async def __handle_exception_error(e):
+async def __handle_exception_error(llm_model, messages, current_message: cl.Message, e):
+    current_message.content = (
+        f"Something went wrong, please try again. Error type: {type(e)}, Error: {e}"
+    )
     print(f"Error type: {type(e)}, Error: {e}")
-    await cl.Message(
-        content=f"Something went wrong. Error type: {type(e)}, Error: {e}",
-    ).send()
 
 
 def __config_chat_session(settings):
@@ -183,6 +197,26 @@ async def __build_settings():
                 label="Vision Model",
                 values=conf.VISION_MODEL_MODELS,
                 initial_value=conf.DEFAULT_VISION_MODEL,
+            ),
+            Switch(
+                id=conf.SETTINGS_ENABLE_TTS_RESPONSE,
+                label="Enable TTS",
+                description=f"Enable chat response TTS option. Note: this action requires OpenAI API key. Default is {conf.SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE}",
+                initial=conf.SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE,
+            ),
+            Select(
+                id=conf.SETTINGS_TTS_MODEL,
+                label="TTS Model",
+                description="The OpenAI Audio API provides a speech endpoint based on TTS (text-to-speech) model. It comes with 6 built-in voices and can be used to, in TTS - Voice options section below.",
+                values=conf.TTS_MODEL_MODELS,
+                initial_value=conf.DEFAULT_TTS_MODEL,
+            ),
+            Select(
+                id=conf.SETTINGS_TTS_VOICE_PRESET_MODEL,
+                label="TTS - Voice options",
+                description="The OpenAI Audio API provides 6 built-in voices and can be used to.",
+                values=conf.TTS_VOICE_PRESETS,
+                initial_value=conf.DEFAULT_TTS_PRESET,
             ),
             Switch(
                 id=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
@@ -382,12 +416,6 @@ async def __handle_vision(
     description = vresponse.choices[0].message.content
     messages.append(
         {
-            "role": "assistant",
-            "content": description,
-        }
-    )
-    messages.append(
-        {
             "role": "user",
             "content": prompt,
         }
@@ -421,3 +449,42 @@ async def __handle_vision(
 
 def __get_settings(key):
     return cl.user_session.get("chat_settings")[key]
+
+
+@cl.action_callback("speak_response")
+async def on_action(action: cl.Action):
+    await action.remove()
+    value = action.value
+    return await __handle_tts_response(value)
+
+
+async def __handle_tts_response(value):
+    enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+    if enable_tts_response is False:
+        return
+
+    if len(value) == 0:
+        return
+
+    model = __get_settings(conf.SETTINGS_TTS_MODEL)
+    voice = __get_settings(conf.SETTINGS_TTS_VOICE_PRESET_MODEL)
+    with openai_client.audio.speech.with_streaming_response.create(
+        model=model,
+        voice=voice,
+        input=value,
+        response_format="aac",
+    ) as response:
+        temp_filepath = os.path.join(temp_dir.name, "tts-output.m4a")
+        response.stream_to_file(temp_filepath)
+
+        await cl.Message(
+            author=model,
+            content=f"⚠️ Please note that the TTS voice you are hearing is AI-generated and not a human voice. It's powered by OpenAI's {model} model, using {voice} preset voice.",
+            elements=[
+                cl.Audio(
+                    name="",
+                    path=temp_filepath,
+                    display="inline",
+                )
+            ],
+        ).send()

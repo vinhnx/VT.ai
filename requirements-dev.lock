@@ -178,6 +178,7 @@ onnxruntime==1.17.3
 openai==1.23.2
     # via litellm
     # via semantic-router
+    # via vtai
 opentelemetry-api==1.24.0
     # via opentelemetry-exporter-otlp-proto-grpc
     # via opentelemetry-exporter-otlp-proto-http
