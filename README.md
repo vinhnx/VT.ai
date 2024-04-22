@@ -21,7 +21,7 @@ This is a Python application built using the Chainlit library, which provides a 
 
 ## Installation
 
-1. Clone the repository: `git clone https://github.com/vinhnx/VT.ai.git`
+1. Clone the repository and rename it as `vtai` (optional): `git clone https://github.com/vinhnx/VT.ai.git vtai`
 2. Navigate to the project directory: `cd vtai`
 3. Start Python virtual environment `python3 -m venv .venv`
 4. Activate venv `source .venv/bin/activate`
