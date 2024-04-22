@@ -91,6 +91,7 @@ async def __handle_conversation(message, messages):
     use_dynamic_conversation_routing = __get_settings(
         conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
     )
+
     if use_dynamic_conversation_routing is True:
         await __handle_dynamic_conversation_routing(messages, model, msg, query)
 
@@ -146,7 +147,7 @@ async def __handle_exception_error(llm_model, messages, current_message, e):
         author=llm_model,
         content=f"""
         Something went wrong, please try again.
-        
+
         Error type: {type(e)}, Error: {e}
         """,
         actions=[
@@ -225,7 +226,7 @@ async def __handle_trigger_async_image_gen(messages, query):
         )
 
     except Exception as e:
-        await __handle_exception_error(image_gen_model, messages, current_message, e)
+        await __handle_exception_error(image_gen_model, messages, message, e)
         return
 
     image_gen_data = image_response["data"][0]
@@ -301,18 +302,45 @@ async def __handle_dynamic_conversation_routing(messages, model, msg, query):
         messages = trim_messages(messages, model)
 
     # determine conversation routing
+    print(f"""💡
+          Query: {query}
+          Is classified as route: {route_choice_name}
+          running router...""")
+
     if route_choice_name == SemanticRouterType.IMAGE_GENERATION:
+        print(f"""💡
+            Running route_choice_name: {route_choice_name}.
+            Processing image generation...""")
         await __handle_trigger_async_image_gen(messages, query)
 
     elif route_choice_name == SemanticRouterType.VISION_IMAGE_PROCESSING:
         urls = extract_url(query)
         if len(urls) > 0:
+            print(f"""💡
+                Running route_choice_name: {route_choice_name}.
+                Received image urls/paths.
+                Processing with Vision model...""")
+
             url = urls[0]
             await __handle_vision(
                 input_image=url, prompt=query, messages=messages, is_local=False
             )
+        else:
+            print(f"""💡
+                Running route_choice_name: {route_choice_name}.
+                Received no image urls/paths.
+                Processing with async chat...""")
+
+            await __handle_trigger_async_chat(
+                llm_model=model,
+                messages=messages,
+                current_message=msg,
+            )
 
     else:
+        print(f"""💡
+            Running route_choice_name: {route_choice_name}.
+            Processing with async chat...""")
         await __handle_trigger_async_chat(
             llm_model=model,
             messages=messages,
