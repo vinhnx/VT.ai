@@ -125,6 +125,7 @@ async def __handle_trigger_async_chat(llm_model, messages, current_message):
             model=llm_model,
             messages=messages,
             stream=True,
+            num_retries=2,
         )
 
     except Exception as e:
