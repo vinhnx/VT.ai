@@ -84,13 +84,13 @@ custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&d
 font_family = "Inter, sans-serif"
 
 [UI.theme.light]
-background = "#FAFAFA"
-paper = "#FFFFFF"
+# background = "#FAFAFA"
+# paper = "#FFFFFF"
 
 [UI.theme.light.primary]
-main = "#F80061"
-dark = "#980039"
-light = "#FFE7EB"
+# main = "#F80061"
+# dark = "#980039"
+# light = "#FFE7EB"
 
 # Override default MUI dark theme. (Check theme.ts)
 [UI.theme.dark]
@@ -98,9 +98,9 @@ light = "#FFE7EB"
 # paper = "#FFFFFF"
 
 [UI.theme.dark.primary]
-main = "#F80061"
-dark = "#980039"
-light = "#FFE7EB"
+# main = "#F80061"
+# dark = "#980039"
+# light = "#FFE7EB"
 
 
 [meta]
