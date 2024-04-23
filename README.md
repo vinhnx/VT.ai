@@ -48,7 +48,7 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 
 ### Installation
 
-1. Clone the repository: `git clone https://github.com/vinhnx/VT.ai.git` (optional: rename the cloned directory to `vtai`)
+1. Clone the repository: `git clone https://github.com/vinhnx/VT.ai.git vtai` (optional: rename the cloned directory to `vtai`)
 2. Navigate to the project directory: `cd vtai`
 3. Install Rye (Python packages manager):
     ```
