@@ -51,7 +51,8 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 1. Clone the repository: `git clone https://github.com/vinhnx/VT.ai.git vtai` (optional: rename the cloned directory to `vtai`)
 2. Navigate to the project directory: `cd vtai`
 
-If you had installed `rye` from [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps.
+If you had installed `rye` from [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps, process to [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below
+
 > 1. Install `rye` (Python packages manager):
 >    ```
 >    curl -sSf https://rye-up.com/get | bash
@@ -61,16 +62,11 @@ If you had installed `rye` from [Prerequisites step](https://github.com/vinhnx/V
 >    source "$HOME/.rye/env"
 >    ```
 
-Sync package dependencies and start the app
-1. Start dependencies sync: `rye sync`
-1. Activate the Python virtual environment: `source .venv/bin/activate`
-1. Run the app: `chainlit run src/vtai/app.py -w`
-2. The app should run on port 8000 `http://localhost:8000`
-
 ### Usage
 
 1. Rename the `.env.example` file to `.env` and configure your private LLM provider API keys.
-2. Set up the required configuration files (`config.py` and `llm_profile_builder.py`) with your LLM models and settings.
+2. Start dependencies sync: `rye sync`
+1. Activate the Python virtual environment: `source .venv/bin/activate`
 3. Run the app with optional hot reload: `chainlit run src/vtai/app.py -w`
 4. Open the provided URL in your web browser (e.g., `localhost:8000`).
 5. Select an LLM model and start chatting or uploading files for multi-modal processing.
