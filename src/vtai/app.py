@@ -23,9 +23,6 @@ litellm.model_alias_map = conf.MODEL_ALIAS_MAP
 # Load semantic router layer from JSON file
 route_layer = RouteLayer.from_json("./src/vtai/semantic_route_layers.json")
 
-# Initialize OpenAI client
-openai_client = OpenAI(max_retries=2)
-
 # Create temporary directory for TTS audio files
 temp_dir = tempfile.TemporaryDirectory()
 
@@ -34,6 +31,8 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
     "Enter OpenAI API Key: "
 )
 
+# Initialize OpenAI client
+openai_client = OpenAI(max_retries=2)
 
 # ---
 # MY TODO LIST
