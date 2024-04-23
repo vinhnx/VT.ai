@@ -1,4 +1,5 @@
 import os
+import pathlib
 import tempfile
 from getpass import getpass
 from typing import Any, Dict, List
@@ -11,10 +12,11 @@ from chainlit.input_widget import Select, Switch
 from constants import SemanticRouterType
 from litellm.utils import trim_messages
 from llm_profile_builder import build_llm_profile
-from openai import OpenAI
+from openai import AsyncOpenAI, OpenAI
 from semantic_router.layer import RouteLayer
 from url_extractor import extract_url
 
+# Load .env
 dotenv.load_dotenv()
 
 # Model alias map for litellm
@@ -26,12 +28,10 @@ route_layer = RouteLayer.from_json("./src/vtai/semantic_route_layers.json")
 # Create temporary directory for TTS audio files
 temp_dir = tempfile.TemporaryDirectory()
 
-# Set OpenAI API Key from environment variable or user input
+# Set LLM Providers API Keys from environment variable or user input
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
     "Enter OpenAI API Key: "
 )
-
-
 os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY") or getpass(
     "Enter Google Gemini API Key, this is used for Vision capability. You can skip this: "
 )
@@ -39,6 +39,7 @@ os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY") or getpass(
 
 # Initialize OpenAI client
 openai_client = OpenAI(max_retries=2)
+async_openai_client = AsyncOpenAI(max_retries=2)
 
 # NOTE: 💡 Check ./TODO file for TODO list
 
@@ -88,7 +89,7 @@ async def __handle_conversation(
 
     query = message.content  # Get user query
     # Add query to message history
-    __update_user_messages_history_with_message(query)
+    __update_user_messages_history_with_context(query)
 
     use_dynamic_conversation_routing = __get_settings(
         conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
@@ -145,7 +146,7 @@ async def __handle_trigger_async_chat(
             await current_message.stream_token(token)
 
     content = current_message.content
-    __update_assistant_messages_history_with_message(content)
+    __update_assistant_messages_history_with_context(content)
 
     enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
     if enable_tts_response:
@@ -287,7 +288,7 @@ async def __handle_trigger_async_image_gen(
         ],
     )
 
-    __update_assistant_messages_history_with_message(revised_prompt)
+    __update_assistant_messages_history_with_context(revised_prompt)
 
     await message.send()
 
@@ -304,28 +305,44 @@ async def __handle_files_upload(
         return
 
     prompt = message.content
-    __update_user_messages_history_with_message(prompt)
+    __update_user_messages_history_with_context(prompt)
 
     for file in message.elements:
-        if "image" in file.mime:
-            path = file.path
-            with open(path, "r") as f:
-                pass
+        path = str(file.path)
+        mime_type = file.mime or ""
 
-            await __handle_vision(path, prompt=prompt, messages=messages, is_local=True)
-            break
+        if "image" in mime_type:
+            await __handle_vision(path, prompt=prompt, is_local=True)
 
-        elif "text" in file.mime:
-            with open(file.path, "r") as uploaded_file:
-                pass
-
+        elif "text" in mime_type:
+            p = pathlib.Path(path, encoding="utf-8")
+            s = p.read_text()
+            message.content = s
             await __handle_conversation(message, messages)
-            break
 
-        else:
-            await cl.Message(
-                content=f"Hmm, we can't handle the file `{file.name}` just yet. How about trying a JPEG, PNG, or a simple text file instead?"
-            ).send()
+        elif "audio" in mime_type:
+            f = pathlib.Path(path)
+            await __handle_audio_transcribe(path, f)
+
+
+async def __handle_audio_transcribe(path, audio_file):
+    model = conf.DEFAULT_WHISPER_MODEL
+    transcription = await async_openai_client.audio.transcriptions.create(
+        model=model, file=audio_file
+    )
+    text = transcription.text
+
+    await cl.Message(
+        content="",
+        author=model,
+        elements=[
+            cl.Audio(name="Audio", path=path, display="inline"),
+            cl.Text(content=text, name="Transcript", display="inline"),
+        ],
+    ).send()
+
+    __update_assistant_messages_history_with_context(text)
+    return text
 
 
 async def __handle_dynamic_conversation_routing_chat(
@@ -394,7 +411,6 @@ async def __handle_dynamic_conversation_routing_chat(
 async def __handle_vision(
     input_image: str,
     prompt: str,
-    messages: List[Dict[str, str]],
     is_local: bool = False,
 ) -> None:
     """
@@ -442,12 +458,23 @@ async def __handle_vision(
     else:
         image = cl.Image(url=input_image, name=prompt, display="inline")
 
-    revised_prompt_text = cl.Text(name="Explain", content=description, display="inline")
     message = cl.Message(
-        author=vision_model, content="", elements=[image, revised_prompt_text]
+        author=vision_model,
+        content="",
+        elements=[
+            image,
+            cl.Text(name="Explain", content=description, display="inline"),
+        ],
+        actions=[
+            cl.Action(
+                name="speak_chat_response_action",
+                value=description,
+                label="Speak response",
+            )
+        ],
     )
 
-    __update_assistant_messages_history_with_message(description)
+    __update_assistant_messages_history_with_context(description)
 
     await message.send()
 
@@ -482,12 +509,11 @@ async def __handle_tts_response(context: str) -> None:
 
     model = __get_settings(conf.SETTINGS_TTS_MODEL)
     voice = __get_settings(conf.SETTINGS_TTS_VOICE_PRESET_MODEL)
-    messages = cl.user_session.get("message_history") or []  # Get message history
 
     with openai_client.audio.speech.with_streaming_response.create(
-        model=model, voice=voice, input=context, response_format="aac"
+        model=model, voice=voice, input=context
     ) as response:
-        temp_filepath = os.path.join(temp_dir.name, "tts-output.m4a")
+        temp_filepath = os.path.join(temp_dir.name, "tts-output.mp3")
         response.stream_to_file(temp_filepath)
 
         await cl.Message(
@@ -499,20 +525,20 @@ async def __handle_tts_response(context: str) -> None:
             ],
         ).send()
 
-        __update_assistant_messages_history_with_message(context)
+        __update_assistant_messages_history_with_context(context)
 
 
-def __update_user_messages_history_with_message(message: str):
-    __update_messages_history(message=message, role="user")
+def __update_user_messages_history_with_context(context: str):
+    __update_messages_history_with_context(context=context, role="user")
 
 
-def __update_assistant_messages_history_with_message(message: str):
-    __update_messages_history(message=message, role="assistant")
+def __update_assistant_messages_history_with_context(context: str):
+    __update_messages_history_with_context(context=context, role="assistant")
 
 
-def __update_messages_history(message: str, role: str):
-    if len(role) == 0 or len(message) == 0:
+def __update_messages_history_with_context(context: str, role: str):
+    if len(role) == 0 or len(context) == 0:
         return
 
     messages = cl.user_session.get("message_history") or []
-    messages.append({"role": role, "content": message})
+    messages.append({"role": role, "content": context})

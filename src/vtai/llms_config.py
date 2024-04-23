@@ -23,7 +23,8 @@ DEFAULT_MODEL = "gpt-3.5-turbo"
 DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
 DEFAULT_VISION_MODEL = "gemini/gemini-pro-vision"
 DEFAULT_TTS_MODEL = "tts-1"
-DEFAULT_TTS_PRESET = "echo"
+DEFAULT_TTS_PRESET = "nova"
+DEFAULT_WHISPER_MODEL = "whisper-1"
 
 TTS_MODELS_MAP = {
     "OpenAI - Text-to-speech 1": "tts-1",
