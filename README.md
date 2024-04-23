@@ -16,18 +16,9 @@
 
 VT.ai is a Python application that provides a user-friendly chat interface for interacting with Large Language Models (LLMs) from various providers. The application supports multi-modal conversations, allowing users to seamlessly integrate text, images, and vision processing in their interactions with the LLMs.
 
----
+### Vision aware
 
-## Key Features
-
--   **Multi-Provider Support:** Choose from a list of LLM providers, including OpenAI, Anthropic, and Google, with more to come.
--   **Multi-Modal Conversations:** Upload text and image files for a rich, multi-modal experience.
--   **Real-time Responses:** Stream responses from the LLM as they are generated.
--   **Dynamic Settings:** Adjust model parameters such as temperature and top-p during the chat session.
--   **Clean and Fast Interface:** Built using Chainlit, ensuring a smooth and intuitive user experience.
--   **Advanced Conversation Routing:** Leveraging SemanticRouter for accurate and efficient modality selection.
-
-## Screenshots
+![Multi-modal Conversation](./src/vtai/resources/screenshot/3.jpg)
 
 ### Multi LLM Providers Selection with LiteLLM
 
@@ -36,6 +27,17 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 ### Multi-modal Conversation Routing with SemanticRouter
 
 ![Multi-modal Conversation](./src/vtai/resources/screenshot/2.jpg)
+
+---
+
+## Key Features
+
+-   **Multi-Provider Support:** Choose from a list of LLM providers, including OpenAI, Anthropic, and Google, with more to come.
+-   **Multi-Modal Conversations:** Upload text and image files for a rich, multi-modal experience. You can drag and image and have the model explain it for you.
+-   **Real-time Responses:** Stream responses from the LLM as they are generated.
+-   **Dynamic Settings:** Adjust model parameters such as temperature and top-p during the chat session.
+-   **Clean and Fast Interface:** Built using Chainlit, ensuring a smooth and intuitive user experience.
+-   **Advanced Conversation Routing:** Leveraging SemanticRouter for accurate and efficient modality selection.
 
 ## Getting Started
 
