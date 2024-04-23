@@ -35,7 +35,7 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 -   **Multi-Provider Support:** Choose from a list of LLM providers, including OpenAI, Anthropic, and Google, with more to come.
 -   **Multi-Modal Conversations:** Upload text and image files for a rich, multi-modal experience. You can drag and image and have the model explain it for you.
 -   **Real-time Responses:** Stream responses from the LLM as they are generated.
--   **Dynamic Settings:** Adjust model parameters such as temperature and top-p during the chat session.
+-   **Dynamic Settings:** Various settings to choose from. TODO: Adjust model parameters such as temperature and top-p during the chat session.
 -   **Clean and Fast Interface:** Built using Chainlit, ensuring a smooth and intuitive user experience.
 -   **Advanced Conversation Routing:** Leveraging SemanticRouter for accurate and efficient modality selection.
 
