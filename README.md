@@ -44,23 +44,28 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 ### Prerequisites
 
 -   Python 3.7 or higher
--   Rye as the Python dependencies manager (installation guide below)
+-   `rye` as the Python dependencies manager (installation guide below)
 
 ### Installation
 
 1. Clone the repository: `git clone https://github.com/vinhnx/VT.ai.git vtai` (optional: rename the cloned directory to `vtai`)
 2. Navigate to the project directory: `cd vtai`
-3. Install Rye (Python packages manager):
-    ```
-    curl -sSf https://rye-up.com/get | bash
-    ```
-4. Source the Rye env file to update PATH (add this to your shell configuration file, e.g., `.zprofile` or `.zshrc`):
-    ```
-    source "$HOME/.rye/env"
-    ```
-5. Start dependencies sync: `rye sync`
-6. Activate the Python virtual environment: `source .venv/bin/activate`
-7. Run the app: `chainlit run src/vtai/app.py -w`
+
+If you had installed `rye` from [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps.
+> 1. Install `rye` (Python packages manager):
+>    ```
+>    curl -sSf https://rye-up.com/get | bash
+>    ```
+> 2. Source the Rye env file to update PATH (add this to your shell configuration file, e.g., `.zprofile` or `.zshrc`):
+>    ```
+>    source "$HOME/.rye/env"
+>    ```
+
+Sync package dependencies and start the app
+1. Start dependencies sync: `rye sync`
+1. Activate the Python virtual environment: `source .venv/bin/activate`
+1. Run the app: `chainlit run src/vtai/app.py -w`
+2. The app should run on port 8000 `http://localhost:8000`
 
 ### Usage
 
