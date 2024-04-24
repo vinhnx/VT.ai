@@ -57,7 +57,7 @@ async def start_chat():
     settings = await __build_settings()
 
     # set selected LLM model for current settion's model
-    __config_chat_session(settings)
+    await __config_chat_session(settings)
 
 
 @cl.on_message
@@ -174,7 +174,7 @@ async def __handle_exception_error(
     print(f"Error type: {type(e)}, Error: {e}")
 
 
-def __config_chat_session(settings: Dict[str, Any]) -> None:
+async def __config_chat_session(settings: Dict[str, Any]) -> None:
     """
     Configures the chat session based on user settings and sets the initial system message.
     """
@@ -186,6 +186,10 @@ def __config_chat_session(settings: Dict[str, Any]) -> None:
     }
 
     cl.user_session.set("message_history", [system_message])
+
+    msg = "Hello! I'm here to assist you. Please don't hesitate to ask me anything you'd like to know."
+    await cl.Message(content=msg).send()
+    __update_assistant_messages_history_with_context(msg)
 
 
 async def __build_settings() -> Dict[str, Any]:
