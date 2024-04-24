@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./public/logo_dark.png" height="93" alt="icon" />
+  <img src="./public/logo_dark.png" height="200" alt="icon" />
 </p>
 
 <h3 align="center">VT.ai</h3>
