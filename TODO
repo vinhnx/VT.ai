@@ -1,130 +1,55 @@
-### TODO List
+# TODO: add welcome message
 
-#### Implementation
+# TODO: Whisper translation
 
--   [ ] Whisper code implementation
+-   translations https://platform.openai.com/docs/api-reference/audio/createTranslation
+-   more option to set Whisper tranlation and transcription settings
+-   https://platform.openai.com/docs/guides/speech-to-text/supported-languages
 
-```python
-audio transcrript
-client = Router(
-    model_list=[
-        {
-            "model_name": "whisper",
-            "litellm_params": {
-                "model": "whisper-1",
-            },
-        },
-    ]
-)
-path = "/Users/vinh.nguyenxuan/Developer/learn-by-doing/vtai/src/vtai/speech.mp3"
-audio_file = open(path, "rb")
-transcript = await client.atranscription(model="whisper", file=audio_file)
-await cl.Message(
-    content="",
-    author="OpenAI",
-    elements=[
-        cl.Audio(
-            name="example",
-            path=path,
-            display="inline",
-        ),
-        cl.Text(
-            content=transcript.text,
-            name="OpenAI Whisper Transcript",
-            display="inline",
-        ),
-    ],
-).send()
+# TODO: try https://elevenlabs.io
 
-# temp_filepath = os.path.join(temp_dir.name, "tts-output.m4a")
-# with open(temp_filepath, "rb") as audio_file:
-with open("output.m4a", "rb") as audio_file:
-    # audio_file = open(temp_filepath, "rb")
-    # w_response = await litellm.atranscription(model="whisper", file=audio_file)
-    response = transcription(model="whisper", file=audio_file)
-    # if w_response:
-    # print(w_response)
+# TODO: Add more providers: Replicate AI, Firework AI
 
-    print(f"response: {response}")
+# TODO: add more models https://replicate.com/blog/run-arctic-with-an-api artics, reka, dbrx..
 
-await cl.Message(content=w_response).send()
-transcription(model="whisper", file=audio_file)
-```
+# TODO: handle when a model is selected -> build a top profile tab?
 
-#### Model Selection
+# TODO handle ollama local server check or instruction
 
--   [ ] Handle model selection -> build a top profile tab
+# TODO: tool call example here https://www.reddit.com/r/LocalLLaMA/comments/1capjrk/unlocking_the_power_of_locally_running_llama3_8b/
 
-#### Local Server
+# TODO: starting screen -> generate list of conversation starter buttons.
 
--   [ ] Handle Ollama local server check or instruction
--   [ ] Tool call example: https://www.reddit.com/r/LocalLLaMA/comments/1capjrk/unlocking_the_power_of_locally_running_llama3_8b/
+# TODO: support Audio transcript: WHISPER
 
-#### Starting Screen
+# TODO: token count, model name https://docs.litellm.ai/docs/completion/output
 
--   [ ] Starting screen -> generate list of conversation starter buttons
+# TODO: TaskList https://docs.chainlit.io/api-reference/elements/tasklist
 
-#### Audio Transcript
+# TODO: https://docs.chainlit.io/api-reference/data-persistence/custom-data-layer
 
--   [ ] Support Audio transcript: WHISPER
+# TODO: "Chat Profiles are useful if you want to let your users choose from a list of predefined configured assistants. For example, you can define a chat profile for a support chat, a sales chat, or a chat for a specific product." https://docs.chainlit.io/advanced-features/chat-profiles
 
-#### Token Count and Model Name
+# TODO: callback https://docs.chainlit.io/concepts/action#define-a-python-callback
 
--   [ ] Token count, model name: https://docs.litellm.ai/docs/completion/output
+# TODO: customize https://docs.chainlit.io/customisation/overview
 
-#### Task List
+# TODO: config https://docs.chainlit.io/backend/config/overview
 
--   [ ] TaskList: https://docs.chainlit.io/api-reference/elements/tasklist
+# TODO: sync/async https://docs.chainlit.io/guides/sync-async
 
-#### Data Persistence
+# TODO: function call https://docs.litellm.ai/docs/completion/function_call
 
--   [ ] Custom data layer: https://docs.chainlit.io/api-reference/data-persistence/custom-data-layer
+# TODO https://docs.litellm.ai/docs/completion/reliable_completions
 
-#### Chat Profiles
+# TODO: customize app UI [UI.theme], [UI.theme.light] [UI.theme.light.primary]
 
--   [ ] Chat Profiles: https://docs.chainlit.io/advanced-features/chat-profiles
+# TODO: Auth https://docs.chainlit.io/authentication/overview
 
-#### Callback
+# TODO: Data persistence https://docs.chainlit.io/data-persistence/overview
 
--   [ ] Define a Python callback: https://docs.chainlit.io/concepts/action#define-a-python-callback
+# TODO: custom endpoint https://docs.chainlit.io/backend/custom-endpoint
 
-#### Customization
+# TODO: deploy https://docs.chainlit.io/deployment/tutorials
 
--   [ ] Customize: https://docs.chainlit.io/customisation/overview
-
-#### Configuration
-
--   [ ] Config: https://docs.chainlit.io/backend/config/overview
-
-#### Sync/Async
-
--   [ ] Sync/async: https://docs.chainlit.io/guides/sync-async
-
-#### Function Call
-
--   [ ] Function call: https://docs.litellm.ai/docs/completion/function_call
-
-#### Reliable Completions
-
--   [ ] Reliable completions: https://docs.litellm.ai/docs/completion/reliable_completions
-
-#### App UI Customization
-
--   [ ] Customize app UI: [UI.theme], [UI.theme.light], [UI.theme.light.primary]
-
-#### Authentication
-
--   [ ] Auth: https://docs.chainlit.io/authentication/overview
-
-#### Data Persistence
-
--   [ ] Data persistence: https://docs.chainlit.io/data-persistence/overview
-
-#### Custom Endpoint
-
--   [ ] Custom endpoint: https://docs.chainlit.io/backend/custom-endpoint
-
-#### Deployment
-
--   [ ] Deploy: https://docs.chainlit.io/deployment/tutorials
--   [ ] Copilot chat widget: https://docs.chainlit.io/deployment/copilot
+# TODO: copilot chat widget https://docs.chainlit.io/deployment/copilot
