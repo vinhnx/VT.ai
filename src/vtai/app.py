@@ -64,14 +64,14 @@ async def start_chat():
 async def on_message(message: cl.Message) -> None:
     """
     Handles incoming messages from the user.
-    Processes text messages, file uploads, and routes conversations accordingly.
+    Processes text messages, file attachment, and routes conversations accordingly.
     """
 
     # Chatbot memory
     messages = cl.user_session.get("message_history") or []  # Get message history
 
     if len(message.elements) > 0:
-        await __handle_files_upload(message, messages)  # Process file uploads
+        await __handle_files_attachment(message, messages)  # Process file attachments
     else:
         await __handle_conversation(message, messages)  # Process text messages
 
@@ -293,11 +293,11 @@ async def __handle_trigger_async_image_gen(
     await message.send()
 
 
-async def __handle_files_upload(
+async def __handle_files_attachment(
     message: cl.Message, messages: List[Dict[str, str]]
 ) -> None:
     """
-    Handles file uploads from the user.
+    Handles file attachments from the user.
     Processes images using vision models and text files as chat input.
     """
     if not message.elements:
