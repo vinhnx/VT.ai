@@ -1,26 +1,12 @@
-# TODO: add welcome message
-
-# TODO: Whisper translation
-
--   translations https://platform.openai.com/docs/api-reference/audio/createTranslation
--   more option to set Whisper tranlation and transcription settings
--   https://platform.openai.com/docs/guides/speech-to-text/supported-languages
-
-# TODO: try https://elevenlabs.io
-
 # TODO: Add more providers: Replicate AI, Firework AI
 
 # TODO: add more models https://replicate.com/blog/run-arctic-with-an-api artics, reka, dbrx..
-
-# TODO: handle when a model is selected -> build a top profile tab?
 
 # TODO handle ollama local server check or instruction
 
 # TODO: tool call example here https://www.reddit.com/r/LocalLLaMA/comments/1capjrk/unlocking_the_power_of_locally_running_llama3_8b/
 
 # TODO: starting screen -> generate list of conversation starter buttons.
-
-# TODO: support Audio transcript: WHISPER
 
 # TODO: token count, model name https://docs.litellm.ai/docs/completion/output
 
