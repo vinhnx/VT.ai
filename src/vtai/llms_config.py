@@ -72,6 +72,7 @@ MODEL_ALIAS_MAP = {
 }
 
 ICONS_PROVIDER_MAP = {
+    "VT.ai": "./src/vtai/resources/vt.jpg",
     "tts-1": "./src/vtai/resources/chatgpt-icon.png",
     "tts-1-hd": "./src/vtai/resources/chatgpt-icon.png",
     "OpenAI": "./src/vtai/resources/chatgpt-icon.png",

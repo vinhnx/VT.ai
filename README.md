@@ -1,16 +1,19 @@
-# VT.ai
+<p align="center">
+  <img src="./public/logo_dark.png" height="93" alt="icon" />
+</p>
+
+<h3 align="center">VT.ai</h3>
 
 <p align="center">
   <em>Multi-modal Large Language Models Chat Application</em>
 </p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+---
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/vinhnx?style=social)](https://github.com/vinhnx)
 [![HackerNews Karma](https://img.shields.io/hackernews/user-karma/vinhnx?style=social)](https://news.ycombinator.com/user?id=vinhnx)
 [![Twitter Follow](https://img.shields.io/twitter/follow/vinhnx?style=social)](https://twitter.com/vinhnx)
-
----
 
 ## Introduction
 
@@ -54,22 +57,22 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 If you had installed `rye` from [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps, process to [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below
 
 > 1. Install `rye` (Python packages manager):
->    ```
->    curl -sSf https://rye-up.com/get | bash
->    ```
+>     ```
+>     curl -sSf https://rye-up.com/get | bash
+>     ```
 > 2. Source the Rye env file to update PATH (add this to your shell configuration file, e.g., `.zprofile` or `.zshrc`):
->    ```
->    source "$HOME/.rye/env"
->    ```
+>     ```
+>     source "$HOME/.rye/env"
+>     ```
 
 ### Usage
 
 1. Rename the `.env.example` file to `.env` and configure your private LLM provider API keys.
 2. Start dependencies sync: `rye sync`
-1. Activate the Python virtual environment: `source .venv/bin/activate`
-3. Run the app with optional hot reload: `chainlit run src/vtai/app.py -w`
-4. Open the provided URL in your web browser (e.g., `localhost:8000`).
-5. Select an LLM model and start chatting or uploading files for multi-modal processing.
+3. Activate the Python virtual environment: `source .venv/bin/activate`
+4. Run the app with optional hot reload: `chainlit run src/vtai/app.py -w`
+5. Open the provided URL in your web browser (e.g., `localhost:8000`).
+6. Select an LLM model and start chatting or uploading files for multi-modal processing.
 
 ## Technical Overview
 
