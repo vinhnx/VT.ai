@@ -22,7 +22,7 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 
 ### Vision aware
 
-![Multi-modal Conversation](./src/vtai/resources/screenshot/4.jpg)
+![Multi-modal Conversation](./src/vtai/resources/screenshot/4.png)
 
 ### Multi LLM Providers Selection with LiteLLM
 
