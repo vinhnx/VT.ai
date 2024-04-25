@@ -3,7 +3,7 @@ from getpass import getpass
 
 import dotenv
 from semantic_router import Route
-from semantic_router.encoders import FastEmbedEncoder, OpenAIEncoder
+from semantic_router.encoders import OpenAIEncoder
 from semantic_router.layer import RouteLayer
 
 dotenv.load_dotenv()
@@ -144,7 +144,8 @@ routes = [
     ),
 ]
 
-encoder = FastEmbedEncoder()  # OpenAIEncoder(name="text-embedding-3-small")
+encoder = OpenAIEncoder(name="text-embedding-3-small")
+
 if encoder is OpenAIEncoder:
     os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
         "Enter OpenAI API Key: "
