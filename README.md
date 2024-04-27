@@ -22,15 +22,15 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 
 ### Vision aware
 
-![Multi-modal Conversation](./src/vtai/resources/screenshot/4.png)
+![Multi-modal Conversation](./src/resources/screenshot/4.png)
 
 ### Multi LLM Providers Selection with LiteLLM
 
-![Multi LLM Providers](./src/vtai/resources/screenshot/1.jpg)
+![Multi LLM Providers](./src/resources/screenshot/1.jpg)
 
 ### Multi-modal Conversation Routing with SemanticRouter
 
-![Multi-modal Conversation](./src/vtai/resources/screenshot/2.jpg)
+![Multi-modal Conversation](./src/resources/screenshot/2.jpg)
 
 ---
 
@@ -71,7 +71,7 @@ If you had installed `rye` from [Prerequisites step](https://github.com/vinhnx/V
 1. Rename the `.env.example` file to `.env` and configure your private LLM provider API keys.
 2. Start dependencies sync: `rye sync`
 3. Activate the Python virtual environment: `source .venv/bin/activate`
-4. Run the app with optional hot reload: `chainlit run src/vtai/app.py -w`
+4. Run the app with optional hot reload: `chainlit run src/app.py -w`
 5. Open the provided URL in your web browser (e.g., `localhost:8000`).
 6. Select an LLM model and start chatting or uploading files for multi-modal processing.
 

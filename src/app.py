@@ -67,7 +67,7 @@ dotenv.load_dotenv()
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
 
 # Load semantic router layer from JSON file
-route_layer = RouteLayer.from_json("./src/vtai/router/layers.json")
+route_layer = RouteLayer.from_json("./src/router/layers.json")
 
 # Create temporary directory for TTS audio files
 temp_dir = tempfile.TemporaryDirectory()

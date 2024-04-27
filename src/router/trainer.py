@@ -10,7 +10,7 @@ dotenv.load_dotenv()
 
 # usage:
 # ```
-# $ python src/vtai/router/trainer.py
+# $ python src/router/trainer.py
 # ```
 # then layers.json file will be updated
 
@@ -154,4 +154,4 @@ if encoder is OpenAIEncoder:
     )
 
 layer = RouteLayer(encoder=encoder, routes=routes)
-layer.to_json("./src/vtai/router/layers.json")
+layer.to_json("./src/router/layers.json")
