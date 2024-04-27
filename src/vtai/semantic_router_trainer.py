@@ -3,7 +3,7 @@ from getpass import getpass
 
 import dotenv
 from semantic_router import Route
-from semantic_router.encoders import OpenAIEncoder
+from semantic_router.encoders import OpenAIEncoder, FastEmbedEncoder
 from semantic_router.layer import RouteLayer
 
 dotenv.load_dotenv()
@@ -80,6 +80,7 @@ routes = [
     Route(
         name="image-generation",
         utterances=[
+            "please help me generate a photo of a car",
             "a image of a cute puppy playing in a meadow",
             "a image of a majestic mountain landscape at sunset",
             "a photo of a modern city skyline at night",
@@ -144,7 +145,8 @@ routes = [
     ),
 ]
 
-encoder = OpenAIEncoder(name="text-embedding-3-small")
+encoder = FastEmbedEncoder()
+# OpenAIEncoder(name="text-embedding-3-small")
 
 if encoder is OpenAIEncoder:
     os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
