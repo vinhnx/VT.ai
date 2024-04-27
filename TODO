@@ -4,8 +4,6 @@
 
 # TODO handle ollama local server check or instruction
 
-# TODO: tool call example here https://www.reddit.com/r/LocalLLaMA/comments/1capjrk/unlocking_the_power_of_locally_running_llama3_8b/
-
 # TODO: starting screen -> generate list of conversation starter buttons.
 
 # TODO: token count, model name https://docs.litellm.ai/docs/completion/output
@@ -13,8 +11,6 @@
 # TODO: TaskList https://docs.chainlit.io/api-reference/elements/tasklist
 
 # TODO: https://docs.chainlit.io/api-reference/data-persistence/custom-data-layer
-
-# TODO: "Chat Profiles are useful if you want to let your users choose from a list of predefined configured assistants. For example, you can define a chat profile for a support chat, a sales chat, or a chat for a specific product." https://docs.chainlit.io/advanced-features/chat-profiles
 
 # TODO: callback https://docs.chainlit.io/concepts/action#define-a-python-callback
 
@@ -27,8 +23,6 @@
 # TODO: function call https://docs.litellm.ai/docs/completion/function_call
 
 # TODO https://docs.litellm.ai/docs/completion/reliable_completions
-
-# TODO: customize app UI [UI.theme], [UI.theme.light] [UI.theme.light.primary]
 
 # TODO: Auth https://docs.chainlit.io/authentication/overview
 
