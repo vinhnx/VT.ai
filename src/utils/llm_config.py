@@ -8,16 +8,18 @@ SETTINGS_TTS_MODEL = "settings_tts_model"
 SETTINGS_TTS_VOICE_PRESET_MODEL = "settings_tts_voice_preset_model"
 SETTINGS_ENABLE_TTS_RESPONSE = "settings_enable_tts_response"
 
-SETTINGS_LLM_PARAMS_TEMPERATURE = "settings_temperature"
-SETTINGS_LLM_PARAMS_TOP_P = "settings_top_p"
-SETTINGS_LLM_PARAMS_MAX_TOKENS = "settings_max_tokens"
-SETTINGS_LLM_PARAMS_STOP_SEQUENCE = "settings_stop_sequence"
-
 SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING = "settings_use_dynamic_conversation_routing"
 SETTINGS_TRIMMED_MESSAGES = "settings_trimmed_messages"
 SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE = True
 SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE = True
 SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE = True
+
+# ref https://platform.openai.com/docs/api-reference/chat
+SETTINGS_TEMPERATURE = "settings_temperature"
+DEFAULT_TEMPERATURE = 0
+SETTINGS_TOP_K = "settings_top_k"
+SETTINGS_TOP_P = "settings_top_p"
+DEFAULT_TOP_P = 1
 
 # set models alias mapping
 

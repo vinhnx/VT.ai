@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 import chainlit as cl
-from chainlit.input_widget import Select, Switch
+from chainlit.input_widget import Select, Slider, Switch
 
 from utils import llm_config as conf
 
@@ -18,6 +18,26 @@ async def build_settings() -> Dict[str, Any]:
                 description="Select the Large Language Model (LLM) you want to use for chat conversations. Different models have varying strengths and capabilities.",
                 values=conf.MODELS,
                 initial_value=conf.DEFAULT_MODEL,
+            ),
+            Slider(
+                id=conf.SETTINGS_TEMPERATURE,
+                label="Temperature",
+                description="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.",
+                min=0,
+                max=2.0,
+                step=0.1,
+                initial=conf.DEFAULT_TEMPERATURE,
+                tooltip="Adjust the temperature parameter",
+            ),
+            Slider(
+                id=conf.SETTINGS_TOP_P,
+                label="Top P",
+                description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.",
+                min=0.1,
+                max=1.0,
+                step=0.1,
+                initial=conf.DEFAULT_TOP_P,
+                tooltip="Adjust the top P parameter",
             ),
             Select(
                 id=conf.SETTINGS_VISION_MODEL,

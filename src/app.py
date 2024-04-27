@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 import chainlit as cl
 import dotenv
 import litellm
-from chainlit.types import ChatProfile
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI, OpenAI
 from router.constants import SemanticRouterType
@@ -82,6 +81,13 @@ async def update_settings(settings: Dict[str, Any]) -> None:
     """
     Updates chat settings based on user preferences.
     """
+
+    if settings_temperature := settings[conf.SETTINGS_TEMPERATURE]:
+        cl.user_session.set(conf.SETTINGS_TEMPERATURE, settings_temperature)
+
+    if settings_top_p := settings[conf.SETTINGS_TOP_P]:
+        cl.user_session.set(conf.SETTINGS_TOP_P, settings_top_p)
+
     cl.user_session.set(conf.SETTINGS_CHAT_MODEL, settings[conf.SETTINGS_CHAT_MODEL])
     cl.user_session.set(
         conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE,
@@ -284,13 +290,17 @@ async def __handle_trigger_async_chat(
     Triggers an asynchronous chat completion using the specified LLM model.
     Streams the response back to the user and updates the message history.
     """
+
+    temperature = __get_settings(conf.SETTINGS_TEMPERATURE)
+    top_p = __get_settings(conf.SETTINGS_TOP_P)
     try:
         stream = await litellm.acompletion(
             model=llm_model,
             messages=messages,
             stream=True,
             num_retries=2,
-            temperature=0.3,
+            temperature=temperature,
+            top_p=top_p,
         )
 
         async for part in stream:
