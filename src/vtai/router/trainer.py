@@ -3,16 +3,16 @@ from getpass import getpass
 
 import dotenv
 from semantic_router import Route
-from semantic_router.encoders import OpenAIEncoder, FastEmbedEncoder
+from semantic_router.encoders import FastEmbedEncoder, OpenAIEncoder
 from semantic_router.layer import RouteLayer
 
 dotenv.load_dotenv()
 
 # usage:
 # ```
-# $ python src/vtai/semantic_router_trainer.py
+# $ python src/vtai/router/trainer.py
 # ```
-# then semantic_route_layers.json file will be updated
+# then layers.json file will be updated
 
 # check for OpenAI API key, default default we will use GPT-3.5-turbo model
 
@@ -154,4 +154,4 @@ if encoder is OpenAIEncoder:
     )
 
 layer = RouteLayer(encoder=encoder, routes=routes)
-layer.to_json("./src/vtai/semantic_route_layers.json")
+layer.to_json("./src/vtai/router/layers.json")

@@ -7,14 +7,15 @@ from typing import Any, Dict, List
 import chainlit as cl
 import dotenv
 import litellm
-import llms_config as conf
-from chainlit.input_widget import Select, Switch
-from constants import SemanticRouterType
+from chainlit.types import ChatProfile
 from litellm.utils import trim_messages
-from llm_profile_builder import build_llm_profile
 from openai import AsyncOpenAI, OpenAI
+from router.constants import SemanticRouterType
 from semantic_router.layer import RouteLayer
-from url_extractor import extract_url
+from utils import llm_config as conf
+from utils.llm_profile_builder import build_llm_profile
+from utils.settings_builder import build_settings
+from utils.url_extractor import extract_url
 
 # TODO: Add more providers: Replicate AI, Firework AI
 
@@ -66,7 +67,7 @@ dotenv.load_dotenv()
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
 
 # Load semantic router layer from JSON file
-route_layer = RouteLayer.from_json("./src/vtai/semantic_route_layers.json")
+route_layer = RouteLayer.from_json("./src/vtai/router/layers.json")
 
 # Create temporary directory for TTS audio files
 temp_dir = tempfile.TemporaryDirectory()
@@ -87,6 +88,20 @@ async_openai_client = AsyncOpenAI(max_retries=2)
 # NOTE: 💡 Check ./TODO file for TODO list
 
 
+@cl.set_chat_profiles
+async def setup_chat_profile():
+    return [
+        ChatProfile(
+            name="Chat",
+            markdown_description="Multi-modality chat with model. Multi-modal conversations, seamlessly integrate text, images, and vision processing interactions with the model.",
+        ),
+        ChatProfile(
+            name="Assistant",
+            markdown_description="An Assistant has instructions and can leverage models, tools, and files to respond to your queries.",
+        ),
+    ]
+
+
 @cl.on_chat_start
 async def start_chat():
     """
@@ -97,7 +112,7 @@ async def start_chat():
     await build_llm_profile(conf.ICONS_PROVIDER_MAP)
 
     # settings configuration
-    settings = await __build_settings__()
+    settings = await build_settings()
 
     # set selected LLM model for current settion's model
     await __config_chat_session__(settings)
@@ -388,78 +403,6 @@ async def __config_chat_session__(settings: Dict[str, Any]) -> None:
     msg = "Hello! I'm here to assist you. Please don't hesitate to ask me anything you'd like to know."
     await cl.Message(content=msg).send()
     __update_msg_history_from_assistant_with_ctx__(msg)
-
-
-async def __build_settings__() -> Dict[str, Any]:
-    """
-    Builds and sends chat settings to the user for configuration.
-    """
-    settings = await cl.ChatSettings(
-        [
-            Select(
-                id=conf.SETTINGS_CHAT_MODEL,
-                label="Chat Model",
-                description="Select the Large Language Model (LLM) you want to use for chat conversations. Different models have varying strengths and capabilities.",
-                values=conf.MODELS,
-                initial_value=conf.DEFAULT_MODEL,
-            ),
-            Select(
-                id=conf.SETTINGS_VISION_MODEL,
-                label="Vision Model",
-                description="Choose the vision model to analyze and understand images. This enables features like image description and object recognition.",
-                values=conf.VISION_MODEL_MODELS,
-                initial_value=conf.DEFAULT_VISION_MODEL,
-            ),
-            Switch(
-                id=conf.SETTINGS_ENABLE_TTS_RESPONSE,
-                label="Enable TTS",
-                description=f"This feature allows you to hear the chat responses spoken aloud, which can be helpful for accessibility or multitasking. Note that this action requires an OpenAI API key. Default value is {conf.SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE}.",
-                initial=conf.SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE,
-            ),
-            Select(
-                id=conf.SETTINGS_TTS_MODEL,
-                label="TTS Model",
-                description="Select the TTS model to use for generating speech. Different models offer distinct voice styles and characteristics.",
-                values=conf.TTS_MODEL_MODELS,
-                initial_value=conf.DEFAULT_TTS_MODEL,
-            ),
-            Select(
-                id=conf.SETTINGS_TTS_VOICE_PRESET_MODEL,
-                label="TTS - Voice options",
-                description="Choose the specific voice preset you prefer for TTS responses. Each preset offers a unique vocal style and tone.",
-                values=conf.TTS_VOICE_PRESETS,
-                initial_value=conf.DEFAULT_TTS_PRESET,
-            ),
-            Switch(
-                id=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
-                label="Use dynamic conversation routing",
-                description=f"This experimental feature automatically switches to specialized models based on your input. For example, if you ask to generate an image, it will use an image generation model like DALL·E 3. Note that this action requires an OpenAI API key. Default value is {conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE}",
-                initial=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE,
-            ),
-            Switch(
-                id=conf.SETTINGS_TRIMMED_MESSAGES,
-                label="Trimming Input Messages",
-                description="Ensure messages does not exceed a model's token limit",
-                initial=conf.SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE,
-            ),
-            Select(
-                id=conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE,
-                label="Image Gen Image Style",
-                description="Set the style of the generated images.Vivid : hyper-real and dramatic images. Natural: produce more natural, less hyper-real looking images.",
-                values=conf.SETTINGS_IMAGE_GEN_IMAGE_STYLES,
-                initial_value=conf.SETTINGS_IMAGE_GEN_IMAGE_STYLES[0],
-            ),
-            Select(
-                id=conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY,
-                label="Image Gen Image Quality",
-                description="Set the quality of the image that will be generated. HD creates images with finer details and greater consistency across the image",
-                values=conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITIES,
-                initial_value=conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITIES[0],
-            ),
-        ]
-    ).send()
-
-    return settings
 
 
 async def __handle_trigger_async_image_gen__(query: str) -> None:

@@ -9,7 +9,7 @@ class SemanticRouterType(str, Enum):
 
     --
 
-    The definition is in `semantic_route_layers.json` file. Here we define routes' name constant.
+    The definition is in `layers.json` file. Here we define routes' name constant.
 
     It' must be mapped together.
     """
