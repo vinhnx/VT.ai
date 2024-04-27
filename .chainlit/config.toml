@@ -65,14 +65,14 @@ hide_cot = true
 
 # Specify a CSS file that can be used to customize the user interface.
 # The CSS file can be served from the public directory or via an external link.
-# custom_css = "/public/test.css"
+custom_css = "/public/custom.css"
 
 # Specify a Javascript file that can be used to customize the user interface.
 # The Javascript file can be served from the public directory.
 # custom_js = "/public/test.js"
 
 # Specify a custom font url.
-custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap"
 
 # Specify a custom build directory for the frontend.
 # This can be used to customize the frontend code.
@@ -84,24 +84,23 @@ custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&d
 font_family = "Inter, sans-serif"
 
 [UI.theme.light]
-# background = "#FAFAFA"
-# paper = "#FFFFFF"
+background = "#D9D9D9"
+paper = "#F2F2F2"
 
 [UI.theme.light.primary]
-# main = "#F80061"
-# dark = "#980039"
-# light = "#FFE7EB"
+main = "#78BFBF"
+dark = "#737373"
+light = "#D9D9D9"
 
 # Override default MUI dark theme. (Check theme.ts)
 [UI.theme.dark]
-# background = "#FAFAFA"
-# paper = "#FFFFFF"
+background = "#262626"
+paper = "#171C26"
 
 [UI.theme.dark.primary]
-# main = "#F80061"
-# dark = "#980039"
-# light = "#FFE7EB"
-
+main = "#A63333"
+dark = "#262626"
+light = "#BFB38F"
 
 [meta]
 generated_by = "1.0.504"
