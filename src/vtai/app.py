@@ -83,6 +83,14 @@ async def update_settings(settings: Dict[str, Any]) -> None:
     """
     cl.user_session.set(conf.SETTINGS_CHAT_MODEL, settings[conf.SETTINGS_CHAT_MODEL])
     cl.user_session.set(
+        conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE,
+        settings[conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE],
+    )
+    cl.user_session.set(
+        conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY,
+        settings[conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY],
+    )
+    cl.user_session.set(
         conf.SETTINGS_VISION_MODEL, settings[conf.SETTINGS_VISION_MODEL]
     )
     cl.user_session.set(
@@ -222,6 +230,20 @@ async def __build_settings() -> Dict[str, Any]:
                 description="Ensure messages does not exceed a model's token limit",
                 initial=conf.SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE,
             ),
+            Select(
+                id=conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE,
+                label="Image Gen Image Style",
+                description="Set the style of the generated images.Vivid : hyper-real and dramatic images. Natural: produce more natural, less hyper-real looking images.",
+                values=conf.SETTINGS_IMAGE_GEN_IMAGE_STYLES,
+                initial_value=conf.SETTINGS_IMAGE_GEN_IMAGE_STYLES[0],
+            ),
+            Select(
+                id=conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY,
+                label="Image Gen Image Quality",
+                description="Set the quality of the image that will be generated. HD creates images with finer details and greater consistency across the image",
+                values=conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITIES,
+                initial_value=conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITIES[0],
+            ),
         ]
     ).send()
 
@@ -242,9 +264,15 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
     )
     await message.send()
 
+    style = __get_settings(conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE)
+    quality = __get_settings(conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY)
     try:
         image_response = await litellm.aimage_generation(
-            prompt=query, model=image_gen_model
+            user=__get_user_session_id(),
+            prompt=query,
+            model=image_gen_model,
+            style=style,
+            quality=quality,
         )
 
         image_gen_data = image_response["data"][0]
@@ -419,6 +447,7 @@ async def __handle_vision(
 
     await message.send()
     vresponse = await litellm.acompletion(
+        user=__get_user_session_id(),
         model=vision_model,
         messages=[
             {
@@ -550,3 +579,7 @@ async def __handle_conversation(
         await __handle_trigger_async_chat(
             llm_model=model, messages=messages, current_message=msg
         )
+
+
+def __get_user_session_id() -> str:
+    return cl.user_session.get("id") or ""

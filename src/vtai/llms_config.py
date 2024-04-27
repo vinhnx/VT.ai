@@ -2,6 +2,8 @@
 SETTINGS_CHAT_MODEL = "settings_chat_model"
 SETTINGS_VISION_MODEL = "settings_vision_model"
 SETTINGS_IMAGE_GEN_LLM_MODEL = "settings_image_gen_llm_model"
+SETTINGS_IMAGE_GEN_IMAGE_STYLE = "settings_image_gen_image_style"
+SETTINGS_IMAGE_GEN_IMAGE_QUALITY = "settings_image_gen_image_quality"
 SETTINGS_TTS_MODEL = "settings_tts_model"
 SETTINGS_TTS_VOICE_PRESET_MODEL = "settings_tts_voice_preset_model"
 SETTINGS_ENABLE_TTS_RESPONSE = "settings_enable_tts_response"
@@ -25,6 +27,9 @@ DEFAULT_VISION_MODEL = "gemini/gemini-pro-vision"
 DEFAULT_TTS_MODEL = "tts-1"
 DEFAULT_TTS_PRESET = "nova"
 DEFAULT_WHISPER_MODEL = "whisper-1"
+
+SETTINGS_IMAGE_GEN_IMAGE_STYLES = ["vivid", "natural"]
+SETTINGS_IMAGE_GEN_IMAGE_QUALITIES = ["standard", "hd"]
 
 TTS_MODELS_MAP = {
     "OpenAI - Text-to-speech 1": "tts-1",
