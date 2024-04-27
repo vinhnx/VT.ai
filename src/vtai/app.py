@@ -16,6 +16,49 @@ from openai import AsyncOpenAI, OpenAI
 from semantic_router.layer import RouteLayer
 from url_extractor import extract_url
 
+# TODO: Add more providers: Replicate AI, Firework AI
+
+# TODO: add more models https://replicate.com/blog/run-arctic-with-an-api artics, reka, dbrx..
+
+# TODO handle ollama local server check or instruction
+
+# TODO: tool call example here https://www.reddit.com/r/LocalLLaMA/comments/1capjrk/unlocking_the_power_of_locally_running_llama3_8b/
+
+# TODO: starting screen -> generate list of conversation starter buttons.
+
+# TODO: token count, model name https://docs.litellm.ai/docs/completion/output
+
+# TODO: TaskList https://docs.chainlit.io/api-reference/elements/tasklist
+
+# TODO: https://docs.chainlit.io/api-reference/data-persistence/custom-data-layer
+
+# TODO: "Chat Profiles are useful if you want to let your users choose from a list of predefined configured assistants. For example, you can define a chat profile for a support chat, a sales chat, or a chat for a specific product." https://docs.chainlit.io/advanced-features/chat-profiles
+
+# TODO: callback https://docs.chainlit.io/concepts/action#define-a-python-callback
+
+# TODO: customize https://docs.chainlit.io/customisation/overview
+
+# TODO: config https://docs.chainlit.io/backend/config/overview
+
+# TODO: sync/async https://docs.chainlit.io/guides/sync-async
+
+# TODO: function call https://docs.litellm.ai/docs/completion/function_call
+
+# TODO https://docs.litellm.ai/docs/completion/reliable_completions
+
+# TODO: customize app UI [UI.theme], [UI.theme.light] [UI.theme.light.primary]
+
+# TODO: Auth https://docs.chainlit.io/authentication/overview
+
+# TODO: Data persistence https://docs.chainlit.io/data-persistence/overview
+
+# TODO: custom endpoint https://docs.chainlit.io/backend/custom-endpoint
+
+# TODO: deploy https://docs.chainlit.io/deployment/tutorials
+
+# TODO: copilot chat widget https://docs.chainlit.io/deployment/copilot
+
+
 # Load .env
 dotenv.load_dotenv()
 
