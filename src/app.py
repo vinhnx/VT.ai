@@ -1,21 +1,32 @@
 import os
 import pathlib
 import tempfile
+from datetime import datetime
 from getpass import getpass
+from pathlib import Path
 from typing import Any, Dict, List
 
 import chainlit as cl
 import dotenv
 import litellm
 import utils.constants as const
-from assistants.mino.mino import MinoAssistant
-from assistants.mino.mino import INSTRUCTIONS
+from assistants.mino.create_assistant import tool_map
+from assistants.mino.mino import INSTRUCTIONS, MinoAssistant
+from chainlit.element import Element
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI, OpenAI
+from openai.types.beta.threads import (
+    ImageFileContentBlock,
+    Message,
+    TextContentBlock,
+)
+from openai.types.beta.threads.runs import RunStep
+from openai.types.beta.threads.runs.tool_calls_step_details import ToolCall
 from router.constants import SemanticRouterType
 from semantic_router.layer import RouteLayer
 from utils import llm_config as conf
 from utils.chat_profile import AppChatProfileType
+from utils.dict_to_object import DictToObject
 from utils.llm_profile_builder import build_llm_profile
 from utils.settings_builder import build_settings
 from utils.url_extractor import extract_url
@@ -45,6 +56,12 @@ os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION") or getpass(
 os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY") or getpass(
     "Enter Google Gemini API Key, this is used for Vision capability. You can skip this: "
 )
+
+
+assistant_id = os.environ.get("ASSISTANT_ID")
+
+# List of allowed mime types
+allowed_mime = ["text/csv", "application/pdf"]
 
 
 # Initialize OpenAI client
@@ -78,6 +95,133 @@ async def start_chat():
     # set selected LLM model for current settion's model
     await __config_chat_session__(settings)
 
+    if __is_currently_in_assistant_profile():
+        thread = await async_openai_client.beta.threads.create()
+        cl.user_session.set("thread", thread)
+
+
+@cl.step(name=APP_NAME, type="run", root=True)
+async def run(thread_id: str, human_query: str, file_ids: List[str] = []):
+    # Add the message to the thread
+    init_message = await async_openai_client.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="user",
+        content=human_query,
+    )
+
+    # Create the run
+    if assistant_id is None or len(assistant_id) == 0:
+        mino = MinoAssistant(openai_client=async_openai_client)
+        assistant = await mino.run_assistant()
+        run = await async_openai_client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=assistant.id,
+        )
+    else:
+        run = await async_openai_client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=assistant_id,
+        )
+
+    message_references = {}  # type: Dict[str, cl.Message]
+    step_references = {}  # type: Dict[str, cl.Step]
+    tool_outputs = []
+    # Periodically check for updates
+    while True:
+        run = await async_openai_client.beta.threads.runs.retrieve(
+            thread_id=thread_id, run_id=run.id
+        )
+
+        # Fetch the run steps
+        run_steps = await async_openai_client.beta.threads.runs.steps.list(
+            thread_id=thread_id, run_id=run.id, order="asc"
+        )
+
+        for step in run_steps.data:
+            # Fetch step details
+            run_step = await async_openai_client.beta.threads.runs.steps.retrieve(
+                thread_id=thread_id, run_id=run.id, step_id=step.id
+            )
+            step_details = run_step.step_details
+            # Update step content in the Chainlit UI
+            if step_details.type == "message_creation":
+                thread_message = (
+                    await async_openai_client.beta.threads.messages.retrieve(
+                        message_id=step_details.message_creation.message_id,
+                        thread_id=thread_id,
+                    )
+                )
+                await __process_thread_message__(message_references, thread_message)
+
+            if step_details.type == "tool_calls":
+                for tool_call in step_details.tool_calls:
+                    if isinstance(tool_call, dict):
+                        tool_call = DictToObject(tool_call)
+
+                    if tool_call.type == "code_interpreter":
+                        await __process_tool_call__(
+                            step_references=step_references,
+                            step=step,
+                            tool_call=tool_call,
+                            name=tool_call.type,
+                            input=tool_call.code_interpreter.input
+                            or "# Generating code",
+                            output=tool_call.code_interpreter.outputs,
+                            show_input="python",
+                        )
+
+                        tool_outputs.append(
+                            {
+                                "output": tool_call.code_interpreter.outputs or "",
+                                "tool_call_id": tool_call.id,
+                            }
+                        )
+
+                    elif tool_call.type == "retrieval":
+                        await __process_tool_call__(
+                            step_references=step_references,
+                            step=step,
+                            tool_call=tool_call,
+                            name=tool_call.type,
+                            input="Retrieving information",
+                            output="Retrieved information",
+                        )
+
+                    elif tool_call.type == "function":
+                        function_name = tool_call.function.name
+                        function_args = json.loads(tool_call.function.arguments)
+
+                        function_output = tool_map[function_name](
+                            **json.loads(tool_call.function.arguments)
+                        )
+
+                        await __process_tool_call__(
+                            step_references=step_references,
+                            step=step,
+                            tool_call=tool_call,
+                            name=function_name,
+                            input=function_args,
+                            output=function_output,
+                            show_input="json",
+                        )
+
+                        tool_outputs.append(
+                            {"output": function_output, "tool_call_id": tool_call.id}
+                        )
+            if (
+                run.status == "requires_action"
+                and run.required_action.type == "submit_tool_outputs"
+            ):
+                await async_openai_client.beta.threads.runs.submit_tool_outputs(
+                    thread_id=thread_id,
+                    run_id=run.id,
+                    tool_outputs=tool_outputs,
+                )
+
+        await cl.sleep(2)  # Refresh every 2 seconds
+        if run.status in ["cancelled", "failed", "completed", "expired"]:
+            break
+
 
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
@@ -86,13 +230,21 @@ async def on_message(message: cl.Message) -> None:
     Processes text messages, file attachment, and routes conversations accordingly.
     """
 
-    # Chatbot memory
-    messages = cl.user_session.get("message_history") or []  # Get message history
+    if __is_currently_in_assistant_profile():
+        thread = cl.user_session.get("thread")  # type: Thread
+        files_ids = await __process_files__(message.elements)
+        await run(thread_id=thread.id, human_query=message.content, file_ids=files_ids)
 
-    if len(message.elements) > 0:
-        await __handle_files_attachment__(message, messages)  # Process file attachments
     else:
-        await __handle_conversation(message, messages)  # Process text messages
+        # Chatbot memory
+        messages = cl.user_session.get("message_history") or []  # Get message history
+
+        if len(message.elements) > 0:
+            await __handle_files_attachment__(
+                message, messages
+            )  # Process file attachments
+        else:
+            await __handle_conversation(message, messages)  # Process text messages
 
 
 @cl.on_settings_update
@@ -165,8 +317,15 @@ async def __handle_tts_response__(context: str) -> None:
 
         await cl.Message(
             author=APP_NAME,
-            content=f"You're hearing an AI voice generated by OpenAI's {model} model, using the {voice} style.  You can customize this in Settings if you'd like!",
-            elements=[cl.Audio(name="", path=temp_filepath, display="inline")],
+            content="",
+            elements=[
+                cl.Audio(name="", path=temp_filepath, display="inline"),
+                cl.Text(
+                    name="Note",
+                    display="inline",
+                    content=f"You're hearing an AI voice generated by OpenAI's {model} model, using the {voice} style.  You can customize this in Settings if you'd like!",
+                ),
+            ],
         ).send()
 
         __update_msg_history_from_assistant_with_ctx__(context)
@@ -205,26 +364,10 @@ async def __handle_conversation(
     __update_msg_history_from_assistant_with_ctx__("Thinking...")
 
     if __is_currently_in_assistant_profile():
-        mino = MinoAssistant()
+        mino = MinoAssistant(openai_client=async_openai_client)
         msg = cl.Message(content="", author=mino.name)
         await msg.send()
-
-        res_message = mino.run_assistant(query)
-        msg.content = res_message
-
-        __update_msg_history_from_assistant_with_ctx__(res_message)
-
-        enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-        if enable_tts_response:
-            msg.actions = [
-                cl.Action(
-                    name="speak_chat_response_action",
-                    value=res_message,
-                    label="Speak response",
-                )
-            ]
-
-        await msg.update()
+        await mino.run_assistant()
 
     else:
         use_dynamic_conversation_routing = __get_settings(
@@ -276,7 +419,14 @@ async def __handle_vision__(
     if supports_vision is False:
         print(f"Unsupported vision model: {vision_model}")
         await cl.Message(
-            content=f"It seems the vision model `{vision_model}` doesn't support image processing. Please choose a different model in Settings that offers Vision capabilities.",
+            content="",
+            elements=[
+                cl.Text(
+                    name="Note",
+                    display="inline",
+                    content=f"It seems the vision model `{vision_model}` doesn't support image processing. Please choose a different model in Settings that offers Vision capabilities.",
+                )
+            ],
         ).send()
         return
 
@@ -587,3 +737,142 @@ async def __handle_dynamic_conversation_routing_chat__(
 def __is_currently_in_assistant_profile() -> bool:
     chat_profile = cl.user_session.get("chat_profile")
     return chat_profile == "Assistant"
+
+
+# Check if the files uploaded are allowed
+async def __check_files__(files: List[Element]):
+    for file in files:
+        if file.mime not in allowed_mime:
+            return False
+    return True
+
+
+# Upload files to the assistant
+async def __upload_files__(files: List[Element]):
+    file_ids = []
+    for file in files:
+        uploaded_file = await async_openai_client.files.create(
+            file=Path(file.path), purpose="assistants"
+        )
+        file_ids.append(uploaded_file.id)
+    return file_ids
+
+
+async def __process_files__(files: List[Element]):
+    # Upload files if any and get file_ids
+    file_ids = []
+    if len(files) > 0:
+        files_ok = await __check_files__(files)
+
+        if not files_ok:
+            file_error_msg = f"Hey, it seems you have uploaded one or more files that we do not support currently, please upload only : {(',').join(allowed_mime)}"
+            await cl.Message(content=file_error_msg).send()
+            return file_ids
+
+        file_ids = await __upload_files__(files)
+
+    return file_ids
+
+
+async def __process_thread_message__(
+    message_references: Dict[str, cl.Message], thread_message: Message
+):
+    for idx, content_message in enumerate(thread_message.content):
+        id = thread_message.id + str(idx)
+        if isinstance(content_message, TextContentBlock):
+            if id in message_references:
+                msg = message_references[id]
+                msg.content = content_message.text.value
+                await msg.update()
+            else:
+                message_references[id] = cl.Message(
+                    author=APP_NAME,
+                    content=content_message.text.value,
+                )
+
+                res_message = message_references[id].content
+                enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+                if enable_tts_response:
+                    message_references[id].actions = [
+                        cl.Action(
+                            name="speak_chat_response_action",
+                            value=res_message,
+                            label="Speak response",
+                        )
+                    ]
+
+                await message_references[id].send()
+        elif isinstance(content_message, ImageFileContentBlock):
+            image_id = content_message.image_file.file_id
+            response = (
+                await async_openai_client.files.with_raw_response.retrieve_content(
+                    image_id
+                )
+            )
+            elements = [
+                cl.Image(
+                    name=image_id,
+                    content=response.content,
+                    display="inline",
+                    size="large",
+                ),
+            ]
+
+            if id not in message_references:
+                message_references[id] = cl.Message(
+                    author=APP_NAME,
+                    content="",
+                    elements=elements,
+                )
+
+                res_message = message_references[id].content
+
+                enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+                if enable_tts_response:
+                    message_references[id].actions = [
+                        cl.Action(
+                            name="speak_chat_response_action",
+                            value=res_message,
+                            label="Speak response",
+                        )
+                    ]
+
+                await message_references[id].send()
+        else:
+            print("unknown message type", type(content_message))
+
+
+async def __process_tool_call__(
+    step_references: Dict[str, cl.Step],
+    step: RunStep,
+    tool_call: ToolCall,
+    name: str,
+    input: Any,
+    output: Any,
+    show_input: str = None,
+):
+    cl_step = None
+    update = False
+    if tool_call.id not in step_references:
+        cl_step = cl.Step(
+            name=name,
+            type="tool",
+            parent_id=cl.context.current_step.id,
+            show_input=show_input,
+        )
+        step_references[tool_call.id] = cl_step
+    else:
+        update = True
+        cl_step = step_references[tool_call.id]
+
+    if step.created_at:
+        cl_step.start = datetime.fromtimestamp(step.created_at).isoformat()
+    if step.completed_at:
+        cl_step.end = datetime.fromtimestamp(step.completed_at).isoformat()
+    cl_step.input = input
+    cl_step.output = output
+
+    if update:
+        await cl_step.update()
+    else:
+        await cl_step.send()

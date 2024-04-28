@@ -1,2 +1,3 @@
 APP_NAME = "VT.ai"
 MINO_ASSISTANT_NAME = "Mino"
+ASSISTANT_TOOL_CODE_INTEPRETER = "code_interpreter"

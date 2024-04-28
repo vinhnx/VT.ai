@@ -1,3 +1,5 @@
+# TODO: handle passing file to code-interpreter for Mino Assistant <https://platform.openai.com/docs/assistants/tools/code-interpreter/passing-files-to-code-interpreter>
+
 # TODO: https://github.com/Chainlit/cookbook/tree/main/openai-functions
 
 # TODO: https://github.com/Chainlit/cookbook/tree/main/openai-functions-streaming
@@ -6,7 +8,6 @@
 
 # TODO: https://github.com/Chainlit/cookbook/tree/main/openai-concurrent-functions
 
-# TODO: Improve Assistant https://github.com/Chainlit/cookbook/tree/main/openai-assistant
 
 # TODO: Add more providers: Replicate AI, Firework AI
 

@@ -26,7 +26,7 @@ prompt_playground = true
 unsafe_allow_html = false
 
 # Process and display mathematical expressions. This can clash with "$" characters in messages.
-latex = false
+latex = true
 
 # Authorize users to upload files with messages
 [features.multi_modal]
