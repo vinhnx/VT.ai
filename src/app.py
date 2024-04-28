@@ -49,7 +49,7 @@ os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY") or getpass(
 # Initialize OpenAI client
 openai_client = OpenAI(max_retries=2)
 async_openai_client = AsyncOpenAI(max_retries=2)
-mino = MinoAssistant()
+
 
 # constants
 APP_NAME = const.APP_NAME
@@ -204,6 +204,7 @@ async def __handle_conversation(
     __update_msg_history_from_assistant_with_ctx__("Thinking...")
 
     if __is_currently_in_assistant_profile():
+        mino = MinoAssistant()
         msg = cl.Message(content="", author=mino.name)
         await msg.send()
 
