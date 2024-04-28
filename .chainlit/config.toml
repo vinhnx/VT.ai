@@ -72,7 +72,8 @@ custom_css = "/public/custom.css"
 # custom_js = "/public/test.js"
 
 # Specify a custom font url.
-custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+# custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+custom_font = "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&display=swap"
 
 # Specify a custom build directory for the frontend.
 # This can be used to customize the frontend code.
@@ -81,7 +82,7 @@ custom_font = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&d
 
 # Override default MUI light theme. (Check theme.ts)
 [UI.theme]
-font_family = "Inter, sans-serif"
+font_family = "IBM Plex Sans, sans-serif"
 
 [UI.theme.light]
 background = "#D9D9D9"
