@@ -237,14 +237,15 @@ pyasn1==0.6.0
     # via rsa
 pyasn1-modules==0.4.0
     # via google-auth
-pydantic==2.7.0
+pydantic==2.7.1
     # via chainlit
     # via fastapi
     # via google-generativeai
     # via literalai
     # via openai
     # via semantic-router
-pydantic-core==2.18.1
+    # via vtai
+pydantic-core==2.18.2
     # via pydantic
 pyjwt==2.8.0
     # via chainlit

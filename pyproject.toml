@@ -10,6 +10,7 @@ dependencies = [
     "semantic-router[fastembed]==0.0.20",
     "pillow>=10.3.0",
     "openai>=1.23.2",
+    "pydantic>=2.7.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
