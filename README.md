@@ -5,7 +5,7 @@
 <h3 align="center">VT.ai</h3>
 
 <p align="center">
-  <em>Multi-modal Large Language Models Chat Application</em>
+  <em>Multi-modal AI Assistant</em>
 </p>
 
 ---
@@ -18,7 +18,11 @@
 
 ## Introduction
 
-VT.ai is a Python application that provides a user-friendly chat interface for interacting with Large Language Models (LLMs) from various providers. The application supports multi-modal conversations, allowing users to seamlessly integrate text, images, and vision processing in their interactions with the LLMs.
+VT.ai is a multi-modal AI assistant that provides a user-friendly chat interface for interacting with Large Language Models (LLMs) from various providers.
+
+The application supports multi-modal conversations, allowing users to seamlessly integrate text, images, and vision processing in their interactions with the LLMs.
+
+[Beta] Multi-modal AI Assistant support via OpenAI's Assistant AI function calling support.
 
 ### Vision aware
 
@@ -36,6 +40,7 @@ VT.ai is a Python application that provides a user-friendly chat interface for i
 
 ## Key Features
 
+-   **[Beta] Assistant support**: Multi-modal AI Assistant support from OpenAI Assistant API. Currently support write and run code to answer math questions.
 -   **Multi-Provider Support:** Choose from a list of LLM providers, including OpenAI, Anthropic, and Google, with more to come.
 -   **Multi-Modal Conversations:** Upload text and image files for a rich, multi-modal experience. You can drag and image and have the model explain it for you.
 -   **Real-time Responses:** Stream responses from the LLM as they are generated.

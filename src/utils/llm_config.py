@@ -1,3 +1,7 @@
+from chainlit.types import ChatProfile
+
+from utils.chat_profile import AppChatProfileModel, AppChatProfileType
+
 # settings
 SETTINGS_CHAT_MODEL = "settings_chat_model"
 SETTINGS_VISION_MODEL = "settings_vision_model"
@@ -80,6 +84,7 @@ MODEL_ALIAS_MAP = {
 
 ICONS_PROVIDER_MAP = {
     "VT.ai": "./src/resources/vt.jpg",
+    "Mino": "./src/resources/vt.jpg",
     "tts-1": "./src/resources/chatgpt-icon.png",
     "tts-1-hd": "./src/resources/chatgpt-icon.png",
     "OpenAI": "./src/resources/chatgpt-icon.png",
@@ -121,3 +126,23 @@ VISION_MODEL_MODELS = list(VISION_MODEL_MAP.values())
 
 TTS_MODEL_NAMES = list(TTS_MODELS_MAP.keys())
 TTS_MODEL_MODELS = list(TTS_MODELS_MAP.values())
+
+APP_CHAT_PROFILE_CHAT = AppChatProfileModel(
+    title=AppChatProfileType.CHAT.value,
+    description="Multi-modal chat with LLM.",
+)
+
+APP_CHAT_PROFILE_ASSISTANT = AppChatProfileModel(
+    title=AppChatProfileType.ASSISTANT.value,
+    description="[Beta] Use Mino built-in Assistant to ask complex question. Currently support Math Calculator",
+)
+
+APP_CHAT_PROFILES = [APP_CHAT_PROFILE_CHAT, APP_CHAT_PROFILE_ASSISTANT]
+
+CHAT_PROFILES = [
+    ChatProfile(
+        name=profile.title,
+        markdown_description=profile.description,
+    )
+    for profile in APP_CHAT_PROFILES
+]
