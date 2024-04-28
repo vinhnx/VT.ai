@@ -9,6 +9,7 @@ import dotenv
 import litellm
 import utils.constants as const
 from assistants.mino.mino import MinoAssistant
+from assistants.mino.mino import INSTRUCTIONS
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI, OpenAI
 from router.constants import SemanticRouterType
@@ -407,10 +408,7 @@ async def __config_chat_session__(settings: Dict[str, Any]) -> None:
         __update_msg_history_from_assistant_with_ctx__(msg)
 
     elif chat_profile == AppChatProfileType.ASSISTANT.value:
-        system_message = {
-            "role": "system",
-            "content": mino.instructions,
-        }
+        system_message = {"role": "system", "content": INSTRUCTIONS}
 
         cl.user_session.set("message_history", [system_message])
 
