@@ -6,7 +6,7 @@ from semantic_router import Route
 from semantic_router.encoders import FastEmbedEncoder, OpenAIEncoder
 from semantic_router.layer import RouteLayer
 
-dotenv.load_dotenv()
+dotenv.load_dotenv(dotenv.find_dotenv())
 
 # usage:
 # ```

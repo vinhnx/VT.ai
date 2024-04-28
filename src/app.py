@@ -9,7 +9,6 @@ import dotenv
 import litellm
 import utils.constants as const
 from assistants.mino.mino import MinoAssistant
-from chainlit.types import ChatProfile
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI, OpenAI
 from router.constants import SemanticRouterType
@@ -21,7 +20,7 @@ from utils.settings_builder import build_settings
 from utils.url_extractor import extract_url
 
 # Load .env
-dotenv.load_dotenv()
+dotenv.load_dotenv(dotenv.find_dotenv())
 
 # Model alias map for litellm
 litellm.model_alias_map = conf.MODEL_ALIAS_MAP
