@@ -18,7 +18,7 @@
 
 ## Introduction
 
-VT.ai is a multi-modal AI assistant designed for developers, offering a chat interface to interact with Large Language Models (LLMs) from various providers.
+VT.ai is a multi-modal AI Chatbot Assistant, offering a chat interface to interact with Large Language Models (LLMs) from various providers.
 
 The application supports multi-modal conversations, seamlessly integrating text, images, and vision processing with LLMs.
 
