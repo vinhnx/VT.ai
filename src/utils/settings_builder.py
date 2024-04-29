@@ -15,7 +15,10 @@ async def build_settings() -> Dict[str, Any]:
             Select(
                 id=conf.SETTINGS_CHAT_MODEL,
                 label="Chat Model",
-                description="Select the Large Language Model (LLM) you want to use for chat conversations. Different models have varying strengths and capabilities.",
+                description="""
+                Select the Large Language Model (LLM) you want to use for chat conversations. Different models have varying strengths and capabilities.
+
+                (NOTE) For using Ollama to get up and running with large language models locally. Please refer to quick start guide: https://github.com/ollama/ollama/blob/main/README.md#quickstart""",
                 values=conf.MODELS,
                 initial_value=conf.DEFAULT_MODEL,
             ),
