@@ -1,3 +1,7 @@
+# TODO: proper support local LLM <https://github.com/Chainlit/cookbook/tree/main/local-llm>
+
+# TODO handle ollama local server check or instruction
+
 # TODO: handle passing file to code-interpreter for Mino Assistant <https://platform.openai.com/docs/assistants/tools/code-interpreter/passing-files-to-code-interpreter>
 
 # TODO: https://github.com/Chainlit/cookbook/tree/main/openai-functions
@@ -7,13 +11,6 @@
 # TODO: https://github.com/Chainlit/cookbook/tree/main/openai-concurrent-streaming
 
 # TODO: https://github.com/Chainlit/cookbook/tree/main/openai-concurrent-functions
-
-
-# TODO: Add more providers: Replicate AI, Firework AI
-
-# TODO: add more models https://replicate.com/blog/run-arctic-with-an-api artics, reka, dbrx..
-
-# TODO handle ollama local server check or instruction
 
 # TODO: starting screen -> generate list of conversation starter buttons.
 
