@@ -18,7 +18,7 @@
 
 ## Introduction
 
-VT.ai is a multi-modal AI Chatbot Assistant, offering a chat interface to interact with Large Language Models (LLMs) from various providers.
+VT.ai is a multi-modal AI Chatbot Assistant, offering a chat interface to interact with Large Language Models (LLMs) from various providers. Both via remote API or running locally with [Ollama](https://github.com/ollama/ollama/blob/main/README.md#quickstart).
 
 The application supports multi-modal conversations, seamlessly integrating text, images, and vision processing with LLMs.
 
