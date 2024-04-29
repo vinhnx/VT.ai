@@ -53,22 +53,25 @@ The application supports multi-modal conversations, seamlessly integrating text,
 ### Prerequisites
 
 - Python 3.7 or higher
-- `rye` as the Python dependencies manager (installation guide below)
+- (Optioal) `rye` as the Python dependencies manager (installation guide below)
 
 ### Installation
 
 1. Clone the repository: `git clone https://github.com/vinhnx/VT.ai.git vtai` (optional: rename the cloned directory to `vtai`)
 2. Navigate to the project directory: `cd vtai`
 
-If you have already installed `rye` from the [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below.
+##### Packages Management
 
-> 1. Install `rye` (Python packages manager):
+1. You can use native Python `pip` to install packages dependencies without installing `rye`. If so, you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below.
+2. If want to use `rye`, and had it installed from the [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below. Otherwise you can install `rye` by following these steps:
+
+> a. Install `rye` (Python packages manager):
 >
 >     ```
 >     curl -sSf https://rye-up.com/get | bash
 >     ```
 >
-> 2. Source the Rye env file to update PATH (add this to your shell configuration file, e.g., `.zprofile` or `.zshrc`):
+> b. Source the Rye env file to update PATH (add this to your shell configuration file, e.g., `.zprofile` or `.zshrc`):
 >
 >     ```
 >     source "$HOME/.rye/env"
@@ -77,7 +80,9 @@ If you have already installed `rye` from the [Prerequisites step](https://github
 ### Usage
 
 1. Rename the `.env.example` file to `.env` and configure your private LLM provider API keys.
-2. Start dependencies sync: `rye sync`
+2. Packages management:
+  + Using pip, start dependencies sync, by running this command: `pip install -r requirements.txt`
+  + If you use `rye`, start dependencies sync, by running this command: `rye sync`
 3. Activate the Python virtual environment: `source .venv/bin/activate`
 4. Run the app with optional hot reload: `chainlit run src/app.py -w`
 5. Open the provided URL in your web browser (e.g., `localhost:8000`).
