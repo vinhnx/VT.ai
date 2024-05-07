@@ -49,7 +49,7 @@ The application supports multi-modal conversations, seamlessly integrating text,
 ### Prerequisites
 
 - Python 3.7 or higher
-- (Optioal) `rye` as the Python dependencies manager (installation guide below)
+- (Optional -- Recommended) `rye` as the Python dependencies manager (installation guide below)
 
 ### Installation
 
@@ -59,7 +59,7 @@ The application supports multi-modal conversations, seamlessly integrating text,
 ##### Packages Management
 
 1. You can use native Python `pip` to install packages dependencies without installing `rye`. If so, you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below.
-2. If want to use `rye`, and had it installed from the [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below. Otherwise you can install `rye` by following these steps:
+2. [Recommended] If want to use `rye`, and had it installed from the [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below. Otherwise you can install `rye` by following these steps:
 
 > a. Install `rye` (Python packages manager):
 >
@@ -80,7 +80,7 @@ The application supports multi-modal conversations, seamlessly integrating text,
 4. Activate the Python virtual environment: `source .venv/bin/activate`
 2. Packages management:
   + Using pip, start dependencies sync, by running this command: `pip install -r requirements.txt`
-  + If you use `rye`, start dependencies sync, by running this command: `rye sync`
+  + [Recommended] If you use `rye`, start dependencies sync, by running this command: `rye sync`
 4. Run the app with optional hot reload: `chainlit run src/app.py -w`
 5. Open the provided URL in your web browser (e.g., `localhost:8000`).
 6. Select an LLM model and start chatting or uploading files for multi-modal processing.
