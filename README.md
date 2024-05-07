@@ -24,18 +24,6 @@ The application supports multi-modal conversations, seamlessly integrating text,
 
 [Beta] Multi-modal AI Assistant support via OpenAI's Assistant API function calling.
 
-### Vision aware
-
-![Multi-modal Conversation](./src/resources/screenshot/4.png)
-
-### Multi LLM Providers Selection with LiteLLM
-
-![Multi LLM Providers](./src/resources/screenshot/1.jpg)
-
-### Multi-modal Conversation Routing with SemanticRouter
-
-![Multi-modal Conversation](./src/resources/screenshot/2.jpg)
-
 ---
 
 ## Key Features
@@ -47,6 +35,14 @@ The application supports multi-modal conversations, seamlessly integrating text,
 - **Dynamic Settings:** Customize model parameters such as temperature and top-p during your chat session.
 - **Clean and Fast Interface:** Built using Chainlit, ensuring a smooth and intuitive user experience.
 - **Advanced Conversation Routing:** Utilizes SemanticRouter for accurate and efficient modality selection.
+
+---
+
+![Multi LLM Providers](./src/resources/screenshot/1.jpg)
+
+![Multi-modal Conversation](./src/resources/screenshot/2.jpg)
+
+---
 
 ## Getting Started
 
@@ -80,10 +76,10 @@ The application supports multi-modal conversations, seamlessly integrating text,
 ### Usage
 
 1. Rename the `.env.example` file to `.env` and configure your private LLM provider API keys.
+3. Activate the Python virtual environment: `source .venv/bin/activate`
 2. Packages management:
   + Using pip, start dependencies sync, by running this command: `pip install -r requirements.txt`
   + If you use `rye`, start dependencies sync, by running this command: `rye sync`
-3. Activate the Python virtual environment: `source .venv/bin/activate`
 4. Run the app with optional hot reload: `chainlit run src/app.py -w`
 5. Open the provided URL in your web browser (e.g., `localhost:8000`).
 6. Select an LLM model and start chatting or uploading files for multi-modal processing.
