@@ -365,7 +365,6 @@ async def __handle_conversation(
     query = message.content  # Get user query
     # Add query to message history
     __update_msg_history_from_user_with_ctx__(query)
-    __update_msg_history_from_assistant_with_ctx__("Thinking...")
 
     if __is_currently_in_assistant_profile():
         mino = MinoAssistant(openai_client=async_openai_client)
