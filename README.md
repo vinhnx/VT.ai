@@ -61,17 +61,9 @@ The application supports multi-modal conversations, seamlessly integrating text,
 1. You can use native Python `pip` to install packages dependencies without installing `rye`. If so, you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below.
 2. [Recommended] If want to use `rye`, and had it installed from the [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below. Otherwise you can install `rye` by following these steps:
 
-> a. Install `rye` (Python packages manager):
->
->     ```
->     curl -sSf https://rye-up.com/get | bash
->     ```
->
-> b. Source the Rye env file to update PATH (add this to your shell configuration file, e.g., `.zprofile` or `.zshrc`):
->
->     ```
->     source "$HOME/.rye/env"
->     ```
+> a. Install `rye` (Python packages manager): `curl -sSf https://rye-up.com/get | bash`
+> 
+> b. Source the Rye env file to update PATH (add this to your shell configuration file, e.g., `.zprofile` or `.zshrc`): `source "$HOME/.rye/env"`
 
 ### Usage
 
