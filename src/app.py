@@ -50,7 +50,7 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
 )
 # OpenAI - Organization ID - track expense
 os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION") or getpass(
-    "(Optional) Enter OpenAI Orginazation ID, for billing management. You can skip this..."
+    "(Optional) Enter OpenAI Orginazation ID, for billing management. You can skip this, by pressing the Return key..."
 )  # OPTIONAL
 
 # os.environ["ASSISTANT_ID"] = os.getenv("ASSISTANT_ID") or getpass(
@@ -58,7 +58,7 @@ os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION") or getpass(
 # )  # OPTIONAL
 
 os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY") or getpass(
-    "Enter Google Gemini API Key, this is used for Vision capability. You can skip this..."
+    "Enter Google Gemini API Key, this is used for Vision capability. You can skip this, by pressing the Return key..."
 )
 
 
