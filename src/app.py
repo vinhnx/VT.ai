@@ -496,7 +496,7 @@ async def __handle_trigger_async_chat(
         stream = await litellm.acompletion(
             model=llm_model,
             messages=messages,
-            stream=True,
+            stream=True,  # TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
             num_retries=2,
             temperature=temperature,
             top_p=top_p,

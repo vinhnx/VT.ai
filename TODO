@@ -1,3 +1,7 @@
+# TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
+
+# TODO: idea integrate token cost counter https://github.com/AgentOps-AI/tokencost?tab=readme-ov-file
+
 # TODO: proper support local LLM <https://github.com/Chainlit/cookbook/tree/main/local-llm>
 
 # TODO: handle passing file to code-interpreter for Mino Assistant <https://platform.openai.com/docs/assistants/tools/code-interpreter/passing-files-to-code-interpreter>
