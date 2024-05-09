@@ -90,6 +90,7 @@ async def start_chat():
     Initializes the chat session.
     Builds LLM profiles, configures chat settings, and sets initial system message.
     """
+
     # build llm profile
     await build_llm_profile(conf.ICONS_PROVIDER_MAP)
 
@@ -506,7 +507,7 @@ async def __handle_trigger_async_chat(
                 await current_message.stream_token(token)
 
         content = current_message.content
-        __update_msg_history_from_user_with_ctx__(content)
+        __update_msg_history_from_assistant_with_ctx__(content)
 
         enable_tts_response = __get_settings__(conf.SETTINGS_ENABLE_TTS_RESPONSE)
         if enable_tts_response:
@@ -633,7 +634,6 @@ async def __handle_files_attachment__(
         return
 
     prompt = message.content
-    __update_msg_history_from_user_with_ctx__(prompt)
 
     for file in message.elements:
         path = str(file.path)
