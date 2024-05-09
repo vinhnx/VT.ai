@@ -506,7 +506,7 @@ async def __handle_trigger_async_chat(
                 await current_message.stream_token(token)
 
         content = current_message.content
-        __update_msg_history_from_assistant_with_ctx__(content)
+        __update_msg_history_from_user_with_ctx__(content)
 
         enable_tts_response = __get_settings__(conf.SETTINGS_ENABLE_TTS_RESPONSE)
         if enable_tts_response:
@@ -558,7 +558,6 @@ async def __config_chat_session__(settings: Dict[str, Any]) -> None:
 
         msg = "Hello! I'm here to assist you. Please don't hesitate to ask me anything you'd like to know."
         await cl.Message(content=msg).send()
-        __update_msg_history_from_assistant_with_ctx__(msg)
 
     elif chat_profile == AppChatProfileType.ASSISTANT.value:
         system_message = {"role": "system", "content": INSTRUCTIONS}
@@ -566,9 +565,7 @@ async def __config_chat_session__(settings: Dict[str, Any]) -> None:
         cl.user_session.set("message_history", [system_message])
 
         msg = "Hello! I'm Mino, your Assistant. I'm here to assist you. Please don't hesitate to ask me anything you'd like to know. Currently, I can write and run code to answer math questions."
-
         await cl.Message(content=msg).send()
-        __update_msg_history_from_assistant_with_ctx__(msg)
 
 
 async def __handle_trigger_async_image_gen__(query: str) -> None:
