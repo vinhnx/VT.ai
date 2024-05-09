@@ -49,9 +49,9 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
     "Enter OpenAI API Key: "
 )
 # OpenAI - Organization ID - track expense
-os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION") or getpass(
-    "(Optional) Enter OpenAI Orginazation ID, for billing management. You can skip this, by pressing the Return key..."
-)  # OPTIONAL
+# os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION") or getpass(
+#     "(Optional) Enter OpenAI Orginazation ID, for billing management. You can skip this, by pressing the Return key..."
+# )  # OPTIONAL
 
 # os.environ["ASSISTANT_ID"] = os.getenv("ASSISTANT_ID") or getpass(
 #     "(Optional) Enter pre-defined OpenAI Assistant ID, this is used for assistant conversation thread. You can skip this."
