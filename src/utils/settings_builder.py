@@ -12,6 +12,12 @@ async def build_settings() -> Dict[str, Any]:
     """
     settings = await cl.ChatSettings(
         [
+            Switch(
+                id=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
+                label="[Experiment] Use dynamic conversation routing",
+                description=f"This experimental feature automatically switches to specialized models based on your input. For example, if you ask to generate an image, it will use an image generation model like DALL·E 3. Note that this action requires an OpenAI API key. Default value is {conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE}",
+                initial=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE,
+            ),
             Select(
                 id=conf.SETTINGS_CHAT_MODEL,
                 label="Chat Model",
@@ -68,12 +74,6 @@ async def build_settings() -> Dict[str, Any]:
                 description="Choose the specific voice preset you prefer for TTS responses. Each preset offers a unique vocal style and tone.",
                 values=conf.TTS_VOICE_PRESETS,
                 initial_value=conf.DEFAULT_TTS_PRESET,
-            ),
-            Switch(
-                id=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
-                label="Use dynamic conversation routing",
-                description=f"This experimental feature automatically switches to specialized models based on your input. For example, if you ask to generate an image, it will use an image generation model like DALL·E 3. Note that this action requires an OpenAI API key. Default value is {conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE}",
-                initial=conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE,
             ),
             Switch(
                 id=conf.SETTINGS_TRIMMED_MESSAGES,
