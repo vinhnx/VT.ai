@@ -1,3 +1,11 @@
+# TODO: deploy 💰 Budgets, Rate Limits https://docs.litellm.ai/docs/proxy/users
+
+# TODO: 🐳 Docker, Deploying LiteLLM Proxy https://docs.litellm.ai/docs/proxy/deploy
+
+# TODO: model fallback https://docs.litellm.ai/docs/tutorials/model_fallbacks
+
+# TODO: check Cohere docs, seems like currenlty had error https://docs.litellm.ai/docs/providers/cohere
+
 # TODO: proper support local LLM <https://github.com/Chainlit/cookbook/tree/main/local-llm>
 
 # TODO: handle passing file to code-interpreter for Mino Assistant <https://platform.openai.com/docs/assistants/tools/code-interpreter/passing-files-to-code-interpreter>
