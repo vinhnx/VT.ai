@@ -734,7 +734,7 @@ async def __handle_dynamic_conversation_routing_chat(
         )
 
 
-def __is_currently_in_assistant_profile() -> bool:
+def _is_currently_in_assistant_profile() -> bool:
     chat_profile = cl.user_session.get("chat_profile")
     return chat_profile == "Assistant"
 
