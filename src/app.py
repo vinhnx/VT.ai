@@ -304,15 +304,15 @@ async def __handle_tts_response(context: str) -> None:
     """
     Generates and sends a TTS audio response using OpenAI's Audio API.
     """
-    enable_tts_response = _get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+    enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
     if enable_tts_response is False:
         return
 
     if len(context) == 0:
         return
 
-    model = _get_settings(conf.SETTINGS_TTS_MODEL)
-    voice = _get_settings(conf.SETTINGS_TTS_VOICE_PRESET_MODEL)
+    model = __get_settings(conf.SETTINGS_TTS_MODEL)
+    voice = __get_settings(conf.SETTINGS_TTS_VOICE_PRESET_MODEL)
 
     with openai_client.audio.speech.with_streaming_response.create(
         model=model, voice=voice, input=context
@@ -333,15 +333,15 @@ async def __handle_tts_response(context: str) -> None:
             ],
         ).send()
 
-        _update_msg_history_from_assistant_with_ctx(context)
+        __update_msg_history_from_assistant_with_ctx(context)
 
 
 def __update_msg_history_from_user_with_ctx(context: str):
-    _update_msg_history_with_ctx(context=context, role="user")
+    __update_msg_history_with_ctx(context=context, role="user")
 
 
 def __update_msg_history_from_assistant_with_ctx(context: str):
-    _update_msg_history_with_ctx(context=context, role="assistant")
+    __update_msg_history_with_ctx(context=context, role="assistant")
 
 
 def __update_msg_history_with_ctx(context: str, role: str):
@@ -359,13 +359,13 @@ async def __handle_conversation(
     Handles text-based conversations with the user.
     Routes the conversation based on settings and semantic understanding.
     """
-    model = _get_settings(conf.SETTINGS_CHAT_MODEL)  # Get selected LLM model
+    model = __get_settings(conf.SETTINGS_CHAT_MODEL)  # Get selected LLM model
     msg = cl.Message(content="", author=APP_NAME)
     await msg.send()
 
     query = message.content  # Get user query
     # Add query to message history
-    _update_msg_history_from_user_with_ctx(query)
+    __update_msg_history_from_user_with_ctx(query)
 
     if _is_currently_in_assistant_profile():
         mino = MinoAssistant(openai_client=async_openai_client)
@@ -374,7 +374,7 @@ async def __handle_conversation(
         await mino.run_assistant()
 
     else:
-        use_dynamic_conversation_routing = _get_settings(
+        use_dynamic_conversation_routing = __get_settings(
             conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
         )
 
@@ -415,7 +415,7 @@ async def __handle_vision(
     vision_model = (
         conf.DEFAULT_VISION_MODEL
         if is_local
-        else _get_settings(conf.SETTINGS_VISION_MODEL)
+        else __get_settings(conf.SETTINGS_VISION_MODEL)
     )
 
     supports_vision = litellm.supports_vision(model=vision_model)
@@ -477,7 +477,7 @@ async def __handle_vision(
         ],
     )
 
-    _update_msg_history_from_assistant_with_ctx(description)
+    __update_msg_history_from_assistant_with_ctx(description)
 
     await message.send()
 
@@ -490,8 +490,8 @@ async def __handle_trigger_async_chat(
     Streams the response back to the user and updates the message history.
     """
 
-    temperature = _get_settings(conf.SETTINGS_TEMPERATURE)
-    top_p = _get_settings(conf.SETTINGS_TOP_P)
+    temperature = __get_settings(conf.SETTINGS_TEMPERATURE)
+    top_p = __get_settings(conf.SETTINGS_TOP_P)
     try:
         stream = await litellm.acompletion(
             model=llm_model,
@@ -507,9 +507,9 @@ async def __handle_trigger_async_chat(
                 await current_message.stream_token(token)
 
         content = current_message.content
-        _update_msg_history_from_assistant_with_ctx(content)
+        __update_msg_history_from_assistant_with_ctx(content)
 
-        enable_tts_response = _get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+        enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
         if enable_tts_response:
             current_message.actions = [
                 cl.Action(
@@ -575,7 +575,7 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
     Sends the generated image and description to the user.
     """
     image_gen_model = conf.DEFAULT_IMAGE_GEN_MODEL
-    _update_msg_history_from_user_with_ctx(query)
+    __update_msg_history_from_user_with_ctx(query)
 
     message = cl.Message(
         content="Sure! I'll create an image based on your description. This might take a moment, please be patient.",
@@ -583,8 +583,8 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
     )
     await message.send()
 
-    style = _get_settings(conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE)
-    quality = _get_settings(conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY)
+    style = __get_settings(conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE)
+    quality = __get_settings(conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY)
     try:
         image_response = await litellm.aimage_generation(
             user=__get_user_session_id(),
@@ -614,7 +614,7 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
             ],
         )
 
-        _update_msg_history_from_assistant_with_ctx(revised_prompt)
+        __update_msg_history_from_assistant_with_ctx(revised_prompt)
 
         await message.send()
 
@@ -669,7 +669,7 @@ async def __handle_audio_transcribe(path, audio_file):
         ],
     ).send()
 
-    _update_msg_history_from_assistant_with_ctx(text)
+    __update_msg_history_from_assistant_with_ctx(text)
     return text
 
 
@@ -683,7 +683,7 @@ async def __handle_dynamic_conversation_routing_chat(
     route_choice = route_layer(query)
     route_choice_name = route_choice.name
 
-    should_trimmed_messages = _get_settings(conf.SETTINGS_TRIMMED_MESSAGES)
+    should_trimmed_messages = __get_settings(conf.SETTINGS_TRIMMED_MESSAGES)
     if should_trimmed_messages:
         messages = trim_messages(messages, model)
 
@@ -791,7 +791,7 @@ async def __process_thread_message(
                 )
 
                 res_message = message_references[id].content
-                enable_tts_response = _get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+                enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
                 if enable_tts_response:
                     message_references[id].actions = [
                         cl.Action(
@@ -827,7 +827,7 @@ async def __process_thread_message(
 
                 res_message = message_references[id].content
 
-                enable_tts_response = _get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+                enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
                 if enable_tts_response:
                     message_references[id].actions = [
                         cl.Action(
