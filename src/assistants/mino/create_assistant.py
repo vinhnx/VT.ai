@@ -1,9 +1,9 @@
-import json
-from openai import AsyncOpenAI
 import asyncio
+import json
 import os
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
+from openai import AsyncOpenAI
 
 load_dotenv()
 
