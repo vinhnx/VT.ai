@@ -6,7 +6,7 @@ from typing_extensions import override
 class EventHandler(AssistantEventHandler):
     @override
     def on_text_created(self, text) -> None:
-        print(f"\nassistant > ", end="", flush=True)
+        print("\nassistant > ", end="", flush=True)
 
     @override
     def on_text_delta(self, delta, snapshot):
@@ -20,7 +20,7 @@ class EventHandler(AssistantEventHandler):
             if delta.code_interpreter.input:
                 print(delta.code_interpreter.input, end="", flush=True)
             if delta.code_interpreter.outputs:
-                print(f"\n\noutput >", flush=True)
+                print("\n\noutput >", flush=True)
                 for output in delta.code_interpreter.outputs:
                     if output.type == "logs":
                         print(f"\n{output.logs}", flush=True)
