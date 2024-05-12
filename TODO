@@ -1,8 +1,17 @@
+# TODO: embed llama.cpp Python binding for Local LLM https://github.com/abetlen/llama-cpp-python
+
+
+# TODO: HN API tools https://github.com/HackerNews/API
+
 # TODO: deploy 💰 Budgets, Rate Limits https://docs.litellm.ai/docs/proxy/users
+
+
 
 # TODO: 🐳 Docker, Deploying LiteLLM Proxy https://docs.litellm.ai/docs/proxy/deploy
 
+
 # TODO: model fallback https://docs.litellm.ai/docs/tutorials/model_fallbacks
+
 
 # TODO: check Cohere docs, seems like currenlty had error https://docs.litellm.ai/docs/providers/cohere
 
