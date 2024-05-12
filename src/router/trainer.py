@@ -147,7 +147,8 @@ def main() -> None:
         ),
     ]
 
-    encoder = FastEmbedEncoder()
+    encoder = OpenAIEncoder(name="text-embedding-3-small")
+    # FastEmbedEncoder()
     # OpenAIEncoder(name="text-embedding-3-small")
 
     if encoder is OpenAIEncoder:

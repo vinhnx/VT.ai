@@ -1,6 +1,6 @@
 {
-    "encoder_type": "fastembed",
-    "encoder_name": "BAAI/bge-small-en-v1.5",
+    "encoder_type": "openai",
+    "encoder_name": "text-embedding-3-small",
     "routes": [
         {
             "name": "text-processing",
@@ -27,7 +27,7 @@
             "description": null,
             "function_schema": null,
             "llm": null,
-            "score_threshold": 0.5
+            "score_threshold": 0.82
         },
         {
             "name": "vision-image-processing",
@@ -48,7 +48,7 @@
             "description": null,
             "function_schema": null,
             "llm": null,
-            "score_threshold": 0.5
+            "score_threshold": 0.82
         },
         {
             "name": "casual-conversation",
@@ -72,7 +72,7 @@
             "description": null,
             "function_schema": null,
             "llm": null,
-            "score_threshold": 0.5
+            "score_threshold": 0.82
         },
         {
             "name": "image-generation",
@@ -122,7 +122,7 @@
             "description": null,
             "function_schema": null,
             "llm": null,
-            "score_threshold": 0.5
+            "score_threshold": 0.82
         },
         {
             "name": "curious",
@@ -146,7 +146,7 @@
             "description": null,
             "function_schema": null,
             "llm": null,
-            "score_threshold": 0.5
+            "score_threshold": 0.82
         }
     ]
 }
