@@ -77,6 +77,7 @@ The application supports multi-modal conversations, seamlessly integrating text,
 2. Packages management:
   + Using pip, start dependencies sync, by running this command: `pip install -r requirements.txt`
   + [Recommended] If you use `rye`, start dependencies sync, by running this command: `rye sync`
+3. (Optional) Run semantic trainer once. `python src/router/trainer.py`
 4. Run the app with optional hot reload: `chainlit run src/app.py -w`
 5. Open the provided URL in your web browser (e.g., `localhost:8000`).
 6. Select an LLM model and start chatting or uploading files for multi-modal processing.
