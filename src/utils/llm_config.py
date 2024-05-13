@@ -63,10 +63,10 @@ VISION_MODEL_MAP = {
 }
 
 MODEL_ALIAS_MAP = {
-    "OpenAI - GPT 4 O": "gpt-4o",
-    "OpenAI - GPT 4": "gpt-4",
-    "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
+    "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 3.5 Turbo": "gpt-3.5-turbo",
+    "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
+    "OpenAI - GPT 4": "gpt-4",
     "Groq - Llama 3 8b": "groq/llama3-8b-8192",
     "Groq - Llama 3 70b": "groq/llama3-70b-8192",
     "Groq - Mixtral 8x7b": "groq/mixtral-8x7b-32768",

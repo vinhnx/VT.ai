@@ -483,7 +483,7 @@ async def __handle_vision(
 
 
 async def __handle_trigger_async_chat(
-    llm_model: str, messages: List[Dict[str, str]], current_message: cl.Message
+    llm_model: str, messages, current_message: cl.Message
 ) -> None:
     """
     Triggers an asynchronous chat completion using the specified LLM model.
@@ -493,14 +493,28 @@ async def __handle_trigger_async_chat(
     temperature = __get_settings(conf.SETTINGS_TEMPERATURE)
     top_p = __get_settings(conf.SETTINGS_TOP_P)
     try:
-        stream = await litellm.acompletion(
-            model=llm_model,
-            messages=messages,
-            stream=True,  # TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
-            num_retries=2,
-            temperature=temperature,
-            top_p=top_p,
-        )
+        # GPT-4o currently supported from OpenAI endpoint
+        if llm_model == conf.GPT4_O_MODEL:
+            stream = await async_openai_client.chat.completions.create(
+                model=llm_model,
+                messages=messages,
+                stream=True,
+                temperature=temperature,
+                top_p=top_p,
+            )
+        else:
+            # use LiteLLM for other providers
+            stream = await litellm.acompletion(
+                model=llm_model,
+                messages=messages,
+                stream=True,  # TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
+                num_retries=2,
+                temperature=temperature,
+                top_p=top_p,
+            )
+
+        if stream is None:
+            return
 
         async for part in stream:
             if token := part.choices[0].delta.content or "":
