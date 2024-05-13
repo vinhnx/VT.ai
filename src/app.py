@@ -321,7 +321,7 @@ async def __handle_tts_response(context: str) -> None:
         response.stream_to_file(temp_filepath)
 
         await cl.Message(
-            author=APP_NAME,
+            author=model,
             content="",
             elements=[
                 cl.Audio(name="", path=temp_filepath, display="inline"),
@@ -360,7 +360,7 @@ async def __handle_conversation(
     Routes the conversation based on settings and semantic understanding.
     """
     model = __get_settings(conf.SETTINGS_CHAT_MODEL)  # Get selected LLM model
-    msg = cl.Message(content="", author=APP_NAME)
+    msg = cl.Message(content="", author=model)
     await msg.send()
 
     query = message.content  # Get user query
@@ -436,7 +436,7 @@ async def __handle_vision(
 
     message = cl.Message(
         content="I'm analyzing the image. This might take a moment.",
-        author=APP_NAME,
+        author=vision_model,
     )
 
     await message.send()
@@ -462,7 +462,7 @@ async def __handle_vision(
         image = cl.Image(url=input_image, name=prompt, display="inline")
 
     message = cl.Message(
-        author=APP_NAME,
+        author=vision_model,
         content="",
         elements=[
             image,
@@ -483,7 +483,7 @@ async def __handle_vision(
 
 
 async def __handle_trigger_async_chat(
-    llm_model: str, messages: List[Dict[str, str]], current_message: cl.Message
+    llm_model: str, messages, current_message: cl.Message
 ) -> None:
     """
     Triggers an asynchronous chat completion using the specified LLM model.
@@ -493,14 +493,28 @@ async def __handle_trigger_async_chat(
     temperature = __get_settings(conf.SETTINGS_TEMPERATURE)
     top_p = __get_settings(conf.SETTINGS_TOP_P)
     try:
-        stream = await litellm.acompletion(
-            model=llm_model,
-            messages=messages,
-            stream=True,  # TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
-            num_retries=2,
-            temperature=temperature,
-            top_p=top_p,
-        )
+        # GPT-4o currently supported from OpenAI endpoint
+        if llm_model == conf.GPT4_O_MODEL:
+            stream = await async_openai_client.chat.completions.create(
+                model=llm_model,
+                messages=messages,
+                stream=True,
+                temperature=temperature,
+                top_p=top_p,
+            )
+        else:
+            # use LiteLLM for other providers
+            stream = await litellm.acompletion(
+                model=llm_model,
+                messages=messages,
+                stream=True,  # TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
+                num_retries=2,
+                temperature=temperature,
+                top_p=top_p,
+            )
+
+        if stream is None:
+            return
 
         async for part in stream:
             if token := part.choices[0].delta.content or "":
@@ -579,7 +593,7 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
 
     message = cl.Message(
         content="Sure! I'll create an image based on your description. This might take a moment, please be patient.",
-        author=APP_NAME,
+        author=image_gen_model,
     )
     await message.send()
 
@@ -599,7 +613,7 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
         revised_prompt = image_gen_data["revised_prompt"]
 
         message = cl.Message(
-            author=APP_NAME,
+            author=image_gen_model,
             content="Here's the image, along with a refined description based on your input:",
             elements=[
                 cl.Image(url=image_url, name=query, display="inline"),
@@ -662,7 +676,7 @@ async def __handle_audio_transcribe(path, audio_file):
 
     await cl.Message(
         content="",
-        author=APP_NAME,
+        author=model,
         elements=[
             cl.Audio(name="Audio", path=path, display="inline"),
             cl.Text(content=text, name="Transcript", display="inline"),

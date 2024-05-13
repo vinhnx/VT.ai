@@ -27,7 +27,8 @@ DEFAULT_TOP_P = 1
 
 # set models alias mapping
 
-DEFAULT_MODEL = "gpt-3.5-turbo"
+GPT4_O_MODEL = "gpt-4o"
+DEFAULT_MODEL = GPT4_O_MODEL
 DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
 DEFAULT_VISION_MODEL = "gemini/gemini-pro-vision"
 DEFAULT_TTS_MODEL = "tts-1"
@@ -56,12 +57,14 @@ IMAGE_GEN_MODELS_ALIAS_MAP = {
 }
 
 VISION_MODEL_MAP = {
+    "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
     "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
     "Google - Gemini Pro Vision": "gemini/gemini-pro-vision",
 }
 
 MODEL_ALIAS_MAP = {
+    "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 3.5 Turbo": "gpt-3.5-turbo",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
     "OpenAI - GPT 4": "gpt-4",
@@ -105,6 +108,7 @@ ICONS_PROVIDER_MAP = {
     "gemini/gemini-pro-vision": "./src/resources/google-gemini-icon.png",
     "dall-e-3": "./src/resources/chatgpt-icon.png",
     "gpt-4": "./src/resources/chatgpt-icon.png",
+    "gpt-4o": "./src/resources/chatgpt-icon.png",
     "gpt-4-turbo": "./src/resources/chatgpt-icon.png",
     "gpt-3.5-turbo": "./src/resources/chatgpt-icon.png",
     "command": "./src/resources/cohere.ico",
