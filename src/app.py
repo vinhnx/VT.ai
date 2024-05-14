@@ -493,28 +493,15 @@ async def __handle_trigger_async_chat(
     temperature = __get_settings(conf.SETTINGS_TEMPERATURE)
     top_p = __get_settings(conf.SETTINGS_TOP_P)
     try:
-        # GPT-4o currently supported from OpenAI endpoint
-        if llm_model == conf.GPT4_O_MODEL:
-            stream = await async_openai_client.chat.completions.create(
-                model=llm_model,
-                messages=messages,
-                stream=True,
-                temperature=temperature,
-                top_p=top_p,
-            )
-        else:
-            # use LiteLLM for other providers
-            stream = await litellm.acompletion(
-                model=llm_model,
-                messages=messages,
-                stream=True,  # TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
-                num_retries=2,
-                temperature=temperature,
-                top_p=top_p,
-            )
-
-        if stream is None:
-            return
+        # use LiteLLM for other providers
+        stream = await litellm.acompletion(
+            model=llm_model,
+            messages=messages,
+            stream=True,  # TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
+            num_retries=2,
+            temperature=temperature,
+            top_p=top_p,
+        )
 
         async for part in stream:
             if token := part.choices[0].delta.content or "":
