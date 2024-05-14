@@ -1,3 +1,5 @@
+# TODO: update vision handling handling (local & remote) with gpt-4o https://platform.openai.com/docs/guides/vision
+
 # TODO: embed llama.cpp Python binding for Local LLM https://github.com/abetlen/llama-cpp-python
 
 
