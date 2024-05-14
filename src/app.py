@@ -321,7 +321,7 @@ async def __handle_tts_response(context: str) -> None:
         response.stream_to_file(temp_filepath)
 
         await cl.Message(
-            author=APP_NAME,
+            author=model,
             content="",
             elements=[
                 cl.Audio(name="", path=temp_filepath, display="inline"),
@@ -360,7 +360,7 @@ async def __handle_conversation(
     Routes the conversation based on settings and semantic understanding.
     """
     model = __get_settings(conf.SETTINGS_CHAT_MODEL)  # Get selected LLM model
-    msg = cl.Message(content="", author=APP_NAME)
+    msg = cl.Message(content="", author=model)
     await msg.send()
 
     query = message.content  # Get user query
@@ -436,7 +436,7 @@ async def __handle_vision(
 
     message = cl.Message(
         content="I'm analyzing the image. This might take a moment.",
-        author=APP_NAME,
+        author=vision_model,
     )
 
     await message.send()
@@ -462,7 +462,7 @@ async def __handle_vision(
         image = cl.Image(url=input_image, name=prompt, display="inline")
 
     message = cl.Message(
-        author=APP_NAME,
+        author=vision_model,
         content="",
         elements=[
             image,
@@ -579,7 +579,7 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
 
     message = cl.Message(
         content="Sure! I'll create an image based on your description. This might take a moment, please be patient.",
-        author=APP_NAME,
+        author=image_gen_model,
     )
     await message.send()
 
@@ -599,7 +599,7 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
         revised_prompt = image_gen_data["revised_prompt"]
 
         message = cl.Message(
-            author=APP_NAME,
+            author=image_gen_model,
             content="Here's the image, along with a refined description based on your input:",
             elements=[
                 cl.Image(url=image_url, name=query, display="inline"),
@@ -662,7 +662,7 @@ async def __handle_audio_transcribe(path, audio_file):
 
     await cl.Message(
         content="",
-        author=APP_NAME,
+        author=model,
         elements=[
             cl.Audio(name="Audio", path=path, display="inline"),
             cl.Text(content=text, name="Transcript", display="inline"),
