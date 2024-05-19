@@ -24,7 +24,7 @@ from openai.types.beta.threads.runs import RunStep
 from openai.types.beta.threads.runs.tool_calls_step_details import ToolCall
 from router.constants import SemanticRouterType
 from semantic_router.layer import RouteLayer
-from utils import llm_config as conf
+from utils import llm_settings_config as conf
 from utils.chat_profile import AppChatProfileType
 from utils.dict_to_object import DictToObject
 from utils.llm_profile_builder import build_llm_profile
