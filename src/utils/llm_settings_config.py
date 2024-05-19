@@ -75,7 +75,7 @@ MODEL_ALIAS_MAP = {
     "Cohere - Command-Light": "command-light",
     "Cohere - Command-R-Plus": "command-r-plus",
     "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
-    "Google - Gemini 1.5 Flash": "gemini/gemini-flash-1.5",
+    "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
     "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
     "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
     "Ollama - LLama 3": "ollama/llama3",
