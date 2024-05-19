@@ -72,7 +72,7 @@ The application supports multi-modal conversations, seamlessly integrating text,
 ### Usage
 
 1. Rename the `.env.example` file to `.env` and configure your private LLM provider API keys.
-3. Create Python virual environment: `python3 -m venv .venv`
+3. Create Python virtual environment: `python3 -m venv .venv`
 4. Activate the Python virtual environment: `source .venv/bin/activate`
 2. Packages management:
   + Using pip, start dependencies sync, by running this command: `pip install -r requirements.txt`
