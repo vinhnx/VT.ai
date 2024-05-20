@@ -1,3 +1,5 @@
+# TODO: https://docs.litellm.ai/docs/completion/token_usage
+
 # TODO: update vision handling handling (local & remote) with gpt-4o https://platform.openai.com/docs/guides/vision
 
 # TODO handle vision capability for GPT-4o
