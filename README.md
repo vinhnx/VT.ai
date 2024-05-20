@@ -84,7 +84,7 @@ The application supports multi-modal conversations, seamlessly integrating text,
   - Example to use Meta's Llama 3 model locally from Ollama: `ollama pull llama3` to download the `llama3` model (replace with the desired model name)
   - `ollama serve` to start the Ollama server
   - `ollama --help` for more options and details
-    
+
 ## Technical Overview
 
 ### Dependencies
