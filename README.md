@@ -50,13 +50,12 @@ The application supports multi-modal conversations, seamlessly integrating text,
 
 - Python 3.7 or higher
 - (Optional -- Recommended) `rye` as the Python dependencies manager (installation guide below)
+- For using local models with [Ollama](https://github.com/ollama/ollama/blob/main/README.md#quickstart):
+  - Download the Ollama client from https://ollama.com/download
+  - Download the desired Ollama models from https://ollama.com/library (e.g., `ollama pull llama3`)
+  - Follow the Ollama installation and setup instructions
 
-### Installation
-
-1. Clone the repository: `git clone https://github.com/vinhnx/VT.ai.git vtai` (optional: rename the cloned directory to `vtai`)
-2. Navigate to the project directory: `cd vtai`
-
-##### Packages Management
+##### A note on Python package/environment management
 
 1. You can use native Python `pip` to install packages dependencies without installing `rye`. If so, you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below.
 2. [Recommended] If want to use `rye`, and had it installed from the [Prerequisites step](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#prerequisites), you can skip these steps and proceed to the [Usage](https://github.com/vinhnx/VT.ai?tab=readme-ov-file#usage) section below. Otherwise you can install `rye` by following these steps:
@@ -71,16 +70,20 @@ The application supports multi-modal conversations, seamlessly integrating text,
 
 ### Usage
 
-1. Rename the `.env.example` file to `.env` and configure your private LLM provider API keys.
-3. Create Python virtual environment: `python3 -m venv .venv`
-4. Activate the Python virtual environment: `source .venv/bin/activate`
-2. Packages management:
-  + Using pip, start dependencies sync, by running this command: `pip install -r requirements.txt`
-  + [Recommended] If you use `rye`, start dependencies sync, by running this command: `rye sync`
-3. (Optional) Run semantic trainer once. `python src/router/trainer.py`
-4. Run the app with optional hot reload: `chainlit run src/app.py -w`
-5. Open the provided URL in your web browser (e.g., `localhost:8000`).
-6. Select an LLM model and start chatting or uploading files for multi-modal processing.
+1. Rename the `.env.example` file to `.env` and configure your desired LLM provider API keys. If using Ollama, you can leave the API keys blank.
+2. Create Python virtual environment: `python3 -m venv .venv`
+3. Activate the Python virtual environment: `source .venv/bin/activate`
+4. Packages management:
+ + Using pip, start dependencies sync, by running this command: `pip install -r requirements.txt`
+ + [Recommended] If you use `rye`, start dependencies sync, by running this command: `rye sync`
+5. (Optional) Run semantic trainer once. `python src/router/trainer.py`
+6. Run the app with optional hot reload: `chainlit run src/app.py -w`
+7. Open the provided URL in your web browser (e.g., `localhost:8000`).
+8. Select an LLM model and start chatting or uploading files for multi-modal processing. If using Ollama, select the `Ollama` option from the model dropdown.
+9. To run Ollama server for serving local LLM models, you can use the following commands:
+  - Example to use Meta's Llama 3 model locally from Ollama: `ollama pull llama3` to download the `llama3` model (replace with the desired model name)
+  - `ollama serve` to start the Ollama server
+  - `ollama --help` for more options and details
 
 ## Technical Overview
 
