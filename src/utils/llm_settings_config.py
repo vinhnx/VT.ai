@@ -28,6 +28,7 @@ DEFAULT_TOP_P = 1
 # set models alias mapping
 
 DEFAULT_MODEL = "gpt-3.5-turbo"
+DEFAULT_MODEL = "gpt-3.5-turbo"
 DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
 DEFAULT_VISION_MODEL = "gemini/gemini-pro-vision"
 DEFAULT_TTS_MODEL = "tts-1"
@@ -58,6 +59,7 @@ IMAGE_GEN_MODELS_ALIAS_MAP = {
 VISION_MODEL_MAP = {
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
+    "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
     "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
     "Google - Gemini Pro Vision": "gemini/gemini-pro-vision",
 }
@@ -123,6 +125,7 @@ ICONS_PROVIDER_MAP = {
     "groq/llama3-70b-8192": "./src/resources/groq.ico",
     "groq/mixtral-8x7b-32768": "./src/resources/groq.ico",
     "gemini/gemini-1.5-pro-latest": "./src/resources/google-gemini-icon.png",
+    "gemini/gemini-1.5-flash-latest": "./src/resources/google-gemini-icon.png",
     "openrouter/mistralai/mistral-7b-instruct": "./src/resources/openrouter.ico",
     "OpenRouter - Mistral 7b instruct Free": "./src/resources/openrouter.ico",
     "ollama/llama3": "./src/resources/ollama.png",
