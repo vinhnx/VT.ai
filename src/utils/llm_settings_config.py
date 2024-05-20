@@ -20,7 +20,7 @@ SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE = True
 
 # ref https://platform.openai.com/docs/api-reference/chat
 SETTINGS_TEMPERATURE = "settings_temperature"
-DEFAULT_TEMPERATURE = 0
+DEFAULT_TEMPERATURE = 0.8
 SETTINGS_TOP_K = "settings_top_k"
 SETTINGS_TOP_P = "settings_top_p"
 DEFAULT_TOP_P = 1
