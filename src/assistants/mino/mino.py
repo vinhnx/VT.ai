@@ -24,7 +24,7 @@ Given a formula below $$ s = ut + \frac{1}{2}at^{2} $$ Calculate the value of $s
 """
 # INSTRUCTIONS = "You are an data science expert who is great at analyzing and visualising datasets. take a look at this data"
 # "You are a personal math tutor. Write and run code to answer math questions. Your name is Mino."
-MODEL = "gpt-3.5-turbo"
+MODEL = "gpt-4o"
 
 
 class MinoAssistant:
