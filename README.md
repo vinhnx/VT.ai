@@ -103,6 +103,10 @@ Contributions are welcome! Here's how you can contribute:
 4. Push to the branch: `git push origin my-new-feature`
 5. Submit a pull request
 
+### Releases
+
+See [releases tags](https://github.com/vinhnx/VT.ai/releases)
+
 ## License
 
 This project is licensed under the MIT License.
