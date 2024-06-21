@@ -91,6 +91,7 @@ MODEL_ALIAS_MAP = {
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
     "Ollama - CodeGemma": "ollama/codegemma",
     "Ollama - Code Llama": "ollama/codellama",
+    "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20240620",
     "Anthropic - Claude 3 Sonnet": "claude-3-sonnet-20240229",
     "Anthropic - Claude 3 Haiku": "claude-3-haiku-20240307",
     "Anthropic - Claude 3 Opus": "claude-3-opus-20240229",
