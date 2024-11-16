@@ -27,7 +27,7 @@ DEFAULT_TOP_P = 1
 
 # set models alias mapping
 
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gpt-4o"
 DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
 DEFAULT_VISION_MODEL = "gemini/gemini-pro-vision"
 DEFAULT_TTS_MODEL = "tts-1"
@@ -80,10 +80,10 @@ MODEL_ALIAS_MAP = {
     "OpenRouter - Qwen2.5-coder 32b": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
     "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
     "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
-    "Ollama - Qwen2.5-coder": "qwen2.5-coder",
+    "Ollama - Qwen2.5-coder": "ollama/qwen2.5-coder",
     "Ollama - LLama 3": "ollama/llama3",
     "Ollama - LLama 3.1": "ollama/llama3.1",
-    "Ollama - LLama 3.2": "ollama/llama3.2",
+    "Ollama - LLama 3.2 - Mini": "ollama/llama3.2",
     "Ollama - Phi-3": "ollama/phi3",
     "Ollama - Command R": "ollama/command-r",
     "Ollama - Command R+": "ollama/command-r-plus",
@@ -151,9 +151,6 @@ APP_CHAT_PROFILE_ASSISTANT = AppChatProfileModel(
 APP_CHAT_PROFILES = [APP_CHAT_PROFILE_CHAT, APP_CHAT_PROFILE_ASSISTANT]
 
 CHAT_PROFILES = [
-    ChatProfile(
-        name=profile.title,
-        markdown_description=profile.description,
-    )
+    ChatProfile(name=profile.title, markdown_description=profile.description)
     for profile in APP_CHAT_PROFILES
 ]
