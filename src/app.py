@@ -27,6 +27,7 @@ from semantic_router.layer import RouteLayer
 from utils import llm_settings_config as conf
 from utils.chat_profile import AppChatProfileType
 from utils.dict_to_object import DictToObject
+
 from utils.llm_profile_builder import build_llm_profile
 from utils.settings_builder import build_settings
 from utils.url_extractor import extract_url
@@ -90,9 +91,13 @@ async def start_chat():
     Initializes the chat session.
     Builds LLM profiles, configures chat settings, and sets initial system message.
     """
+    # Initialize default settings
+    cl.user_session.set(
+        conf.SETTINGS_CHAT_MODEL, "default_model_name"
+    )  # Set your default model
 
     # build llm profile
-    await build_llm_profile(conf.ICONS_PROVIDER_MAP)
+    build_llm_profile(conf.ICONS_PROVIDER_MAP)
 
     # settings configuration
     settings = await build_settings()
@@ -105,7 +110,7 @@ async def start_chat():
         cl.user_session.set("thread", thread)
 
 
-@cl.step(name=APP_NAME, type="run", root=True)
+@cl.step(name=APP_NAME, type="run")
 async def run(thread_id: str, human_query: str, file_ids: List[str] = []):
     # Add the message to the thread
     init_message = await async_openai_client.beta.threads.messages.create(
