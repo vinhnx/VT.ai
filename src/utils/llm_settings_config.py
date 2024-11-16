@@ -29,7 +29,7 @@ DEFAULT_TOP_P = 1
 
 DEFAULT_MODEL = "gpt-4o"
 DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
-DEFAULT_VISION_MODEL = "gemini/gemini-1.5-flash-latest"
+DEFAULT_VISION_MODEL = "gemini/gemini-1.5-pro-latest"
 DEFAULT_TTS_MODEL = "tts-1"
 DEFAULT_TTS_PRESET = "nova"
 DEFAULT_WHISPER_MODEL = "whisper-1"
