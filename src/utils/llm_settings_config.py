@@ -29,7 +29,7 @@ DEFAULT_TOP_P = 1
 
 DEFAULT_MODEL = "gpt-4o"
 DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
-DEFAULT_VISION_MODEL = "gemini/gemini-pro-vision"
+DEFAULT_VISION_MODEL = "gemini/gemini-1.5-flash-latest"
 DEFAULT_TTS_MODEL = "tts-1"
 DEFAULT_TTS_PRESET = "nova"
 DEFAULT_WHISPER_MODEL = "whisper-1"
@@ -60,7 +60,7 @@ VISION_MODEL_MAP = {
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
     "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
     "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
-    "Google - Gemini Pro Vision": "gemini/gemini-pro-vision",
+    "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
 }
 
 MODEL_ALIAS_MAP = {
@@ -76,11 +76,13 @@ MODEL_ALIAS_MAP = {
     "Cohere - Command-Light": "command-light",
     "Cohere - Command-R-Plus": "command-r-plus",
     "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
+    "Google - gemini-1.5-pro-002": "gemini/gemini-1.5-pro-002",
     "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
     "OpenRouter - Qwen2.5-coder 32b": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
     "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
     "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
-    "Ollama - Qwen2.5-coder": "ollama/qwen2.5-coder",
+    "Ollama - Qwen2.5-coder 7b": "ollama/qwen2.5-coder",
+    "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
     "Ollama - LLama 3": "ollama/llama3",
     "Ollama - LLama 3.1": "ollama/llama3.1",
     "Ollama - LLama 3.2 - Mini": "ollama/llama3.2",
@@ -101,7 +103,6 @@ ICONS_PROVIDER_MAP = {
     "Anthropic": "./src/resources/claude-ai-icon.png",
     "OpenRouter" "Google": "./src/resources/google-gemini-icon.png",
     "Groq": "./src/resources/groq.ico",
-    "gemini/gemini-pro-vision": "./src/resources/google-gemini-icon.png",
     "dall-e-3": "./src/resources/chatgpt-icon.png",
     "gpt-4": "./src/resources/chatgpt-icon.png",
     "gpt-4o": "./src/resources/chatgpt-icon.png",
