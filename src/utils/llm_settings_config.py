@@ -27,7 +27,7 @@ DEFAULT_TOP_P = 1
 
 # set models alias mapping
 
-DEFAULT_MODEL = "gemini/gemini-1.5-flash-latest"
+DEFAULT_MODEL = "gpt-4o"
 DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
 DEFAULT_VISION_MODEL = "gemini/gemini-pro-vision"
 DEFAULT_TTS_MODEL = "tts-1"
@@ -65,9 +65,9 @@ VISION_MODEL_MAP = {
 
 MODEL_ALIAS_MAP = {
     "OpenAI - GPT-4o": "gpt-4o",
-    "OpenAI - GPT 3.5 Turbo": "gpt-3.5-turbo",
-    "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
-    "OpenAI - GPT 4": "gpt-4",
+    "OpenAI - GPT-4o-Mini": "gpt-4o-mini",
+    "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
+    "Anthropic - Claude 3.5 Haiky": "claude-3-5-haiku-20241022",
     "Groq - Llama 3 8b": "groq/llama3-8b-8192",
     "Groq - Llama 3 70b": "groq/llama3-70b-8192",
     "Groq - Mixtral 8x7b": "groq/mixtral-8x7b-32768",
@@ -80,21 +80,12 @@ MODEL_ALIAS_MAP = {
     "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
     "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
     "Ollama - LLama 3": "ollama/llama3",
+    "Ollama - LLama 3.1": "ollama/llama3.1",
     "Ollama - Phi-3": "ollama/phi3",
-    "Ollama - Dolphin 2.9": "ollama/dolphin-llama3",
-    "Ollama - Snowflake Arctic - Embed": "ollama/snowflake-arctic-embed",
-    "Ollama - LLaVA": "ollama/llava",
-    "Ollama - DBRX": "ollama/dbrx",
     "Ollama - Command R": "ollama/command-r",
     "Ollama - Command R+": "ollama/command-r-plus",
     "Ollama - Mistral 7B Instruct": "ollama/mistral",
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
-    "Ollama - CodeGemma": "ollama/codegemma",
-    "Ollama - Code Llama": "ollama/codellama",
-    "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20240620",
-    "Anthropic - Claude 3 Sonnet": "claude-3-sonnet-20240229",
-    "Anthropic - Claude 3 Haiku": "claude-3-haiku-20240307",
-    "Anthropic - Claude 3 Opus": "claude-3-opus-20240229",
 }
 
 ICONS_PROVIDER_MAP = {
