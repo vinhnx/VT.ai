@@ -73,10 +73,11 @@ The application supports multi-modal conversations, seamlessly integrating text,
 1. Rename the `.env.example` file to `.env` and configure your desired LLM provider API keys. If using Ollama, you can leave the API keys blank.
 2. Create Python virtual environment: `python3 -m venv .venv`
 3. Activate the Python virtual environment: `source .venv/bin/activate`
-4. Packages management:
- + Using pip, start dependencies sync, by running this command: `pip install -r requirements.txt`
+4. (Optional) Verify python path `which python3`, the output should print `/PATH_TO/VT.ai/.venv/bin/python3`
+5. Packages management:
+ + Using pip, start dependencies sync, by running this command: `python3 -m pip install -r requirements.txt`
  + [Recommended] If you use `rye`, start dependencies sync, by running this command: `rye sync`
-5. (Optional) Run semantic trainer once. `python src/router/trainer.py`
+5. (Optional) Run semantic trainer once. `python3 src/router/trainer.py`
 6. Run the app with optional hot reload: `chainlit run src/app.py -w`
 7. Open the provided URL in your web browser (e.g., `localhost:8000`).
 8. Select an LLM model and start chatting or uploading files for multi-modal processing. If using Ollama, select the `Ollama` option from the model dropdown.
