@@ -1,8 +1,8 @@
-chainlit>=1.0.504
-google-generativeai>=0.5.2
-litellm>=1.35.17
-openai>=1.23.2
-pillow>=10.3.0
-pydantic>=2.7.1
-python-dotenv>=1.0.1
-semantic-router[fastembed]==0.0.20
+chainlit
+google-generativeai
+litellm
+openai
+pillow
+pydantic
+python-dotenv
+semantic-router[fastembed]
