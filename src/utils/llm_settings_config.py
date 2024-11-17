@@ -82,6 +82,7 @@ MODEL_ALIAS_MAP = {
     "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
     "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
     "Ollama - Qwen2.5-coder 7b": "ollama/qwen2.5-coder",
+    "Ollama - Qwen2.5-coder 14b": "ollama/qwen2.5-coder:14b",
     "Ollama - Qwen2.5-coder 32b": "ollama/qwen2.5-coder:32b",
     "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
     "Ollama - LLama 3": "ollama/llama3",
