@@ -5,7 +5,7 @@
 <h1 align="center">VT.ai</h1>
 
 <p align="center">
-  <em>A Minimalist Multi-modal AI Assistant Platform</em>
+  <em>Minimal multimodal AI chat app with dynamic conversation routing</em>
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
 
 ## Overview
 
-VT.ai is a minimal multi-modal AI assistant platform that provides a seamless chat interface for interacting with various Large Language Models (LLMs). It supports both cloud-based providers and local model execution through [Ollama](https://github.com/ollama/ollama).
+VT.ai is a VT.ai - Minimal multimodal AI chat app that provides a seamless chat interface for interacting with various Large Language Models (LLMs). It supports both cloud-based providers and local model execution through [Ollama](https://github.com/ollama/ollama).
 
 ### Key Features 🚀
 
