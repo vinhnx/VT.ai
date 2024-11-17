@@ -2,102 +2,110 @@
   <img src="./public/logo_dark.png" height="200" alt="icon" />
 </p>
 
-<h3 align="center">VT.ai</h3>
+<h1 align="center">VT.ai</h1>
 
 <p align="center">
-  <em>Multi-modal AI Assistant</em>
+  <em>A Minimalist Multi-modal AI Assistant Platform</em>
 </p>
 
----
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/vinhnx"><img src="https://img.shields.io/github/stars/vinhnx?style=social" alt="GitHub Stars"></a>
+  <a href="https://news.ycombinator.com/user?id=vinhnx"><img src="https://img.shields.io/hackernews/user-karma/vinhnx?style=social" alt="HackerNews Karma"></a>
+  <a href="https://twitter.com/vinhnx"><img src="https://img.shields.io/twitter/follow/vinhnx?style=social" alt="Twitter Follow"></a>
+  <a href="https://twitter.com/vtdotai"><img src="https://img.shields.io/twitter/follow/vtdotai?style=social" alt="VT.ai Twitter"></a>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Stars](https://img.shields.io/github/stars/vinhnx?style=social)](https://github.com/vinhnx)
-[![HackerNews Karma](https://img.shields.io/hackernews/user-karma/vinhnx?style=social)](https://news.ycombinator.com/user?id=vinhnx)
-[![Twitter Follow](https://img.shields.io/twitter/follow/vinhnx?style=social)](https://twitter.com/vinhnx)
-[![Twitter Follow](https://img.shields.io/twitter/follow/vtdotai?style=social)](https://twitter.com/vtdotai)
+## Overview
 
-## Introduction
+VT.ai is a minimal multi-modal AI assistant platform that provides a seamless chat interface for interacting with various Large Language Models (LLMs). It supports both cloud-based providers and local model execution through [Ollama](https://github.com/ollama/ollama).
 
-VT.ai is a multi-modal AI Chatbot Assistant, offering a chat interface to interact with Large Language Models (LLMs) from various providers. Both via remote API or running locally with [Ollama](https://github.com/ollama/ollama/blob/main/README.md#quickstart).
+### Key Features 🚀
 
-The application supports multi-modal conversations, seamlessly integrating text, images, and vision processing with LLMs.
+- **Multi-modal Interactions**
+  - Text and image processing capabilities
+  - Drag-and-drop image analysis
+  - Real-time streaming responses
+  - [Beta] Advanced Assistant features via OpenAI's Assistant API
 
-[Beta] Multi-modal AI Assistant support via OpenAI's Assistant API function calling.
+- **Flexible Model Support**
+  - OpenAI, Anthropic, and Google integration
+  - Local model execution via Ollama
+  - Dynamic parameter adjustment (temperature, top-p)
 
----
+- **Modern Architecture**
+  - Built on Chainlit for responsive UI
+  - SemanticRouter for intelligent conversation routing
+  - Real-time response streaming
+  - Customizable model settings
 
-## Key Features
-
-- **[Beta] Assistant support:** Enjoy the assistance of Multi-modal AI Assistant through OpenAI's Assistant API. It can write and run code to answer math questions.
-- **Multi-Provider Support:** Choose from a variety of LLM providers including OpenAI, Anthropic, and Google, with more to come.
-- **Multi-Modal Conversations:** Experience rich, multi-modal interactions by uploading text and image files. You can even drag and drop images for the model to analyze.
-- **Real-time Responses:** Stream responses from the LLM as they are generated.
-- **Dynamic Settings:** Customize model parameters such as temperature and top-p during your chat session.
-- **Clean and Fast Interface:** Built using Chainlit, ensuring a smooth and intuitive user experience.
-- **Advanced Conversation Routing:** Utilizes SemanticRouter for accurate and efficient modality selection.
-
----
+## Screenshots
 
 ![Multi LLM Providers](./src/resources/screenshot/1.jpg)
-
 ![Multi-modal Conversation](./src/resources/screenshot/2.jpg)
 
----
-
-## Getting Started
+## Quick Start Guide
 
 ### Prerequisites
 
-- Python 3.7 or higher
-- (Optional -- Recommended) `rye` as the Python dependencies manager (installation guide below)
-- For using local models with [Ollama](https://github.com/ollama/ollama/blob/main/README.md#quickstart):
-  - Download the Ollama client from https://ollama.com/download
-  - Download the desired Ollama models from https://ollama.com/library (e.g., `ollama pull llama3`)
-  - Follow the Ollama installation and setup instructions
+- Python 3.7+
+- (Recommended) `rye` for dependency management
+- For local models:
+  - [Ollama](https://ollama.com/download) client
+  - Desired [Ollama models](https://ollama.com/library)
 
-### Usage
+### Installation
 
-1. Rename the `.env.example` file to `.env` and configure your desired LLM provider API keys. If using Ollama, you can leave the API keys blank.
-2. Create a new virtual environment with Python 3: `python3 -m venv .venv`
-3. Activate the virtual environment: `source .venv/bin/activate`
-4. Install the requirements using pip3: `pip3 install -r requirements.txt`
-6. (Optional) Run semantic trainer once. `python3 src/router/trainer.py`
-7. Run the app with optional hot reload: `chainlit run src/app.py -w`
-8. Open the provided URL in your web browser (e.g., `localhost:8000`).
-9. Select an LLM model and start chatting or uploading files for multi-modal processing. If using Ollama, select the `Ollama` option from the model dropdown.
-10. To run Ollama server for serving local LLM models, you can use the following commands:
-  - Example to use Meta's Llama 3 model locally from Ollama: `ollama pull llama3` to download the `llama3` model (replace with the desired model name)
-  - `ollama serve` to start the Ollama server
-  - `ollama --help` for more options and details
+1. Clone the repository
+2. Copy `.env.example` to `.env` and configure your API keys
+3. Set up Python environment:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip3 install -r requirements.txt
+   ```
+4. Optional: Train semantic router
+   ```bash
+   python3 src/router/trainer.py
+   ```
+5. Launch the application:
+   ```bash
+   chainlit run src/app.py -w
+   ```
 
-## Technical Overview
+### Using Local Models with Ollama
 
-### Dependencies
+```bash
+# Download model
+ollama pull llama3
 
-- [Chainlit](https://github.com/Chainlit/chainlit): A powerful library for building chat applications with LLMs, providing a clean and fast front-end.
-- [LiteLLM](https://github.com/BerriAI/litellm): A versatile library for interacting with LLMs, abstracting away the complexities of different providers.
-- [SemanticRouter](https://github.com/aurelio-labs/semantic-router): A high-performance library for accurate conversation routing, enabling dynamic modality selection.
+# Start Ollama server
+ollama serve
+```
 
-### Contributing
+## Technical Stack
 
-Contributions are welcome! Here's how you can contribute:
+- **[Chainlit](https://github.com/Chainlit/chainlit)**: Frontend framework
+- **[LiteLLM](https://github.com/BerriAI/litellm)**: LLM integration layer
+- **[SemanticRouter](https://github.com/aurelio-labs/semantic-router)**: Conversation routing
+
+## Contributing
 
 1. Fork the repository
-2. Create a new branch: `git checkout -b my-new-feature`
-3. Make your changes and commit them: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-### Releases
+## Release Information
 
-See [releases tags](https://github.com/vinhnx/VT.ai/releases)
+Check our [releases page](https://github.com/vinhnx/VT.ai/releases) for version history and updates.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
-## Contact
-
-For questions, suggestions, or feedback, feel free to reach out:
+## Connect
 
 - Twitter: [@vinhnx](https://twitter.com/vinhnx)
+- Project Updates: [@vtdotai](https://twitter.com/vtdotai)
