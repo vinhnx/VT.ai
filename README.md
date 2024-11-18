@@ -24,7 +24,6 @@ VT.ai is a VT.ai - Minimal multimodal AI chat app that provides a seamless chat 
 
 - **Multi-modal Interactions**
   - Text and image processing capabilities
-  - Drag-and-drop image analysis
   - Real-time streaming responses
   - [Beta] Advanced Assistant features via OpenAI's Assistant API
 
