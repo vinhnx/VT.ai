@@ -3,6 +3,6 @@ google-generativeai
 litellm
 openai
 pillow
-pydantic
+pydantic==2.10.1 # downgrade pydantic as incompatibilty with chainlit https://github.com/Chainlit/chainlit/issues/1556
 python-dotenv
 semantic-router[fastembed]
