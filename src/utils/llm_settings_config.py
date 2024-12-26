@@ -67,7 +67,7 @@ MODEL_ALIAS_MAP = {
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT-4o-Mini": "gpt-4o-mini",
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
-    "Anthropic - Claude 3.5 Haiky": "claude-3-5-haiku-20241022",
+    "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
     "Groq - Llama 3 8b": "groq/llama3-8b-8192",
     "Groq - Llama 3 70b": "groq/llama3-70b-8192",
     "Groq - Mixtral 8x7b": "groq/mixtral-8x7b-32768",
