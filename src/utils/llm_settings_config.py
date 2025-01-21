@@ -64,6 +64,24 @@ VISION_MODEL_MAP = {
 }
 
 MODEL_ALIAS_MAP = {
+    "Ollama - Deepseek R1 1.5B": "ollama/deepseek-r1:1.5b",
+    "Ollama - Deepseek R1 7B": "ollama/deepseek-r1:7b",
+    "Ollama - Deepseek R1 8B": "ollama/deepseek-r1:8b",
+    "Ollama - Deepseek R1 14B": "ollama/deepseek-r1:14b",
+    "Ollama - Deepseek R1 32B": "ollama/deepseek-r1:32b",
+    "Ollama - Deepseek R1 70B": "ollama/deepseek-r1:70b",
+    "Ollama - Qwen2.5-coder 7b": "ollama/qwen2.5-coder",
+    "Ollama - Qwen2.5-coder 14b": "ollama/qwen2.5-coder:14b",
+    "Ollama - Qwen2.5-coder 32b": "ollama/qwen2.5-coder:32b",
+    "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
+    "Ollama - LLama 3": "ollama/llama3",
+    "Ollama - LLama 3.1": "ollama/llama3.1",
+    "Ollama - LLama 3.2 - Mini": "ollama/llama3.2",
+    "Ollama - Phi-3": "ollama/phi3",
+    "Ollama - Command R": "ollama/command-r",
+    "Ollama - Command R+": "ollama/command-r-plus",
+    "Ollama - Mistral 7B Instruct": "ollama/mistral",
+    "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT-4o-Mini": "gpt-4o-mini",
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
@@ -81,18 +99,6 @@ MODEL_ALIAS_MAP = {
     "OpenRouter - Qwen2.5-coder 32b": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
     "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
     "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
-    "Ollama - Qwen2.5-coder 7b": "ollama/qwen2.5-coder",
-    "Ollama - Qwen2.5-coder 14b": "ollama/qwen2.5-coder:14b",
-    "Ollama - Qwen2.5-coder 32b": "ollama/qwen2.5-coder:32b",
-    "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
-    "Ollama - LLama 3": "ollama/llama3",
-    "Ollama - LLama 3.1": "ollama/llama3.1",
-    "Ollama - LLama 3.2 - Mini": "ollama/llama3.2",
-    "Ollama - Phi-3": "ollama/phi3",
-    "Ollama - Command R": "ollama/command-r",
-    "Ollama - Command R+": "ollama/command-r-plus",
-    "Ollama - Mistral 7B Instruct": "ollama/mistral",
-    "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
 }
 
 ICONS_PROVIDER_MAP = {
