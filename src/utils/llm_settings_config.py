@@ -109,7 +109,7 @@ ICONS_PROVIDER_MAP = {
     "OpenAI": "./src/resources/chatgpt-icon.png",
     "Ollama": "./src/resources/ollama.png",
     "Anthropic": "./src/resources/claude-ai-icon.png",
-    "OpenRouter" "Google": "./src/resources/google-gemini-icon.png",
+    "Google": "./src/resources/google-gemini-icon.png",
     "Groq": "./src/resources/groq.ico",
     "dall-e-3": "./src/resources/chatgpt-icon.png",
     "gpt-4": "./src/resources/chatgpt-icon.png",
