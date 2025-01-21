@@ -301,7 +301,7 @@ async def on_speak_chat_response(action: cl.Action) -> None:
     Handles the action triggered by the user.
     """
     await action.remove()
-    value = action.value
+    value = action.payload.get("value") or ""
     return await __handle_tts_response(value)
 
 
@@ -476,7 +476,7 @@ async def __handle_vision(
         actions=[
             cl.Action(
                 name="speak_chat_response_action",
-                value=description,
+                payload={"value": description},
                 label="Speak response",
             )
         ],
@@ -520,7 +520,7 @@ async def __handle_trigger_async_chat(
             current_message.actions = [
                 cl.Action(
                     name="speak_chat_response_action",
-                    value=content,
+                    payload={"value": content},
                     label="Speak response",
                 )
             ]
@@ -614,7 +614,7 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
             actions=[
                 cl.Action(
                     name="speak_chat_response_action",
-                    value=revised_prompt,
+                    payload={"value": revised_prompt},
                     label="Speak response",
                 )
             ],
@@ -802,7 +802,7 @@ async def __process_thread_message(
                     message_references[id].actions = [
                         cl.Action(
                             name="speak_chat_response_action",
-                            value=res_message,
+                            payload={"value": res_message},
                             label="Speak response",
                         )
                     ]
@@ -838,7 +838,7 @@ async def __process_thread_message(
                     message_references[id].actions = [
                         cl.Action(
                             name="speak_chat_response_action",
-                            value=res_message,
+                            payload={"value": res_message},
                             label="Speak response",
                         )
                     ]
