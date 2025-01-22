@@ -1,169 +1,155 @@
 ---
 <p align="center">
   <img src="./public/logo_dark.png" height="200" alt="VT.ai Logo" />
+  <h1 align="center">VT.ai</h1>
+  <p align="center">Multimodal AI Platform with Dynamic Routing & Assistant Framework</p>
+  
+  [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/vinhnx/VT.ai)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Twitter Follow](https://img.shields.io/twitter/follow/vtdotai?style=social)](https://twitter.com/vtdotai)
 </p>
 
-<h1 align="center">VT.ai</h1>
+## 🚀 Features
 
-<p align="center">
-  <em>Multimodal AI Chat Application with Intelligent Conversation Routing</em>
-</p>
+### Multi-Provider AI Orchestration
+✅ **Supported Platforms**:
+- OpenAI (GPT-4o, DALL-E 3, Whisper, TTS)
+- Anthropic (Claude 3.5 models)
+- Google Gemini (Vision & Language)
+- Local Models via Ollama (Llama3, Phi-3, Mistral, etc.)
+- Groq (Llama3-70B, Mixtral)
+- Cohere (Command R+)
+- OpenRouter
 
-<p align="center">
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-  <a href="https://github.com/vinhnx/VT.ai/stargazers"><img src="https://img.shields.io/github/stars/vinhnx/VT.ai?style=social" alt="GitHub Stars"></a>
-  <a href="https://twitter.com/vtdotai"><img src="https://img.shields.io/twitter/follow/vtdotai?style=social" alt="VT.ai Twitter"></a>
-  <a href="https://twitter.com/vinhnx"><img src="https://img.shields.io/twitter/follow/vinhnx?style=social" alt="Creator Twitter"></a>
-</p>
+✨ **Core Capabilities**:
+- Dynamic conversation routing with SemanticRouter
+- Multi-modal interactions (Text/Image/Audio)
+- Assistant framework with code interpretation
+- Real-time response streaming
+- Cross-provider model switching
+- Local model support with Ollama integration
 
-## 🌟 Overview
-
-VT.ai is a sophisticated chat interface that integrates multiple AI providers and local models. Designed for developers and AI enthusiasts, it offers:
-
-- Unified access to leading cloud AI APIs and local models
-- Advanced conversation routing using semantic analysis
-- Multi-modal interactions (text, images, audio)
-- Customizable AI assistant capabilities
-
-### Architectural Overview
-
-<p align="center">
-  <img src="./public/vtai_diagram.png" width="800" alt="System Architecture Diagram" />
-</p>
-
-*Diagram created using [gitdiagram](https://github.com/aurelio-labs/gitdiagram)*
-
-## 🚀 Key Features
-
-### Multi-modal Capabilities
-- **Text & Image Processing**
-  - Vision model integration (GPT-4o, Gemini 1.5 Pro, Llama 3.2 Vision)
-  - Image generation with DALL-E 3
-  - Audio transcription via Whisper
-- **Conversation Features**
-  - Real-time response streaming
-  - Session persistence
-  - Dynamic parameter controls (temperature, top-p)
-  - Text-to-Speech (TTS) responses
-
-### Supported Providers & Models
-| Provider       | Models Supported                                                                 |
-|----------------|----------------------------------------------------------------------------------|
-| **OpenAI**     | GPT-4o, GPT-4 Turbo, DALL-E 3, Whisper, TTS                                     |
-| **Anthropic**  | Claude 3.5 Sonnet, Claude 3.5 Haiku                                             |
-| **Google**     | Gemini 1.5 Pro, Gemini 1.5 Flash                                               |
-| **Ollama**     | Llama 3/3.2 Vision, Phi-3, Mistral, Mixtral, Deepseek R1 series                |
-| **Groq**       | Llama 3 8B/70B, Mixtral 8x7B                                                   |
-| **Cohere**     | Command, Command-R, Command-Light                                              |
-| **OpenRouter** | Qwen2.5-coder, Mistral 7B                                                      |
-
-### Advanced Features
-- **Dynamic Conversation Routing**
-  - Semantic understanding of queries
-  - Automatic routing to appropriate services (chat, vision, image gen)
-- **Assistant Framework**
-  - Code interpreter for math/problem solving
-  - File attachments support (PDF, CSV, images)
-  - Custom tool integrations
-- **Local Model Support**
-  - Ollama integration for local inference
-  - Vision capabilities with local images
-
-## 📸 Screenshots
-
-| Multi-Provider Interface | Assistant Conversation |
-|--------------------------|------------------------|
-| ![Multi LLM Providers](./src/resources/screenshot/1.jpg) | ![Assistant Chat](./src/resources/screenshot/2.jpg) |
-
-## 🛠️ Getting Started
+## 📦 Installation
 
 ### Prerequisites
 - Python 3.11+
-- [Ollama](https://ollama.com/download) (for local models)
-- API keys for cloud providers
+- Ollama (for local models) - [Install Guide](https://ollama.com/download)
 
-### Installation
 ```bash
-# Clone repository
 git clone https://github.com/vinhnx/VT.ai.git
 cd VT.ai
 
-# Setup environment
-python3 -m venv .venv
-source .venv/bin/activate
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate  # Windows
+
 pip install -r requirements.txt
-
-# Configure environment
 cp .env.example .env
-# Add your API keys to .env
 ```
 
-### Configuration
+## 🔧 Configuration
+
+Populate `.env` with your API keys:
 ```ini
-# Example .env configuration
-OPENAI_API_KEY=your_openai_key
-GEMINI_API_KEY=your_gemini_key
-ASSISTANT_ID=your_assistant_id  # Optional
-OLLAMA_HOST=http://localhost:11434  # For local models
+OPENAI_API_KEY=sk-your-key
+GEMINI_API_KEY=your-gemini-key
+COHERE_API_KEY=your-cohere-key
+ANTHROPIC_API_KEY=your-claude-key
+
+# Local Models
+OLLAMA_HOST=http://localhost:11434
 ```
 
-## ⚙️ Advanced Configuration
+## 🖥️ Usage
 
-### Model Settings
-Configure in `llm_settings_config.py`:
+### Start Application
+```bash
+# Train semantic router (recommended)
+python src/router/trainer.py
+
+# Launch interface
+chainlit run src/app.py -w
+```
+
+### Key Commands
+| Shortcut | Action                          |
+|----------|---------------------------------|
+| Ctrl+/   | Switch model provider          |
+| Ctrl+,   | Open settings                  |
+| Ctrl+L   | Clear conversation history     |
+
+## 🧩 Chat Profiles
+
+### Standard Chat Mode
+- Multi-LLM conversations
+- Dynamic model switching
+- Image generation & analysis
+- Audio transcription
+
+### Assistant Mode (Beta)
 ```python
-MODEL_ALIAS_MAP = {
-    # Customize model aliases here
-    "OpenAI - GPT-4o": "gpt-4o",
-    "Ollama - Llama 3": "ollama/llama3",
-    # ... other model definitions
-}
+# Example assistant capabilities
+async def solve_math_problem(problem: str):
+    assistant = MinoAssistant()
+    return await assistant.solve(problem)
+```
+- Code interpreter for complex calculations
+- File attachments (PDF/CSV/Images)
+- Persistent conversation threads
+- Custom tool integrations
+
+## 🏗️ Project Structure
+
+```
+VT.ai/
+├── src/
+│   ├── assistants/       # Custom AI assistant implementations
+│   ├── router/           # Semantic routing configuration
+│   ├── utils/            # Helper functions & configs
+│   └── app.py            # Main application entrypoint
+├── public/               # Static assets
+├── requirements.txt      # Python dependencies
+└── .env.example          # Environment template
 ```
 
-### Chat Profiles
-Two main interaction modes:
-1. **Standard Chat**: Standard multi-LLM conversations
-2. **Assistant Mode**: 
-   - Code interpreter for complex problem solving
-   - File attachments support
-   - Persistent conversation threads
+## 🌐 Supported Models
 
-### Vision Processing
-```python
-# Example vision processing configuration
-VISION_MODEL_MAP = {
-    "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
-    "OpenAI - GPT-4o": "gpt-4o"
-}
-```
+| Category       | Models                                                                 |
+|----------------|-----------------------------------------------------------------------|
+| **Chat**       | GPT-4o, Claude 3.5, Gemini 1.5, Llama3-70B, Mixtral 8x7B             |
+| **Vision**     | GPT-4o, Gemini 1.5 Pro, Llama3.2 Vision                              |
+| **Image Gen**  | DALL-E 3                                                             |
+| **TTS**        | OpenAI TTS-1, TTS-1-HD                                               |
+| **Local**      | Llama3, Phi-3, Mistral, Deepseek R1 series                           |
 
 ## 🤝 Contributing
 
 ### Development Setup
-1. Install development dependencies:
 ```bash
+# Install development tools
 pip install -r requirements-dev.txt
-```
 
-2. Code standards:
-- Follow PEP8 guidelines
-- Include type hints for new features
-- Add unit tests for critical components
-
-### Testing
-```bash
-# Run basic tests
+# Run tests
 pytest tests/
 
-# Verify model integrations
-python -m pytest tests/integration/
+# Format code
+black .
 ```
 
-## 📜 License
+### Contribution Guidelines
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Add Type hints for new functions
+4. Update documentation
+5. Open Pull Request
 
-Distributed under MIT License. See [LICENSE](./LICENSE) for details.
+## 📄 License
 
-## 📬 Connect
-- Project Updates: [@vtdotai](https://twitter.com/vtdotai)
-- Creator: [@vinhnx](https://twitter.com/vinhnx)
-- GitHub: [vinhnx/VT.ai](https://github.com/vinhnx/VT.ai)
+MIT License - See [LICENSE](LICENSE) for full text.
+
+## 🌟 Acknowledgements
+
+- Inspired by [Chainlit](https://chainlit.io) for chat interface
+- Powered by [LiteLLM](https://docs.litellm.ai) for model abstraction
+- Semantic routing via [SemanticRouter](https://github.com/aurelio-labs/semantic-router)
