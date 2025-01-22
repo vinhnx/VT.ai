@@ -1,3 +1,4 @@
+---
 <p align="center">
   <img src="./public/logo_dark.png" height="200" alt="VT.ai Logo" />
 </p>
@@ -5,7 +6,7 @@
 <h1 align="center">VT.ai</h1>
 
 <p align="center">
-  <em>Minimal multimodal AI chat application with intelligent conversation routing</em>
+  <em>Multimodal AI Chat Application with Intelligent Conversation Routing</em>
 </p>
 
 <p align="center">
@@ -17,12 +18,12 @@
 
 ## 🌟 Overview
 
-VT.ai is a modern chat interface that seamlessly integrates multiple AI providers and local models. Built for developers and AI enthusiasts, it offers:
+VT.ai is a sophisticated chat interface that integrates multiple AI providers and local models. Designed for developers and AI enthusiasts, it offers:
 
-- Unified access to leading cloud AI APIs
-- Local model execution via Ollama
-- Intelligent conversation routing
-- Multi-modal interactions (text + images)
+- Unified access to leading cloud AI APIs and local models
+- Advanced conversation routing using semantic analysis
+- Multi-modal interactions (text, images, audio)
+- Customizable AI assistant capabilities
 
 ### Architectural Overview
 
@@ -34,38 +35,54 @@ VT.ai is a modern chat interface that seamlessly integrates multiple AI provider
 
 ## 🚀 Key Features
 
-- **Multi-modal Capabilities**
-  - Text and image processing
+### Multi-modal Capabilities
+- **Text & Image Processing**
+  - Vision model integration (GPT-4o, Gemini 1.5 Pro, Llama 3.2 Vision)
+  - Image generation with DALL-E 3
+  - Audio transcription via Whisper
+- **Conversation Features**
   - Real-time response streaming
-  - File attachments support
-  - **Beta**: OpenAI Assistant API integration
-
-- **Flexible Model Integration**
-  - Cloud providers: OpenAI, Anthropic, Google
-  - Local models via Ollama
-  - Dynamic parameter controls (temperature, top-p)
-
-- **Smart Conversation Handling**
-  - Intent-based routing with SemanticRouter
   - Session persistence
-  - Model configuration presets
+  - Dynamic parameter controls (temperature, top-p)
+  - Text-to-Speech (TTS) responses
+
+### Supported Providers & Models
+| Provider       | Models Supported                                                                 |
+|----------------|----------------------------------------------------------------------------------|
+| **OpenAI**     | GPT-4o, GPT-4 Turbo, DALL-E 3, Whisper, TTS                                     |
+| **Anthropic**  | Claude 3.5 Sonnet, Claude 3.5 Haiku                                             |
+| **Google**     | Gemini 1.5 Pro, Gemini 1.5 Flash                                               |
+| **Ollama**     | Llama 3/3.2 Vision, Phi-3, Mistral, Mixtral, Deepseek R1 series                |
+| **Groq**       | Llama 3 8B/70B, Mixtral 8x7B                                                   |
+| **Cohere**     | Command, Command-R, Command-Light                                              |
+| **OpenRouter** | Qwen2.5-coder, Mistral 7B                                                      |
+
+### Advanced Features
+- **Dynamic Conversation Routing**
+  - Semantic understanding of queries
+  - Automatic routing to appropriate services (chat, vision, image gen)
+- **Assistant Framework**
+  - Code interpreter for math/problem solving
+  - File attachments support (PDF, CSV, images)
+  - Custom tool integrations
+- **Local Model Support**
+  - Ollama integration for local inference
+  - Vision capabilities with local images
 
 ## 📸 Screenshots
 
-| Multi-Provider Interface | Multi-modal Conversation |
-|--------------------------|--------------------------|
-| ![Multi LLM Providers](./src/resources/screenshot/1.jpg) | ![Multi-modal Chat](./src/resources/screenshot/2.jpg) |
+| Multi-Provider Interface | Assistant Conversation |
+|--------------------------|------------------------|
+| ![Multi LLM Providers](./src/resources/screenshot/1.jpg) | ![Assistant Chat](./src/resources/screenshot/2.jpg) |
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
-
 - Python 3.11+
 - [Ollama](https://ollama.com/download) (for local models)
 - API keys for cloud providers
 
 ### Installation
-
 ```bash
 # Clone repository
 git clone https://github.com/vinhnx/VT.ai.git
@@ -81,50 +98,72 @@ cp .env.example .env
 # Add your API keys to .env
 ```
 
-### 🖥️ Local Model Setup
-
-1. Start Ollama service:
-```bash
-ollama serve
+### Configuration
+```ini
+# Example .env configuration
+OPENAI_API_KEY=your_openai_key
+GEMINI_API_KEY=your_gemini_key
+ASSISTANT_ID=your_assistant_id  # Optional
+OLLAMA_HOST=http://localhost:11434  # For local models
 ```
 
-2. Pull desired models:
-```bash
-ollama pull llama3
+## ⚙️ Advanced Configuration
+
+### Model Settings
+Configure in `llm_settings_config.py`:
+```python
+MODEL_ALIAS_MAP = {
+    # Customize model aliases here
+    "OpenAI - GPT-4o": "gpt-4o",
+    "Ollama - Llama 3": "ollama/llama3",
+    # ... other model definitions
+}
 ```
 
-### 🚦 Launch Application
+### Chat Profiles
+Two main interaction modes:
+1. **Standard Chat**: Standard multi-LLM conversations
+2. **Assistant Mode**: 
+   - Code interpreter for complex problem solving
+   - File attachments support
+   - Persistent conversation threads
 
-```bash
-# Train semantic router (optional)
-python src/router/trainer.py
-
-# Start chat interface
-chainlit run src/app.py -w
+### Vision Processing
+```python
+# Example vision processing configuration
+VISION_MODEL_MAP = {
+    "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
+    "OpenAI - GPT-4o": "gpt-4o"
+}
 ```
-
-## ⚙️ Technical Stack
-
-- **Frontend**: [Chainlit](https://github.com/Chainlit/chainlit)
-- **LLM Orchestration**: [LiteLLM](https://github.com/BerriAI/litellm)
-- **Routing Engine**: [SemanticRouter](https://github.com/aurelio-labs/semantic-router)
-- **Local Inference**: [Ollama](https://ollama.com)
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add some amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Development Setup
+1. Install development dependencies:
+```bash
+pip install -r requirements-dev.txt
+```
+
+2. Code standards:
+- Follow PEP8 guidelines
+- Include type hints for new features
+- Add unit tests for critical components
+
+### Testing
+```bash
+# Run basic tests
+pytest tests/
+
+# Verify model integrations
+python -m pytest tests/integration/
+```
 
 ## 📜 License
 
 Distributed under MIT License. See [LICENSE](./LICENSE) for details.
 
 ## 📬 Connect
-
 - Project Updates: [@vtdotai](https://twitter.com/vtdotai)
 - Creator: [@vinhnx](https://twitter.com/vinhnx)
 - GitHub: [vinhnx/VT.ai](https://github.com/vinhnx/VT.ai)
