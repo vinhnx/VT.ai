@@ -13,7 +13,7 @@
 
 ### Multi-Provider AI Orchestration
 ✅ **Supported Models**:
-- Deepseek (R1 distilled)
+- DeepSeek (R1 distilled)
 - OpenAI (GPT-4o, DALL-E 3, Whisper, TTS)
 - Anthropic (Claude 3.5 models)
 - Google Gemini (Vision & Language)
