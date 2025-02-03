@@ -12,14 +12,13 @@
 ## 🚀 Features
 
 ### Multi-Provider AI Orchestration
-✅ **Supported Models**:
-- DeepSeek (R1 distilled)
-- OpenAI (GPT-4o, DALL-E 3, Whisper, TTS)
-- Anthropic (Claude 3.5 models)
-- Google Gemini (Vision & Language)
+✅ **Supported Models Provider**:
+- DeepSeek
+- OpenAI
+- Anthropic
+- Google Gemini
 - Local Models via Ollama (Llama3, Phi-3, Mistral, etc.)
-- Groq (Llama3-70B, Mixtral)
-- Cohere (Command R+)
+- Cohere
 - OpenRouter
 
 ✨ **Core Capabilities**:
