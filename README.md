@@ -2,7 +2,7 @@
 <p align="center">
   <img src="./public/logo_dark.png" height="200" alt="VT.ai Logo" />
   <h1 align="center">VT.ai</h1>
-  <p align="center">Multimodal AI Platform with Dynamic Routing & Assistant Framework</p>
+  <p align="center">Multimodal AI Platform with Dynamic Routing & Assistant</p>
   
   [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/vinhnx/VT.ai)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
