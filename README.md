@@ -5,7 +5,7 @@
   <p align="center">Minimal multimodal AI chat app with dynamic conversation routing</p>
   
   [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/vinhnx/VT.ai)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  <!--[License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)-->
   [![Twitter Follow](https://img.shields.io/twitter/follow/vtdotai?style=social)](https://twitter.com/vtdotai)
 </p>
 
@@ -32,47 +32,89 @@
 ## 📦 Installation
 
 ### Prerequisites
-- Python 3.11+
-- Ollama (for local models) - [Install Guide](https://github.com/ollama/ollama/blob/main/README.md#quickstart)
+- Python 3.11+ (specified in `.python-version`)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) (for managing virtual environments and dependencies)
+- [Ollama](https://github.com/ollama/ollama/blob/main/README.md#quickstart) (for local models, optional)
+
+# Install uv if not already installed
 
 ```bash
+pip install uv
 git clone https://github.com/vinhnx/VT.ai.git
 cd VT.ai
+```
 
-# Create virtual environment
-python -m venv .venv
+# Create a virtual environment and install dependencies with uv
+
+```bash
+uv venv
 source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate  # Windows
-
-pip install -r requirements.txt
+# .venv\Scripts\activate     # Windows
+uv pip install -r requirements.txt
 cp .env.example .env
 ```
 
+**Note**: `uv` provides a fast and efficient way to manage Python environments and dependencies. Activate the virtual environment before running the app.
+
 ## 🔧 Configuration
 
-Populate `.env` with your API keys:
+Populate the `.env` file with your API keys. Depending on the models and features you want to use, set the corresponding keys. For example:
+
+- `OPENAI_API_KEY`: Required for OpenAI models, assistant mode, TTS, and image generation.
+- `GEMINI_API_KEY`: Required for Google Gemini models and vision capabilities.
+- `ANTHROPIC_API_KEY`: Required for Anthropic models.
+- `GROQ_API_KEY`: Required for Groq models.
+- `COHERE_API_KEY`: Required for Cohere models.
+- `OPENROUTER_API_KEY`: Required for OpenRouter models.
+- `MISTRAL_API_KEY`: Required for Mistral models.
+- `HUGGINGFACE_API_KEY`: Required for Hugging Face models (if applicable).
+
+Refer to `.env.example` for the full list. Example:
+
 ```ini
 OPENAI_API_KEY=sk-your-key
 GEMINI_API_KEY=your-gemini-key
 COHERE_API_KEY=your-cohere-key
 ANTHROPIC_API_KEY=your-claude-key
+HUGGINGFACE_API_KEY=your-huggingface-key
+GROQ_API_KEY=your-groq-key
+OPENROUTER_API_KEY=your-openrouter-key
+MISTRAL_API_KEY=your-mistral-key
 
-# Local Models
+# For local models via Ollama
 OLLAMA_HOST=http://localhost:11434
 ```
+
+**Note**: If `OPENAI_API_KEY` or `GEMINI_API_KEY` is missing, the app will prompt you to enter them at startup.
 
 ## 🖥️ Usage
 
 ### Start Application
+
+# Activate the virtual environment
+
 ```bash
-# Train semantic router (recommended)
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate     # Windows
+```
+
+# (Optional) Train semantic router for customization
+# Requires OPENAI_API_KEY
+
+```bash
 python src/router/trainer.py
+```
 
 # Launch interface
+
+```bash
 chainlit run src/app.py -w
 ```
 
+**Note**: Training the semantic router is optional. Use the provided `layers.json` for default routing or train your own for better performance/customization. Training requires an OpenAI API key.
+
 ### Key Commands
+
 | Shortcut | Action                          |
 |----------|---------------------------------|
 | Ctrl+/   | Switch model provider          |
@@ -88,12 +130,14 @@ chainlit run src/app.py -w
 - Audio transcription
 
 ### Assistant Mode (Beta)
-```python
 # Example assistant capabilities
+
+```python
 async def solve_math_problem(problem: str):
     assistant = MinoAssistant()
     return await assistant.solve(problem)
 ```
+
 - Code interpreter for complex calculations
 - File attachments (PDF/CSV/Images)
 - Persistent conversation threads
@@ -101,7 +145,7 @@ async def solve_math_problem(problem: str):
 
 ## 🏗️ Project Structure
 
-```
+```ini
 VT.ai/
 ├── src/
 │   ├── assistants/       # Custom AI assistant implementations
@@ -126,11 +170,19 @@ VT.ai/
 ## 🤝 Contributing
 
 ### Development Setup
-```bash
-# Install development tools
-pip install -r requirements-dev.txt
 
-# Run tests
+```bash
+# Activate the virtual environment
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate     # Windows
+```
+
+# Install development tools (e.g., for testing or formatting)
+
+```bash
+uv pip install pytest black
+
+# Run tests (once tests are added)
 pytest tests/
 
 # Format code
@@ -139,10 +191,12 @@ black .
 
 ### Contribution Guidelines
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Add Type hints for new functions
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Add type hints for new functions
 4. Update documentation
-5. Open Pull Request
+5. Open a Pull Request
+
+**Note**: Development dependencies (e.g., `pytest`, `black`) are not currently specified in a separate file. Install them manually with `uv pip install` as needed.
 
 ## 📄 License
 
