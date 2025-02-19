@@ -33,7 +33,7 @@
 
 ### Prerequisites
 - Python 3.11+
-- Ollama (for local models) - [Install Guide](https://ollama.com/download)
+- Ollama (for local models) - [Install Guide](https://github.com/ollama/ollama/blob/main/README.md#quickstart)
 
 ```bash
 git clone https://github.com/vinhnx/VT.ai.git
