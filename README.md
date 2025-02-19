@@ -22,7 +22,7 @@
 - OpenRouter
 
 ✨ **Core Capabilities**:
-- Dynamic conversation routing with SemanticRouter
+- Dynamic conversation routing with [SemanticRouter](https://github.com/aurelio-labs/semantic-router)
 - Multi-modal interactions (Text/Image/Audio)
 - Assistant framework with code interpretation
 - Real-time response streaming
