@@ -27,7 +27,7 @@
 - Assistant framework with code interpretation
 - Real-time response streaming
 - Cross-provider model switching
-- Local model support with Ollama integration
+- Local model support with [Ollama](https://github.com/ollama/ollama) integration
 
 ## 📦 Installation
 
