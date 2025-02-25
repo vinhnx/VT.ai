@@ -84,6 +84,7 @@ MODEL_ALIAS_MAP = {
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT-4o-Mini": "gpt-4o-mini",
+    "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
     "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
     "Groq - Llama 3 8b": "groq/llama3-8b-8192",
