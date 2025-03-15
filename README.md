@@ -32,7 +32,7 @@
 ### Architecture
 
 <p align="center">
-  <img src="vtai_diagram.png" alt="diagram" />
+  <img src="diagram.png" alt="diagram" />
 </p>
 
 <p align="center">
