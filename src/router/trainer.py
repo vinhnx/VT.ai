@@ -1,5 +1,7 @@
 import os
+import argparse
 from getpass import getpass
+from typing import Optional
 
 import dotenv
 from semantic_router import Route
@@ -10,14 +12,16 @@ dotenv.load_dotenv(dotenv.find_dotenv())
 
 # usage:
 # ```
-# $ python src/router/trainer.py
+# $ python src/router/trainer.py --encoder openai
 # ```
 # then layers.json file will be updated
 
-# check for OpenAI API key, default default we will use GPT-3.5-turbo model
 
-
-def main() -> None:
+def create_routes() -> list[Route]:
+    """
+    Create and return predefined routes for the semantic router.
+    Each route represents a specific conversation topic with example utterances.
+    """
     routes = [
         Route(
             name="text-processing",
@@ -146,19 +150,65 @@ def main() -> None:
             ],
         ),
     ]
+    return routes
 
-    encoder = FastEmbedEncoder()
-    # OpenAIEncoder(name="text-embedding-3-small")
-    # FastEmbedEncoder()
-    # OpenAIEncoder(name="text-embedding-3-small")
 
-    if encoder is OpenAIEncoder:
-        os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
-            "Enter OpenAI API Key: "
-        )
+def get_encoder(encoder_type: str) -> FastEmbedEncoder | OpenAIEncoder:
+    """
+    Get the appropriate encoder based on the specified type.
+    
+    Args:
+        encoder_type: The type of encoder to use ('fast' or 'openai')
+        
+    Returns:
+        An instance of the specified encoder
+    """
+    if encoder_type.lower() == "openai":
+        # Check for OpenAI API key and prompt if missing
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not openai_api_key:
+            os.environ["OPENAI_API_KEY"] = getpass("Enter OpenAI API Key: ")
+        return OpenAIEncoder(name="text-embedding-3-small")
+    else:
+        return FastEmbedEncoder()
 
-    layer = RouteLayer(encoder=encoder, routes=routes)
-    layer.to_json("./src/router/layers.json")
+
+def main() -> None:
+    """
+    Main function to train and save the semantic router.
+    """
+    parser = argparse.ArgumentParser(description="Train semantic router with specified encoder")
+    parser.add_argument(
+        "--encoder", 
+        type=str, 
+        default="fast",
+        choices=["fast", "openai"],
+        help="Encoder to use: 'fast' for FastEmbedEncoder or 'openai' for OpenAIEncoder"
+    )
+    parser.add_argument(
+        "--output", 
+        type=str, 
+        default="./src/router/layers.json",
+        help="Path to save the trained layer"
+    )
+    
+    args = parser.parse_args()
+    
+    try:
+        routes = create_routes()
+        encoder = get_encoder(args.encoder)
+        
+        print(f"Training semantic router using {encoder.__class__.__name__}...")
+        layer = RouteLayer(encoder=encoder, routes=routes)
+        
+        # Save the trained layer
+        output_path = args.output
+        layer.to_json(output_path)
+        print(f"Successfully saved semantic router layer to {output_path}")
+        
+    except Exception as e:
+        print(f"Error training semantic router: {str(e)}")
+        return
 
 
 if __name__ == "__main__":

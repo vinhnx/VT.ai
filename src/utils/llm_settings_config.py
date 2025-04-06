@@ -1,48 +1,52 @@
+from typing import Dict, List
+
 from chainlit.types import ChatProfile
 
 from utils.chat_profile import AppChatProfileModel, AppChatProfileType
 
-# settings
-SETTINGS_CHAT_MODEL = "settings_chat_model"
-SETTINGS_VISION_MODEL = "settings_vision_model"
-SETTINGS_IMAGE_GEN_LLM_MODEL = "settings_image_gen_llm_model"
-SETTINGS_IMAGE_GEN_IMAGE_STYLE = "settings_image_gen_image_style"
-SETTINGS_IMAGE_GEN_IMAGE_QUALITY = "settings_image_gen_image_quality"
-SETTINGS_TTS_MODEL = "settings_tts_model"
-SETTINGS_TTS_VOICE_PRESET_MODEL = "settings_tts_voice_preset_model"
-SETTINGS_ENABLE_TTS_RESPONSE = "settings_enable_tts_response"
+# Settings keys - grouped for better organization
+# Chat settings
+SETTINGS_CHAT_MODEL: str = "settings_chat_model"
+SETTINGS_TEMPERATURE: str = "settings_temperature"
+SETTINGS_TOP_K: str = "settings_top_k"
+SETTINGS_TOP_P: str = "settings_top_p"
+SETTINGS_TRIMMED_MESSAGES: str = "settings_trimmed_messages"
 
-SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING = "settings_use_dynamic_conversation_routing"
-SETTINGS_TRIMMED_MESSAGES = "settings_trimmed_messages"
-SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE = True
-SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE = True
-SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE = True
+# Image and Vision settings
+SETTINGS_VISION_MODEL: str = "settings_vision_model"
+SETTINGS_IMAGE_GEN_LLM_MODEL: str = "settings_image_gen_llm_model"
+SETTINGS_IMAGE_GEN_IMAGE_STYLE: str = "settings_image_gen_image_style"
+SETTINGS_IMAGE_GEN_IMAGE_QUALITY: str = "settings_image_gen_image_quality"
 
-# ref https://platform.openai.com/docs/api-reference/chat
-SETTINGS_TEMPERATURE = "settings_temperature"
-DEFAULT_TEMPERATURE = 0.8
-SETTINGS_TOP_K = "settings_top_k"
-SETTINGS_TOP_P = "settings_top_p"
-DEFAULT_TOP_P = 1
+# Voice and TTS settings
+SETTINGS_TTS_MODEL: str = "settings_tts_model"
+SETTINGS_TTS_VOICE_PRESET_MODEL: str = "settings_tts_voice_preset_model"
+SETTINGS_ENABLE_TTS_RESPONSE: str = "settings_enable_tts_response"
 
-# set models alias mapping
+# Routing settings
+SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING: str = "settings_use_dynamic_conversation_routing"
 
-DEFAULT_MODEL = "gpt-4o-mini"
-DEFAULT_IMAGE_GEN_MODEL = "dall-e-3"
-DEFAULT_VISION_MODEL = "gemini/gemini-1.5-pro-latest"
-DEFAULT_TTS_MODEL = "tts-1"
-DEFAULT_TTS_PRESET = "nova"
-DEFAULT_WHISPER_MODEL = "whisper-1"
+# Default values
+DEFAULT_TEMPERATURE: float = 0.8
+DEFAULT_TOP_P: float = 1.0
+DEFAULT_MODEL: str = "gpt-4o-mini"
+DEFAULT_IMAGE_GEN_MODEL: str = "dall-e-3"
+DEFAULT_VISION_MODEL: str = "gemini/gemini-1.5-pro-latest"
+DEFAULT_TTS_MODEL: str = "tts-1"
+DEFAULT_TTS_PRESET: str = "nova"
+DEFAULT_WHISPER_MODEL: str = "whisper-1"
 
-SETTINGS_IMAGE_GEN_IMAGE_STYLES = ["vivid", "natural"]
-SETTINGS_IMAGE_GEN_IMAGE_QUALITIES = ["standard", "hd"]
+# Default boolean settings
+SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE: bool = True
+SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE: bool = True
+SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE: bool = True
 
-TTS_MODELS_MAP = {
-    "OpenAI - Text-to-speech 1": "tts-1",
-    "OpenAI - Text-to-speech 1 HD": "tts-1-hd",
-}
+# Image generation options
+SETTINGS_IMAGE_GEN_IMAGE_STYLES: List[str] = ["vivid", "natural"]
+SETTINGS_IMAGE_GEN_IMAGE_QUALITIES: List[str] = ["standard", "hd"]
 
-TTS_VOICE_PRESETS = [
+# TTS options
+TTS_VOICE_PRESETS: List[str] = [
     "alloy",
     "echo",
     "fable",
@@ -51,11 +55,17 @@ TTS_VOICE_PRESETS = [
     "shimmer",
 ]
 
-IMAGE_GEN_MODELS_ALIAS_MAP = {
+# Model mappings
+TTS_MODELS_MAP: Dict[str, str] = {
+    "OpenAI - Text-to-speech 1": "tts-1",
+    "OpenAI - Text-to-speech 1 HD": "tts-1-hd",
+}
+
+IMAGE_GEN_MODELS_ALIAS_MAP: Dict[str, str] = {
     "OpenAI - DALL·E 3": "dall-e-3",
 }
 
-VISION_MODEL_MAP = {
+VISION_MODEL_MAP: Dict[str, str] = {
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
     "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
@@ -63,7 +73,8 @@ VISION_MODEL_MAP = {
     "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
 }
 
-MODEL_ALIAS_MAP = {
+MODEL_ALIAS_MAP: Dict[str, str] = {
+    # OpenRouter models
     "OpenRouter - DeepSeek V3 0324": "openrouter/deepseek/deepseek-chat-v3-0324:free",
     "OpenRouter - Google: Gemini 2.5 Pro Experimental (free)": "openrouter/google/gemini-2.5-pro-exp-03-25:free",
     "OpenRouter - Google: Gemini 2.0 Flash Thinking Experimental (free)": "openrouter/google/gemini-2.0-flash-thinking-exp:free",
@@ -76,6 +87,8 @@ MODEL_ALIAS_MAP = {
     "OpenRouter - Qwen 2.5 Coder 32B": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
     "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
     "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
+    
+    # Ollama models
     "Ollama - Deepseek R1 1.5B": "ollama/deepseek-r1:1.5b",
     "Ollama - Deepseek R1 7B": "ollama/deepseek-r1:7b",
     "Ollama - Deepseek R1 8B": "ollama/deepseek-r1:8b",
@@ -94,38 +107,54 @@ MODEL_ALIAS_MAP = {
     "Ollama - Command R+": "ollama/command-r-plus",
     "Ollama - Mistral 7B Instruct": "ollama/mistral",
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
+    
+    # OpenAI models
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT-4o-Mini": "gpt-4o-mini",
+    
+    # Anthropic models
     "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
     "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
+    
+    # Groq models
+    "Groq - Llama 4 Scout 17b Instruct": "meta-llama/llama-4-scout-17b-16e-instruct",
     "Groq - Llama 3 8b": "groq/llama3-8b-8192",
     "Groq - Llama 3 70b": "groq/llama3-70b-8192",
     "Groq - Mixtral 8x7b": "groq/mixtral-8x7b-32768",
+    
+    # Cohere models
     "Cohere - Command": "command",
     "Cohere - Command-R": "command-r",
     "Cohere - Command-Light": "command-light",
     "Cohere - Command-R-Plus": "command-r-plus",
+    
+    # Google models
     "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
     "Google - gemini-1.5-pro-002": "gemini/gemini-1.5-pro-002",
     "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
 }
 
-ICONS_PROVIDER_MAP = {
+ICONS_PROVIDER_MAP: Dict[str, str] = {
+    # App icons
     "VT.ai": "./src/resources/vt.jpg",
     "Mino": "./src/resources/vt.jpg",
+    
+    # OpenAI icons
     "tts-1": "./src/resources/chatgpt-icon.png",
     "tts-1-hd": "./src/resources/chatgpt-icon.png",
     "OpenAI": "./src/resources/chatgpt-icon.png",
-    "Ollama": "./src/resources/ollama.png",
-    "Anthropic": "./src/resources/claude-ai-icon.png",
-    "Google": "./src/resources/google-gemini-icon.png",
-    "Groq": "./src/resources/groq.ico",
     "dall-e-3": "./src/resources/chatgpt-icon.png",
     "gpt-4": "./src/resources/chatgpt-icon.png",
     "gpt-4o": "./src/resources/chatgpt-icon.png",
     "gpt-4-turbo": "./src/resources/chatgpt-icon.png",
     "gpt-3.5-turbo": "./src/resources/chatgpt-icon.png",
+    
+    # Other provider icons
+    "Ollama": "./src/resources/ollama.png",
+    "Anthropic": "./src/resources/claude-ai-icon.png",
+    "Google": "./src/resources/google-gemini-icon.png",
+    "Groq": "./src/resources/groq.ico",
     "command": "./src/resources/cohere.ico",
     "command-r": "./src/resources/cohere.ico",
     "command-light": "./src/resources/cohere.ico",
@@ -145,18 +174,20 @@ ICONS_PROVIDER_MAP = {
     "ollama/mistral": "./src/resources/ollama.png",
 }
 
-NAMES = list(MODEL_ALIAS_MAP.keys())
-MODELS = list(MODEL_ALIAS_MAP.values())
+# Derive lists from dictionaries
+NAMES: List[str] = list(MODEL_ALIAS_MAP.keys())
+MODELS: List[str] = list(MODEL_ALIAS_MAP.values())
 
-IMAGE_GEN_NAMES = list(IMAGE_GEN_MODELS_ALIAS_MAP.keys())
-IMAGE_GEN_MODELS = list(IMAGE_GEN_MODELS_ALIAS_MAP.values())
+IMAGE_GEN_NAMES: List[str] = list(IMAGE_GEN_MODELS_ALIAS_MAP.keys())
+IMAGE_GEN_MODELS: List[str] = list(IMAGE_GEN_MODELS_ALIAS_MAP.values())
 
-VISION_MODEL_NAMES = list(VISION_MODEL_MAP.keys())
-VISION_MODEL_MODELS = list(VISION_MODEL_MAP.values())
+VISION_MODEL_NAMES: List[str] = list(VISION_MODEL_MAP.keys())
+VISION_MODEL_MODELS: List[str] = list(VISION_MODEL_MAP.values())
 
-TTS_MODEL_NAMES = list(TTS_MODELS_MAP.keys())
-TTS_MODEL_MODELS = list(TTS_MODELS_MAP.values())
+TTS_MODEL_NAMES: List[str] = list(TTS_MODELS_MAP.keys())
+TTS_MODEL_MODELS: List[str] = list(TTS_MODELS_MAP.values())
 
+# Chat profiles
 APP_CHAT_PROFILE_CHAT = AppChatProfileModel(
     title=AppChatProfileType.CHAT.value,
     description="Multi-modal chat with LLM.",
@@ -167,10 +198,13 @@ APP_CHAT_PROFILE_ASSISTANT = AppChatProfileModel(
     description="[Beta] Use Mino built-in Assistant to ask complex question. Currently support Math Calculator",
 )
 
-APP_CHAT_PROFILES = [APP_CHAT_PROFILE_CHAT, APP_CHAT_PROFILE_ASSISTANT]
+APP_CHAT_PROFILES: List[AppChatProfileModel] = [
+    APP_CHAT_PROFILE_CHAT, 
+    APP_CHAT_PROFILE_ASSISTANT
+]
 
 # Update to use markdown_description instead of description for Chainlit v2.0.0
-CHAT_PROFILES = [
+CHAT_PROFILES: List[ChatProfile] = [
     ChatProfile(name=profile.title, markdown_description=profile.description)
     for profile in APP_CHAT_PROFILES
 ]

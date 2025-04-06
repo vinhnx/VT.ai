@@ -2,14 +2,17 @@ import os
 import pathlib
 import tempfile
 import json
+import logging
 from datetime import datetime
 from getpass import getpass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 import chainlit as cl
 import dotenv
 import litellm
+from litellm.exceptions import BadRequestError, RateLimitError, ServiceUnavailableError
+
 import utils.constants as const
 from assistants.mino.create_assistant import tool_map
 from assistants.mino.mino import INSTRUCTIONS, MinoAssistant
@@ -33,6 +36,14 @@ from utils.llm_profile_builder import build_llm_profile
 from utils.settings_builder import build_settings
 from utils.url_extractor import extract_url
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger("vt.ai")
+
 # Load .env after setup
 dotenv.load_dotenv(dotenv.find_dotenv())
 
@@ -45,26 +56,58 @@ route_layer = RouteLayer.from_json("./src/router/layers.json")
 # Create temporary directory for TTS audio files
 temp_dir = tempfile.TemporaryDirectory()
 
-# Set LLM Providers API Keys from environment variables
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-os.environ["COHERE_API_KEY"] = os.getenv("COHERE_API_KEY")
-os.environ["HUGGINGFACE_API_KEY"] = os.getenv("HUGGINGFACE_API_KEY")
-os.environ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY")
-os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
-os.environ["OPENROUTER_API_KEY"] = os.getenv("OPENROUTER_API_KEY")
-os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
-os.environ["MISTRAL_API_KEY"] = os.getenv("MISTRAL_API_KEY")
+def load_api_keys() -> None:
+    """
+    Load API keys from environment variables and set them in os.environ.
+    Logs which keys were successfully loaded to help with debugging.
+    """
+    api_keys = {
+        "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
+        "COHERE_API_KEY": os.getenv("COHERE_API_KEY"),
+        "HUGGINGFACE_API_KEY": os.getenv("HUGGINGFACE_API_KEY"),
+        "ANTHROPIC_API_KEY": os.getenv("ANTHROPIC_API_KEY"),
+        "GROQ_API_KEY": os.getenv("GROQ_API_KEY"),
+        "OPENROUTER_API_KEY": os.getenv("OPENROUTER_API_KEY"),
+        "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY"),
+        "MISTRAL_API_KEY": os.getenv("MISTRAL_API_KEY"),
+    }
+
+    # Set API keys in environment
+    loaded_keys = []
+    for key, value in api_keys.items():
+        if value:
+            os.environ[key] = value
+            loaded_keys.append(key)
+
+    logger.info(f"Loaded API keys: {', '.join(loaded_keys)}")
+    if not loaded_keys:
+        logger.warning("No API keys were loaded from environment")
+
+# Load API keys
+load_api_keys()
 
 assistant_id = os.environ.get("ASSISTANT_ID")
 
 # List of allowed mime types
-allowed_mime = ["text/csv", "application/pdf"]
+allowed_mime = [
+    "text/csv",
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav"
+]
 
-
-# Initialize OpenAI client
-openai_client = OpenAI(max_retries=2)
-async_openai_client = AsyncOpenAI(max_retries=2)
-
+# Initialize OpenAI client with better error handling
+try:
+    openai_client = OpenAI(max_retries=2)
+    async_openai_client = AsyncOpenAI(max_retries=2)
+    logger.info("Successfully initialized OpenAI clients")
+except Exception as e:
+    logger.error(f"Failed to initialize OpenAI clients: {e}")
+    raise
 
 # constants
 APP_NAME = const.APP_NAME
@@ -526,16 +569,30 @@ async def __handle_trigger_async_chat(
 
 async def __handle_exception_error(e: Exception) -> None:
     """
-    Handles exceptions that occur during LLM interactions.
+    Handles exceptions that occur during LLM interactions with more specific error messages
+    based on the type of exception.
+
+    Args:
+        e: The exception that was raised
     """
+    error_message = "Something went wrong. "
 
-    await cl.Message(
-        content=(
-            f"Something went wrong, please try again. Error type: {type(e)}, Error: {e}"
-        )
-    ).send()
+    if isinstance(e, RateLimitError):
+        error_message += "Rate limit exceeded. Please try again in a few moments."
+    elif isinstance(e, BadRequestError):
+        error_message += "Invalid request parameters. Please check your inputs and try again."
+    elif isinstance(e, ServiceUnavailableError):
+        error_message += "The service is temporarily unavailable. Please try again later."
+    elif isinstance(e, ValueError):
+        error_message += f"Invalid value: {str(e)}"
+    elif isinstance(e, TimeoutError):
+        error_message += "The request timed out. Please try again."
+    else:
+        error_message += f"Unexpected error: {str(e)}"
 
-    print(f"Error type: {type(e)}, Error: {e}")
+    logger.error(f"Error details: {type(e).__name__}: {str(e)}")
+
+    await cl.Message(content=error_message).send()
 
 
 async def __config_chat_session(settings: Dict[str, Any]) -> None:
@@ -741,11 +798,29 @@ def _is_currently_in_assistant_profile() -> bool:
 
 
 # Check if the files uploaded are allowed
-async def __check_files(files: List):
+async def __check_files(files: List) -> Tuple[bool, Optional[str]]:
+    """
+    Check if all files are of allowed mime types
+
+    Args:
+        files: List of files to check
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    invalid_files = []
     for file in files:
         if file.mime not in allowed_mime:
-            return False
-    return True
+            invalid_files.append(f"{file.name} ({file.mime})")
+
+    if invalid_files:
+        error_msg = (
+            f"The following files are not supported: {', '.join(invalid_files)}. "
+            f"Please upload only: {', '.join(allowed_mime)}"
+        )
+        return False, error_msg
+
+    return True, None
 
 
 # Upload files to the assistant
@@ -759,18 +834,32 @@ async def __upload_files(files: List):
     return file_ids
 
 
-async def __process_files(files: List):
-    # Upload files if any and get file_ids
+async def __process_files(files: List) -> List[str]:
+    """
+    Process files and upload them to the assistant if valid
+
+    Args:
+        files: List of files to process
+
+    Returns:
+        List of file IDs
+    """
     file_ids = []
-    if len(files) > 0:
-        files_ok = await __check_files(files)
+    if not files:
+        return file_ids
 
-        if not files_ok:
-            file_error_msg = f"Hey, it seems you have uploaded one or more files that we do not support currently, please upload only : {(',').join(allowed_mime)}"
-            await cl.Message(content=file_error_msg).send()
-            return file_ids
+    is_valid, error_message = await __check_files(files)
+    if not is_valid:
+        await cl.Message(content=error_message).send()
+        logger.warning(f"Invalid files rejected: {error_message}")
+        return file_ids
 
+    try:
         file_ids = await __upload_files(files)
+        logger.info(f"Successfully uploaded {len(file_ids)} files")
+    except Exception as e:
+        logger.error(f"Error uploading files: {e}")
+        await __handle_exception_error(e)
 
     return file_ids
 

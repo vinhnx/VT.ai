@@ -1,8 +1,21 @@
-chainlit
-google-generativeai
-litellm
-openai
-pillow
-pydantic==2.10.1 # downgrade pydantic as incompatibilty with chainlit https://github.com/Chainlit/chainlit/issues/1556
-python-dotenv
-semantic-router[fastembed]
+# Core dependencies
+chainlit>=2.0.0
+litellm>=1.30.0
+openai>=1.20.0
+pydantic==2.10.1  # Specific version due to compatibility issues with chainlit: https://github.com/Chainlit/chainlit/issues/1556
+python-dotenv>=1.0.0
+
+# Semantic routing
+semantic-router[fastembed]>=0.0.54
+
+# Image processing
+pillow>=10.0.0
+
+# AI models
+google-generativeai>=0.3.0
+
+# Development dependencies (uncomment as needed)
+# pytest>=7.4.0
+# black>=23.7.0
+# isort>=5.12.0
+# flake8>=6.1.0

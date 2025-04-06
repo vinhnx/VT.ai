@@ -1,21 +1,45 @@
+"""
+Semantic router type definitions for VT.ai.
+
+This module defines the semantic routing types used by the router layer to
+classify and direct user queries to appropriate processing pathways.
+
+The router uses semantic vector space to make fast routing decisions without
+requiring LLM inference, improving response time and efficiency.
+"""
+
 from enum import Enum
+from typing import Dict, Final, List, Set
 
 
 class SemanticRouterType(str, Enum):
     """
-    We use https://github.com/aurelio-labs/semantic-router?tab=readme-ov-file
-
-    Semantic Router is a superfast decision-making layer for your LLMs and agents. Rather than waiting for slow LLM generations to make tool-use decisions, we use the magic of semantic vector space to make those decisions — routing our requests using semantic meaning.
-
-    --
-
-    The definition is in `layers.json` file. Here we define routes' name constant.
-
-    It' must be mapped together.
+    Enumeration of semantic router types for conversation classification.
+    
+    These types correspond to the route names defined in the `layers.json` file
+    and are used to categorize user queries based on their semantic meaning.
+    
+    Each value represents a distinct conversation type that may require
+    different processing or model selection.
     """
 
-    IMAGE_GENERATION = "image-generation"
-    TEXT_PROCESSING = "text-processing"
-    CASUAL_CONVERSATION = "casual-conversation"
-    CURIOUS = "curious"
-    VISION_IMAGE_PROCESSING = "vision-image-processing"
+    IMAGE_GENERATION: Final[str] = "image-generation"
+    TEXT_PROCESSING: Final[str] = "text-processing"
+    CASUAL_CONVERSATION: Final[str] = "casual-conversation"
+    CURIOUS: Final[str] = "curious"
+    VISION_IMAGE_PROCESSING: Final[str] = "vision-image-processing"
+    
+    @classmethod
+    def values(cls) -> List[str]:
+        """Get a list of all route type values."""
+        return [item.value for item in cls]
+    
+    @classmethod
+    def requires_image_processing(cls) -> Set[str]:
+        """Get the set of routes that require image processing capabilities."""
+        return {cls.VISION_IMAGE_PROCESSING.value}
+    
+    @classmethod
+    def requires_image_generation(cls) -> Set[str]:
+        """Get the set of routes that require image generation capabilities."""
+        return {cls.IMAGE_GENERATION.value}
