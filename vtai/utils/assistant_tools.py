@@ -4,21 +4,22 @@ Assistant tools handling utilities for VT.ai application.
 Processes OpenAI Assistant tool calls and manages thread messages.
 """
 
-import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import chainlit as cl
 from openai.types.beta.threads import ImageFileContentBlock, Message, TextContentBlock
 from openai.types.beta.threads.runs import RunStep
 
-from utils import constants as const
-from utils.config import logger
-from utils.dict_to_object import DictToObject
-from utils.user_session_helper import get_setting
+from vtai.utils import constants as const
+from vtai.utils.config import logger
+from vtai.utils.user_session_helper import get_setting
+
 
 async def process_thread_message(
-    message_references: Dict[str, cl.Message], thread_message: Message, async_openai_client: Any
+    message_references: Dict[str, cl.Message],
+    thread_message: Message,
+    async_openai_client: Any,
 ) -> None:
     """
     Process a thread message from the OpenAI Assistant API.

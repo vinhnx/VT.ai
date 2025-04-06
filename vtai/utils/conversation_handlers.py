@@ -13,17 +13,17 @@ import chainlit as cl
 import litellm
 from litellm.utils import trim_messages
 
-from router.constants import SemanticRouterType
-from utils import llm_settings_config as conf
-from utils.config import logger
-from utils.error_handlers import handle_exception
-from utils.media_processors import (
+from vtai.router.constants import SemanticRouterType
+from vtai.utils import llm_settings_config as conf
+from vtai.utils.config import logger
+from vtai.utils.error_handlers import handle_exception
+from vtai.utils.media_processors import (
     handle_audio_transcribe,
     handle_trigger_async_image_gen,
     handle_vision,
 )
-from utils.url_extractor import extract_url
-from utils.user_session_helper import (
+from vtai.utils.url_extractor import extract_url
+from vtai.utils.user_session_helper import (
     get_setting,
     get_user_session_id,
     update_message_history_from_assistant,
@@ -280,8 +280,8 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
     Args:
         settings: User settings dictionary
     """
-    from assistants.mino.mino import INSTRUCTIONS
-    from utils.chat_profile import AppChatProfileType
+    from vtai.assistants.mino.mino import INSTRUCTIONS
+    from vtai.utils.chat_profile import AppChatProfileType
 
     try:
         chat_profile = cl.user_session.get("chat_profile")

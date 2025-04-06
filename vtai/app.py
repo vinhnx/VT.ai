@@ -16,7 +16,7 @@ import chainlit as cl
 from vtai.assistants.mino.create_assistant import tool_map
 from vtai.assistants.mino.mino import MinoAssistant
 
-# Update imports to use vtai package namespace for proper pip installation
+# Fix imports to use the correct package namespace
 from vtai.utils import constants as const
 from vtai.utils import llm_settings_config as conf
 from vtai.utils.assistant_tools import process_thread_message, process_tool_call
@@ -54,9 +54,8 @@ async def start_chat():
     Initialize the chat session with settings and system message.
     """
     # Initialize default settings
-    cl.user_session.set(conf.SETTINGS_CHAT_MODEL, "default_model_name")
+    cl.user_session.set(conf.SETTINGS_CHAT_MODEL, conf.DEFAULT_MODEL)
 
-    # testing
     # Build LLM profile
     build_llm_profile(conf.ICONS_PROVIDER_MAP)
 
@@ -71,11 +70,8 @@ async def start_chat():
             thread = await async_openai_client.beta.threads.create()
             cl.user_session.set("thread", thread)
             logger.info("Created new thread: %s", thread.id)
-        except (ValueError, ConnectionError, TimeoutError) as e:
-            logger.error("Failed to create thread: %s", e)
-            await handle_exception(e)
         except Exception as e:
-            logger.error("Unexpected error when creating thread: %s", e)
+            logger.error("Failed to create thread: %s", e)
             await handle_exception(e)
 
 

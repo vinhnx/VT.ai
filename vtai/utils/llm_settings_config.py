@@ -1,9 +1,25 @@
+"""
+Settings configuration for LLM models and chat profiles.
+"""
+
 from typing import Dict, List
 
 import chainlit as cl
-from chainlit.types import ChatProfile
+from pydantic import BaseModel
 
-from utils.chat_profile import AppChatProfileModel, AppChatProfileType
+# Update imports to use vtai namespace
+from vtai.utils.chat_profile import AppChatProfileType
+
+
+# Define AppChatProfileModel class
+class AppChatProfileModel(BaseModel):
+    title: str
+    description: str
+    icon: str
+    is_default: bool = False
+
+
+from chainlit.types import ChatProfile
 
 # Settings keys - grouped for better organization
 # Chat settings
@@ -181,41 +197,42 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Cohere - Command-R-Plus": "command-r-plus",
 }
 
+# ICONS_PROVIDER_MAP modification - updating resource paths
 ICONS_PROVIDER_MAP: Dict[str, str] = {
     # App icons
-    "VT.ai": "./src/resources/vt.jpg",
-    "Mino": "./src/resources/vt.jpg",
+    "VT.ai": "./vtai/resources/vt.jpg",
+    "Mino": "./vtai/resources/vt.jpg",
     # OpenAI icons
-    "tts-1": "./src/resources/chatgpt-icon.png",
-    "tts-1-hd": "./src/resources/chatgpt-icon.png",
-    "OpenAI": "./src/resources/chatgpt-icon.png",
-    "dall-e-3": "./src/resources/chatgpt-icon.png",
-    "gpt-4": "./src/resources/chatgpt-icon.png",
-    "gpt-4o": "./src/resources/chatgpt-icon.png",
-    "gpt-4-turbo": "./src/resources/chatgpt-icon.png",
-    "gpt-3.5-turbo": "./src/resources/chatgpt-icon.png",
+    "tts-1": "./vtai/resources/chatgpt-icon.png",
+    "tts-1-hd": "./vtai/resources/chatgpt-icon.png",
+    "OpenAI": "./vtai/resources/chatgpt-icon.png",
+    "dall-e-3": "./vtai/resources/chatgpt-icon.png",
+    "gpt-4": "./vtai/resources/chatgpt-icon.png",
+    "gpt-4o": "./vtai/resources/chatgpt-icon.png",
+    "gpt-4-turbo": "./vtai/resources/chatgpt-icon.png",
+    "gpt-3.5-turbo": "./vtai/resources/chatgpt-icon.png",
     # Other provider icons
-    "Ollama": "./src/resources/ollama.png",
-    "Anthropic": "./src/resources/claude-ai-icon.png",
-    "Google": "./src/resources/google-gemini-icon.png",
-    "Groq": "./src/resources/groq.ico",
-    "command": "./src/resources/cohere.ico",
-    "command-r": "./src/resources/cohere.ico",
-    "command-light": "./src/resources/cohere.ico",
-    "command-r-plus": "./src/resources/cohere.ico",
-    "claude-2": "./src/resources/claude-ai-icon.png",
-    "claude-3-sonnet-20240229": "./src/resources/claude-ai-icon.png",
-    "claude-3-haiku-20240307": "./src/resources/claude-ai-icon.png",
-    "claude-3-opus-20240229": "./src/resources/claude-ai-icon.png",
-    "groq/llama3-8b-8192": "./src/resources/groq.ico",
-    "groq/llama3-70b-8192": "./src/resources/groq.ico",
-    "groq/mixtral-8x7b-32768": "./src/resources/groq.ico",
-    "gemini/gemini-1.5-pro-latest": "./src/resources/google-gemini-icon.png",
-    "gemini/gemini-1.5-flash-latest": "./src/resources/google-gemini-icon.png",
-    "openrouter/mistralai/mistral-7b-instruct": "./src/resources/openrouter.ico",
-    "OpenRouter - Mistral 7b instruct Free": "./src/resources/openrouter.ico",
-    "ollama/llama3": "./src/resources/ollama.png",
-    "ollama/mistral": "./src/resources/ollama.png",
+    "Ollama": "./vtai/resources/ollama.png",
+    "Anthropic": "./vtai/resources/claude-ai-icon.png",
+    "Google": "./vtai/resources/google-gemini-icon.png",
+    "Groq": "./vtai/resources/groq.ico",
+    "command": "./vtai/resources/cohere.ico",
+    "command-r": "./vtai/resources/cohere.ico",
+    "command-light": "./vtai/resources/cohere.ico",
+    "command-r-plus": "./vtai/resources/cohere.ico",
+    "claude-2": "./vtai/resources/claude-ai-icon.png",
+    "claude-3-sonnet-20240229": "./vtai/resources/claude-ai-icon.png",
+    "claude-3-haiku-20240307": "./vtai/resources/claude-ai-icon.png",
+    "claude-3-opus-20240229": "./vtai/resources/claude-ai-icon.png",
+    "groq/llama3-8b-8192": "./vtai/resources/groq.ico",
+    "groq/llama3-70b-8192": "./vtai/resources/groq.ico",
+    "groq/mixtral-8x7b-32768": "./vtai/resources/groq.ico",
+    "gemini/gemini-1.5-pro-latest": "./vtai/resources/google-gemini-icon.png",
+    "gemini/gemini-1.5-flash-latest": "./vtai/resources/google-gemini-icon.png",
+    "openrouter/mistralai/mistral-7b-instruct": "./vtai/resources/openrouter.ico",
+    "OpenRouter - Mistral 7b instruct Free": "./vtai/resources/openrouter.ico",
+    "ollama/llama3": "./vtai/resources/ollama.png",
+    "ollama/mistral": "./vtai/resources/ollama.png",
 }
 
 # Derive lists from dictionaries

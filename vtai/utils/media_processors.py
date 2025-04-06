@@ -1,20 +1,20 @@
 """
-Media processing utilities for VT.ai application.
-
-Handles audio transcription, text-to-speech, and image processing.
+Media processing utilities for the VT.ai application.
 """
 
 import asyncio
 import os
-from pathlib import Path
+import tempfile
+from io import BytesIO
 
 import chainlit as cl
 import litellm
-from openai import AsyncOpenAI, OpenAI
+from openai import OpenAI
 
-from utils import llm_settings_config as conf
-from utils.config import logger, temp_dir
-from utils.user_session_helper import (
+# Update imports to use vtai namespace
+from vtai.utils import llm_settings_config as conf
+from vtai.utils.config import logger
+from vtai.utils.user_session_helper import (
     get_setting,
     get_user_session_id,
     update_message_history_from_assistant,
@@ -37,7 +37,7 @@ async def handle_tts_response(context: str, openai_client: OpenAI) -> None:
     voice = get_setting(conf.SETTINGS_TTS_VOICE_PRESET_MODEL)
 
     try:
-        temp_filepath = os.path.join(temp_dir.name, "tts-output.mp3")
+        temp_filepath = os.path.join(tempfile.gettempdir(), "tts-output.mp3")
 
         # Using a custom timeout for the TTS request to avoid hanging connections
         with openai_client.audio.speech.with_streaming_response.create(
@@ -75,15 +75,15 @@ async def handle_tts_response(context: str, openai_client: OpenAI) -> None:
 
 
 async def handle_audio_transcribe(
-    path: str, audio_file: Path, async_openai_client: AsyncOpenAI
+    path: str, audio_file: BytesIO, openai_client: OpenAI
 ) -> str:
     """
     Transcribes audio to text using OpenAI's Whisper model.
 
     Args:
         path: Path to the audio file
-        audio_file: Path object for the audio file
-        async_openai_client: AsyncOpenAI client instance
+        audio_file: BytesIO object for the audio file
+        openai_client: OpenAI client instance
 
     Returns:
         The transcribed text
@@ -92,9 +92,7 @@ async def handle_audio_transcribe(
     try:
         # Add a timeout to the transcription request
         transcription = await asyncio.wait_for(
-            async_openai_client.audio.transcriptions.create(
-                model=model, file=audio_file
-            ),
+            openai_client.audio.transcriptions.create(model=model, file=audio_file),
             timeout=30.0,  # 30 second timeout
         )
         text = transcription.text

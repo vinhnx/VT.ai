@@ -1,4 +1,3 @@
-
 <p align="center">
   <h1 align="center">VT.ai</h1>
 
@@ -59,7 +58,7 @@ VT.ai implements a modular architecture centered on a semantic routing system th
 
 ### Key Components
 
-1. **Semantic Router** (`/src/router/`)
+1. **Semantic Router** (`/vtai/router/`)
    - Vector-based query classification system using FastEmbed embeddings
    - Routes user queries to specialized handlers using the `SemanticRouterType` enum
    - Supports five distinct routing categories:
@@ -69,27 +68,43 @@ VT.ai implements a modular architecture centered on a semantic routing system th
      - Casual conversation (social interactions)
      - Curious inquiries (informational requests)
 
-2. **Model Management** (`/src/utils/llm_settings_config.py`)
+2. **Model Management** (`/vtai/utils/llm_settings_config.py`)
    - Unified API abstractions through LiteLLM
    - Provider-agnostic model switching with dynamic parameters
    - Centralized configuration for model settings and routing
 
-3. **Conversation Handling** (`/src/utils/conversation_handlers.py`)
+3. **Conversation Handling** (`/vtai/utils/conversation_handlers.py`)
    - Streaming response processing with backpressure handling
    - Multi-modal content parsing and rendering
    - Thinking mode implementation showing reasoning steps
    - Error handling with graceful fallbacks
 
-4. **Assistant Framework** (`/src/assistants/mino/`)
+4. **Assistant Framework** (`/vtai/assistants/mino/`)
    - Tool use capabilities with function calling
    - Code interpreter integration for computation
    - File attachment processing with multiple formats
    - Assistant state management
 
-5. **Media Processing** (`/src/utils/media_processors.py`)
+5. **Media Processing** (`/vtai/utils/media_processors.py`)
    - Image generation pipeline for DALL-E 3
    - Vision analysis with cross-provider model support
    - Audio transcription and Text-to-Speech integration
+
+## Installation from PyPI
+
+```bash
+# Install VT.ai from PyPI
+pip install vtai
+
+# Run the application
+vtai
+
+# With additional arguments
+vtai --help  # Show command-line options
+vtai -w      # Run with auto-reload for development
+```
+
+This installs the `vtai` command which lets you launch the application directly from your terminal.
 
 ## Setup Guide
 
@@ -148,7 +163,7 @@ source .venv/bin/activate  # Linux/Mac
 .venv\Scripts\activate     # Windows
 
 # Launch the interface
-chainlit run src/app.py -w
+chainlit run vtai/app.py -w
 ```
 
 The `-w` flag enables auto-reloading during development.
@@ -176,7 +191,7 @@ uv pip install -r requirements.txt
 To customize the semantic router for specific use cases:
 
 ```bash
-python src/router/trainer.py
+python vtai/router/trainer.py
 ```
 
 This utility updates the `layers.json` file with new routing rules and requires an OpenAI API key to generate embeddings.
@@ -239,8 +254,8 @@ uv pip install -e ".[dev]"
 black .
 
 # Run linting
-flake8 src/
-isort src/
+flake8 vtai/
+isort vtai/
 
 # Run tests
 pytest

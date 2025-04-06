@@ -7,7 +7,8 @@ Centralizes error handling and exception processing.
 import chainlit as cl
 from litellm.exceptions import BadRequestError, RateLimitError, ServiceUnavailableError
 
-from utils.config import logger
+from vtai.utils.config import logger
+
 
 async def handle_exception(e: Exception) -> None:
     """
@@ -22,9 +23,13 @@ async def handle_exception(e: Exception) -> None:
     if isinstance(e, RateLimitError):
         error_message += "Rate limit exceeded. Please try again in a few moments."
     elif isinstance(e, BadRequestError):
-        error_message += "Invalid request parameters. Please check your inputs and try again."
+        error_message += (
+            "Invalid request parameters. Please check your inputs and try again."
+        )
     elif isinstance(e, ServiceUnavailableError):
-        error_message += "The service is temporarily unavailable. Please try again later."
+        error_message += (
+            "The service is temporarily unavailable. Please try again later."
+        )
     elif isinstance(e, ValueError):
         error_message += f"Invalid value: {str(e)}"
     elif isinstance(e, TimeoutError):

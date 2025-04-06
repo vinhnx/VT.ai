@@ -3,7 +3,8 @@ import os
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.beta import Assistant
-from utils import constants
+
+from vtai.utils import constants
 
 # Assistant (beta)
 # ref: https://platform.openai.com/docs/assistants/tools/code-interpreter/how-it-works
@@ -41,7 +42,7 @@ class MinoAssistant:
         self.instructions = INSTRUCTIONS
 
     async def run_assistant(self) -> Assistant:
-        tool = constants.ASSISTANT_TOOL_CODE_INTEPRETER
+        tool = constants.ASSISTANT_TOOL_CODE_INTERPRETER
         assistant_name = NAME
         assistant = await self.__openai_client__.beta.assistants.create(
             name=assistant_name,

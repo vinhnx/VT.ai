@@ -1,4 +1,15 @@
 """
+Constants for the semantic router component.
+"""
+
+from typing import List
+
+from semantic_router import RouteLayer as SRRouteLayer
+
+# Export RouteLayer directly to fix import issues
+RouteLayer = SRRouteLayer
+
+"""
 Semantic router type definitions for VT.ai.
 
 This module defines the semantic routing types used by the router layer to
@@ -9,7 +20,7 @@ requiring LLM inference, improving response time and efficiency.
 """
 
 from enum import Enum
-from typing import Dict, Final, List, Set
+from typing import Final, Set
 
 
 class SemanticRouterType(str, Enum):
