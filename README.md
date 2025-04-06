@@ -1,18 +1,16 @@
----
 <p align="center">
   <img src="./public/logo_dark.png" height="200" alt="VT.ai Logo" />
   <h1 align="center">VT.ai</h1>
-  <p align="center">Minimal multimodal AI chat app with dynamic conversation routing</p>
+  <p align="center">Multimodal AI chat application with semantic-based conversation routing</p>
 
   [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/vinhnx/VT.ai)
-  <!--[License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)-->
   [![Twitter Follow](https://img.shields.io/twitter/follow/vtdotai?style=social)](https://twitter.com/vtdotai)
 </p>
 
-## 🚀 Features
+## Features
 
-### Multi-Provider AI Orchestration
-✅ **Supported AI Model Providers**:
+### Multi-Provider AI Integration
+**Supported AI Model Providers**:
 - OpenAI (GPT-o1, GPT-o3, GPT-4.5, GPT-4o)
 - Anthropic (Claude 3.5, Claude 3.7 Sonnet)
 - Google (Gemini 1.5/2.0/2.5 Pro/Flash series)
@@ -21,22 +19,22 @@
 - Cohere (Command, Command-R, Command-R-Plus)
 - Local Models via Ollama (Llama3, Phi-3, Mistral, DeepSeek R1)
 - Groq (Llama 3 70B, Mixtral 8x7B)
-- OpenRouter (for accessing multiple providers with one key)
+- OpenRouter (unified access to multiple providers)
 
-✨ **Core Capabilities**:
-- Dynamic conversation routing with semantic understanding
-- Multi-modal interactions (Text/Image/Audio)
+**Core Capabilities**:
+- Semantic-based routing using embedding-based classification
+- Multi-modal interactions across text, image, and audio
 - Vision analysis for images and URLs
 - Image generation with DALL-E 3
-- Text-to-Speech with latest voice models
+- Text-to-Speech with multiple voice models
 - Assistant framework with code interpreter
-- Thinking mode with visible reasoning process
-- Real-time response streaming
-- Cross-provider model switching
+- Thinking mode with transparent reasoning steps
+- Real-time streaming responses
+- Provider-agnostic model switching
 
-## 🏗️ Architecture
+## Architecture
 
-VT.ai uses a modular architecture built around intelligent request routing and multi-provider model support:
+VT.ai implements a modular architecture centered on a semantic routing system that directs user queries to specialized handlers:
 
 ```
 ┌────────────────┐     ┌─────────────────┐     ┌───────────────────────┐
@@ -58,37 +56,43 @@ VT.ai uses a modular architecture built around intelligent request routing and m
 ### Key Components
 
 1. **Semantic Router** (`/src/router/`)
-   - Uses embeddings to classify user queries into intent categories
-   - Routes requests to specialized handlers based on content type
-   - Supports text processing, image generation, vision analysis, casual conversation, and curious inquiry
+   - Vector-based query classification system using FastEmbed embeddings
+   - Routes user queries to specialized handlers using the `SemanticRouterType` enum
+   - Supports five distinct routing categories:
+     - Text processing (summaries, translations, analysis)
+     - Image generation (DALL-E prompt crafting)
+     - Vision analysis (image interpretation)
+     - Casual conversation (social interactions)
+     - Curious inquiries (informational requests)
 
 2. **Model Management** (`/src/utils/llm_settings_config.py`)
-   - Unified API abstractions via LiteLLM
-   - Provider-agnostic model switching
-   - Configurable model parameters with dynamic loading
+   - Unified API abstractions through LiteLLM
+   - Provider-agnostic model switching with dynamic parameters
+   - Centralized configuration for model settings and routing
 
 3. **Conversation Handling** (`/src/utils/conversation_handlers.py`)
-   - Stream-based response processing
-   - Multi-modal content handling
-   - Thinking mode with visible reasoning process
-   - Enhanced error handling and timeouts
+   - Streaming response processing with backpressure handling
+   - Multi-modal content parsing and rendering
+   - Thinking mode implementation showing reasoning steps
+   - Error handling with graceful fallbacks
 
-4. **Assistant Framework** (`/src/assistants/`)
-   - Tool-using capabilities
-   - Code interpreter integration
-   - File attachment processing
+4. **Assistant Framework** (`/src/assistants/mino/`)
+   - Tool use capabilities with function calling
+   - Code interpreter integration for computation
+   - File attachment processing with multiple formats
+   - Assistant state management
 
 5. **Media Processing** (`/src/utils/media_processors.py`)
-   - Image generation with DALL-E 3
-   - Vision analysis with multiple model options
-   - Audio transcription and Text-to-Speech
+   - Image generation pipeline for DALL-E 3
+   - Vision analysis with cross-provider model support
+   - Audio transcription and Text-to-Speech integration
 
-## 📦 Quick Start
+## Setup Guide
 
 ### Prerequisites
 - Python 3.11+ (specified in `.python-version`)
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) for dependency management
-- [Ollama](https://github.com/ollama/ollama/blob/main/README.md#quickstart) (optional, for local models)
+- [uv](https://github.com/astral-sh/uv) for dependency management
+- [Ollama](https://github.com/ollama/ollama) (optional, for local models)
 
 ### Installation
 
@@ -97,13 +101,14 @@ VT.ai uses a modular architecture built around intelligent request routing and m
 git clone https://github.com/vinhnx/VT.ai.git
 cd VT.ai
 
-# Setup environment
+# Setup environment using uv
 uv venv
 source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate     # Windows
+.venv\Scripts\activate     # Windows
 
-# Install dependencies
-uv pip install -r requirements.txt
+# Install dependencies using uv
+uv pip install -e .         # Install main dependencies
+uv pip install -e ".[dev]"  # Optional: Install development dependencies
 
 # Configure environment
 cp .env.example .env
@@ -112,7 +117,7 @@ cp .env.example .env
 
 ### Configuration
 
-Edit the `.env` file with your API keys based on which models you want to use:
+Edit the `.env` file with your API keys for the models you intend to use:
 
 ```ini
 # Required for basic functionality (at least one of these)
@@ -136,27 +141,45 @@ OLLAMA_HOST=http://localhost:11434
 ```bash
 # Activate the virtual environment (if not already active)
 source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate     # Windows
+.venv\Scripts\activate     # Windows
 
 # Launch the interface
 chainlit run src/app.py -w
 ```
 
-The `-w` flag enables auto-reloading for development.
+The `-w` flag enables auto-reloading during development.
 
-### (Optional) Train the Semantic Router
+### Dependency Management
 
-To customize the semantic router for your specific needs:
+The project uses uv for faster and more reliable dependency management:
+
+```bash
+# Add a new dependency
+uv pip install package-name
+
+# Update a dependency
+uv pip install --upgrade package-name
+
+# Export dependencies to requirements.txt
+uv pip freeze > requirements.txt
+
+# Install from requirements.txt
+uv pip install -r requirements.txt
+```
+
+### Customizing the Semantic Router
+
+To customize the semantic router for specific use cases:
 
 ```bash
 python src/router/trainer.py
 ```
 
-This requires an OpenAI API key and will update the `layers.json` file with new routing rules.
+This utility updates the `layers.json` file with new routing rules and requires an OpenAI API key to generate embeddings.
 
-## 💡 Usage Guide
+## Usage Guide
 
-### Chat Interface Controls
+### Interface Controls
 
 | Shortcut | Action                      |
 |----------|----------------------------- |
@@ -164,29 +187,29 @@ This requires an OpenAI API key and will update the `layers.json` file with new 
 | Ctrl+,   | Open settings panel         |
 | Ctrl+L   | Clear conversation history  |
 
-### Available Chat Modes
+### Chat Modes
 
 1. **Standard Chat**
-   - Interact with any configured LLM
-   - Dynamic conversation routing based on query type
-   - Support for text, images, and audio input
-   - Thinking mode with visible reasoning process (use "<think>" tag)
+   - Access to all configured LLM providers
+   - Dynamic conversation routing based on query classification
+   - Support for text, image, and audio inputs
+   - Advanced thinking mode with reasoning trace (use "<think>" tag)
 
 2. **Assistant Mode (Beta)**
-   - Code interpreter for complex calculations
-   - File attachments (PDF/CSV/Images)
+   - Code interpreter for computations and data analysis
+   - File attachment support (PDF/CSV/Images)
    - Persistent conversation threads
-   - Function calling capabilities
+   - Function calling for external integrations
 
-### Task-Specific Features
+### Specialized Features
 
-- **Image Generation**: Ask for an image to be generated (e.g., "Generate an image of a mountain landscape")
-- **Image Analysis**: Upload or provide a URL to an image for the AI to analyze
-- **Text Processing**: Request summaries, translations, or other text transformations
-- **Voice Input**: Use speech recognition for hands-free interaction
-- **TTS Output**: Hear responses spoken aloud with configurable voices
+- **Image Generation**: Generate images through prompts ("Generate an image of...")
+- **Image Analysis**: Upload or provide URL for image interpretation
+- **Text Processing**: Request summaries, translations, or content transformation
+- **Voice Interaction**: Use speech recognition for input and TTS for responses
+- **Thinking Mode**: Access step-by-step reasoning from the models
 
-## 🌐 Supported Models
+## Supported Models
 
 | Category       | Models                                                     |
 |----------------|-----------------------------------------------------------|
@@ -196,34 +219,57 @@ This requires an OpenAI API key and will update the `layers.json` file with new 
 | **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                          |
 | **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B)                |
 
-## 🤝 Contributing
+## Development
 
-### Development Setup
+### Environment Setup
 
 ```bash
 # Activate the virtual environment
 source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate     # Windows
+.venv\Scripts\activate     # Windows
 
-# Install development tools
-uv pip install pytest black
+# Install development dependencies
+uv pip install -e ".[dev]"
 
 # Format code
 black .
+
+# Run linting
+flake8 src/
+isort src/
+
+# Run tests
+pytest
 ```
 
-### Contribution Guidelines
+### Dependency Management
+
+```bash
+# Add a project dependency
+uv pip install package-name
+# Update pyproject.toml manually after confirming compatibility
+
+# Add a development dependency
+uv pip install --dev package-name
+# Update pyproject.toml's project.optional-dependencies.dev section
+
+# Sync all project dependencies after pulling updates
+uv pip install -e .
+uv pip install -e ".[dev]"
+```
+
+### Contribution Process
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/new-capability`)
 3. Add type hints for new functions
-4. Update documentation
-5. Open a Pull Request
+4. Update documentation to reflect changes
+5. Submit a Pull Request with comprehensive description
 
-## 📄 License
+## License
 
-MIT License - See [LICENSE](LICENSE) for full text.
+MIT License - See [LICENSE](LICENSE) for details.
 
-## 🌟 Acknowledgements
+## Acknowledgements
 
 - [Chainlit](https://chainlit.io) - Chat interface framework
 - [LiteLLM](https://docs.litellm.ai) - Model abstraction layer
