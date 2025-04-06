@@ -33,7 +33,7 @@ from utils.llm_profile_builder import build_llm_profile
 from utils.settings_builder import build_settings
 from utils.url_extractor import extract_url
 
-# Load .env
+# Load .env after setup
 dotenv.load_dotenv(dotenv.find_dotenv())
 
 # Model alias map for litellm
@@ -45,24 +45,15 @@ route_layer = RouteLayer.from_json("./src/router/layers.json")
 # Create temporary directory for TTS audio files
 temp_dir = tempfile.TemporaryDirectory()
 
-# Set LLM Providers API Keys from environment variable or user input
-# OpenAI - API Key
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY") or getpass(
-    "Enter OpenAI API Key: "
-)
-# OpenAI - Organization ID - track expense
-# os.environ["OPENAI_ORGANIZATION"] = os.getenv("OPENAI_ORGANIZATION") or getpass(
-#     "(Optional) Enter OpenAI Orginazation ID, for billing management. You can skip this, by pressing the Return key..."
-# )  # OPTIONAL
-
-# os.environ["ASSISTANT_ID"] = os.getenv("ASSISTANT_ID") or getpass(
-#     "(Optional) Enter pre-defined OpenAI Assistant ID, this is used for assistant conversation thread. You can skip this."
-# )  # OPTIONAL
-
-os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY") or getpass(
-    "Enter Google Gemini API Key, this is used for Vision capability. You can skip this, by pressing the Return key..."
-)
-
+# Set LLM Providers API Keys from environment variables
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+os.environ["COHERE_API_KEY"] = os.getenv("COHERE_API_KEY")
+os.environ["HUGGINGFACE_API_KEY"] = os.getenv("HUGGINGFACE_API_KEY")
+os.environ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY")
+os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
+os.environ["OPENROUTER_API_KEY"] = os.getenv("OPENROUTER_API_KEY")
+os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
+os.environ["MISTRAL_API_KEY"] = os.getenv("MISTRAL_API_KEY")
 
 assistant_id = os.environ.get("ASSISTANT_ID")
 
