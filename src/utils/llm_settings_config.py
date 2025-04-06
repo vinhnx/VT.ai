@@ -115,10 +115,12 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "OpenRouter - Meta: Llama 4 Maverick": "openrouter/meta-llama/llama-4-maverick",
     "OpenRouter - Meta: Llama 4 Scout (free)": "openrouter/meta-llama/llama-4-scout:free",
     "OpenRouter - Meta: Llama 4 Scout": "openrouter/meta-llama/llama-4-scout",
+    "OpenRouter - Qwen QWQ 32B (free)": "openrouter/qwen/qwq-32b:free",
+    "OpenRouter - Qwen QWQ 32B": "openrouter/qwen/qwq-32b",
     "OpenRouter - Qwen 2.5 VL 32B (free)": "openrouter/qwen/qwen2.5-vl-32b-instruct:free",
     "OpenRouter - Qwen 2.5 Coder 32B": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
-    "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
-    "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
+    "OpenRouter - Mistral: Mistral Small 3.1 24B (free)": "mistralai/mistral-small-3.1-24b-instruct:free",
+    "OpenRouter - Mistral: Mistral Small 3.1 24B": "mistralai/mistral-small-3.1-24b-instruct",
 
     # Ollama models
     "Ollama - Deepseek R1 1.5B": "ollama/deepseek-r1:1.5b",
