@@ -168,7 +168,7 @@ def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
             encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
 
             # Load routes directly from the original path
-            with open("./src/router/layers.json", "r") as f:
+            with open("./vtai/router/layers.json", "r") as f:
                 router_json = json.load(f)
 
                 # Create routes from the JSON data

@@ -6,30 +6,34 @@ A multimodal AI chat application with dynamic conversation routing.
 
 import asyncio
 import json
+import os
+import sys
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
 import chainlit as cl
 
-import utils.constants as const
-from assistants.mino.create_assistant import tool_map
-from assistants.mino.mino import MinoAssistant
-from utils import llm_settings_config as conf
-from utils.assistant_tools import process_thread_message, process_tool_call
-from utils.config import initialize_app, logger
-from utils.conversation_handlers import (
+from vtai.assistants.mino.create_assistant import tool_map
+from vtai.assistants.mino.mino import MinoAssistant
+
+# Update imports to use vtai package namespace for proper pip installation
+from vtai.utils import constants as const
+from vtai.utils import llm_settings_config as conf
+from vtai.utils.assistant_tools import process_thread_message, process_tool_call
+from vtai.utils.config import initialize_app, logger
+from vtai.utils.conversation_handlers import (
     config_chat_session,
     handle_conversation,
     handle_files_attachment,
     handle_thinking_conversation,
 )
-from utils.dict_to_object import DictToObject
-from utils.error_handlers import handle_exception
-from utils.file_handlers import process_files
-from utils.llm_profile_builder import build_llm_profile
-from utils.media_processors import handle_tts_response
-from utils.settings_builder import build_settings
-from utils.user_session_helper import get_setting, is_in_assistant_profile
+from vtai.utils.dict_to_object import DictToObject
+from vtai.utils.error_handlers import handle_exception
+from vtai.utils.file_handlers import process_files
+from vtai.utils.llm_profile_builder import build_llm_profile
+from vtai.utils.media_processors import handle_tts_response
+from vtai.utils.settings_builder import build_settings
+from vtai.utils.user_session_helper import get_setting, is_in_assistant_profile
 
 # Initialize the application with improved client configuration
 route_layer, assistant_id, openai_client, async_openai_client = initialize_app()
@@ -52,6 +56,7 @@ async def start_chat():
     # Initialize default settings
     cl.user_session.set(conf.SETTINGS_CHAT_MODEL, "default_model_name")
 
+    # testing
     # Build LLM profile
     build_llm_profile(conf.ICONS_PROVIDER_MAP)
 
@@ -66,8 +71,11 @@ async def start_chat():
             thread = await async_openai_client.beta.threads.create()
             cl.user_session.set("thread", thread)
             logger.info("Created new thread: %s", thread.id)
-        except Exception as e:
+        except (ValueError, ConnectionError, TimeoutError) as e:
             logger.error("Failed to create thread: %s", e)
+            await handle_exception(e)
+        except Exception as e:
+            logger.error("Unexpected error when creating thread: %s", e)
             await handle_exception(e)
 
 
@@ -493,3 +501,22 @@ async def on_speak_chat_response(action: cl.Action) -> None:
     except Exception as e:
         logger.error("Error handling TTS response: %s", e)
         await cl.Message(content="Failed to generate speech. Please try again.").send()
+
+
+def main():
+    """
+    Entry point for the VT.ai application when installed via pip.
+    This function is called when the 'vtai' command is executed.
+    """
+    # Check for the chainlit run command
+    if len(sys.argv) == 1:
+        # No arguments provided, directly run the app using chainlit
+        os.system(f"chainlit run {os.path.realpath(__file__)}")
+    else:
+        # Pass any arguments to chainlit
+        args = " ".join(sys.argv[1:])
+        os.system(f"chainlit run {os.path.realpath(__file__)} {args}")
+
+
+if __name__ == "__main__":
+    main()
