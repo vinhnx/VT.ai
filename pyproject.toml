@@ -1,6 +1,6 @@
 [project]
 name = "vtai"
-version = "0.1.0"
+version = "0.1.1"
 description = " VT.ai - Minimal multimodal AI chat app with dynamic conversation routing "
 authors = [{ name = "Vinh Nguyen" }]
 dependencies = [
@@ -30,7 +30,7 @@ classifiers = [
 "Bug Tracker" = "https://github.com/vinhnx/VT.ai/issues"
 
 [project.scripts]
-vtai = "vtai_runner:main"
+vtai = "vtai.app:main"
 
 [build-system]
 requires = ["hatchling"]
