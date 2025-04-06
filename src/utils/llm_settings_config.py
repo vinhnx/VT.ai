@@ -24,7 +24,9 @@ SETTINGS_TTS_VOICE_PRESET_MODEL: str = "settings_tts_voice_preset_model"
 SETTINGS_ENABLE_TTS_RESPONSE: str = "settings_enable_tts_response"
 
 # Routing settings
-SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING: str = "settings_use_dynamic_conversation_routing"
+SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING: str = (
+    "settings_use_dynamic_conversation_routing"
+)
 SETTINGS_USE_THINKING_MODEL: str = "settings_use_thinking_model"
 
 # Default values
@@ -57,6 +59,7 @@ REASONING_MODELS = [
     "ollama/deepseek-r1:70b",
 ]
 
+
 # Function to check if a model is a reasoning model
 def is_reasoning_model(model_id: str) -> bool:
     """
@@ -69,6 +72,7 @@ def is_reasoning_model(model_id: str) -> bool:
         bool: True if the model is a reasoning model, False otherwise
     """
     return any(reasoning_model in model_id for reasoning_model in REASONING_MODELS)
+
 
 # Image generation options
 SETTINGS_IMAGE_GEN_IMAGE_STYLES: List[str] = ["vivid", "natural"]
@@ -98,13 +102,12 @@ IMAGE_GEN_MODELS_ALIAS_MAP: Dict[str, str] = {
 VISION_MODEL_MAP: Dict[str, str] = {
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
-    "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
-    "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
+    "Google - Gemini 1.5 Flash": "gemini/gemini-2.0-flash-latest",
+    "Google - Gemini 1.5 Pro": "gemini/gemini-2.0-pro-latest",
     "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
 }
 
 MODEL_ALIAS_MAP: Dict[str, str] = {
-
     # OpenAI models
     "OpenAI - GPT-o1": "o1",
     "OpenAI - GPT-o1 Mini": "o1-mini",
@@ -116,17 +119,17 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "OpenAI - GPT-4.5 Preview": "gpt-4.5-preview",
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT-4o Mini": "gpt-4o-mini",
-
     # Anthropic models
     "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
     "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
-
     # OpenRouter models
     "OpenRouter - DeepSeek R1 (free)": "openrouter/deepseek/deepseek-r1:free",
     "OpenRouter - DeepSeek R1": "openrouter/deepseek/deepseek-r1",
     "OpenRouter - DeepSeek V3 0324 (free)": "openrouter/deepseek/deepseek-chat-v3-0324:free",
     "OpenRouter - DeepSeek V3 0324": "openrouter/deepseek/deepseek-chat-v3-0324",
+    "OpenRouter - Anthropic: Claude 3.7 Sonnet (thinking)": "openrouter/anthropic/claude-3.7-sonnet:thinking",
+    "OpenRouter - Anthropic: Claude 3.7 Sonnet": "openrouter/anthropic/claude-3.7-sonnet",
     "OpenRouter - Google: Gemini 2.5 Pro Experimental (free)": "openrouter/google/gemini-2.5-pro-exp-03-25:free",
     "OpenRouter - Google: Gemini 2.5 Pro Preview": "openrouter/google/gemini-2.5-pro-preview-03-25",
     "OpenRouter - Google: Gemini 2.0 Flash Thinking Experimental (free)": "openrouter/google/gemini-2.0-flash-thinking-exp:free",
@@ -141,7 +144,6 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "OpenRouter - Qwen 2.5 Coder 32B": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
     "OpenRouter - Mistral: Mistral Small 3.1 24B (free)": "openrouter/mistralai/mistral-small-3.1-24b-instruct:free",
     "OpenRouter - Mistral: Mistral Small 3.1 24B": "openrouter/mistralai/mistral-small-3.1-24b-instruct",
-
     # Ollama models
     "Ollama - Deepseek R1 1.5B": "ollama/deepseek-r1:1.5b",
     "Ollama - Deepseek R1 7B": "ollama/deepseek-r1:7b",
@@ -161,19 +163,16 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Ollama - Command R+": "ollama/command-r-plus",
     "Ollama - Mistral 7B Instruct": "ollama/mistral",
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
-
     # Groq models
     "Groq - Llama 4 Scout 17b Instruct": "meta-llama/llama-4-scout-17b-16e-instruct",
     "Groq - Llama 3 8b": "groq/llama3-8b-8192",
     "Groq - Llama 3 70b": "groq/llama3-70b-8192",
     "Groq - Mixtral 8x7b": "groq/mixtral-8x7b-32768",
-
     # Cohere models
     "Cohere - Command": "command",
     "Cohere - Command-R": "command-r",
     "Cohere - Command-Light": "command-light",
     "Cohere - Command-R-Plus": "command-r-plus",
-
     # Google models
     "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
     "Google - gemini-1.5-pro-002": "gemini/gemini-1.5-pro-002",
@@ -184,7 +183,6 @@ ICONS_PROVIDER_MAP: Dict[str, str] = {
     # App icons
     "VT.ai": "./src/resources/vt.jpg",
     "Mino": "./src/resources/vt.jpg",
-
     # OpenAI icons
     "tts-1": "./src/resources/chatgpt-icon.png",
     "tts-1-hd": "./src/resources/chatgpt-icon.png",
@@ -194,7 +192,6 @@ ICONS_PROVIDER_MAP: Dict[str, str] = {
     "gpt-4o": "./src/resources/chatgpt-icon.png",
     "gpt-4-turbo": "./src/resources/chatgpt-icon.png",
     "gpt-3.5-turbo": "./src/resources/chatgpt-icon.png",
-
     # Other provider icons
     "Ollama": "./src/resources/ollama.png",
     "Anthropic": "./src/resources/claude-ai-icon.png",
@@ -245,7 +242,7 @@ APP_CHAT_PROFILE_ASSISTANT = AppChatProfileModel(
 
 APP_CHAT_PROFILES: List[AppChatProfileModel] = [
     APP_CHAT_PROFILE_CHAT,
-    APP_CHAT_PROFILE_ASSISTANT
+    APP_CHAT_PROFILE_ASSISTANT,
 ]
 
 # Update to use markdown_description instead of description for Chainlit v2.0.0
