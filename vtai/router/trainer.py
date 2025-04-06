@@ -161,6 +161,11 @@ def main() -> None:
         default="./vtai/router/layers.json",
         help="Path to save the trained layer",
     )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose output during training",
+    )
 
     args = parser.parse_args()
 
@@ -171,6 +176,12 @@ def main() -> None:
 
         print("Training semantic router using FastEmbedEncoder...")
         layer = RouteLayer(encoder=encoder, routes=routes)
+        
+        if args.verbose:
+            print(f"Created layer with {len(routes)} routes:")
+            for i, route in enumerate(routes):
+                print(f"  {i+1}. '{route.name}' - {len(route.utterances)} utterances")
+            print(f"Encoder: {encoder.model_name}")
 
         # Save the trained layer
         output_path = args.output
