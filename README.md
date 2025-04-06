@@ -4,7 +4,8 @@
   <p align="center">Multimodal AI chat application with semantic-based conversation routing</p>
 
   [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/vinhnx/VT.ai)
-  [![Twitter Follow](https://img.shields.io/twitter/follow/vtdotai?style=social)](https://twitter.com/vtdotai)
+  [![Twitter Follow](https://img.shields.io/twitter/follow/vinhnx?style=social)](https://x.com/vinhnx)
+  [![Twitter Follow](https://img.shields.io/twitter/follow/vtdotai?style=social)](https://x.com/vtdotai)
 </p>
 
 ## Features
@@ -275,3 +276,9 @@ MIT License - See [LICENSE](LICENSE) for details.
 - [LiteLLM](https://docs.litellm.ai) - Model abstraction layer
 - [SemanticRouter](https://github.com/aurelio-labs/semantic-router) - Intent classification
 - [FastEmbed](https://github.com/qdrant/fastembed) - Embedding models for routing
+
+## Contact
+
+I'm [@vinhnx](https://github.com/vinhnx) on the internet.
+
+Thank you, and have a great day!
