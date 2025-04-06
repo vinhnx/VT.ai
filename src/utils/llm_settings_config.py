@@ -64,6 +64,18 @@ VISION_MODEL_MAP = {
 }
 
 MODEL_ALIAS_MAP = {
+    "OpenRouter - DeepSeek V3 0324": "openrouter/deepseek/deepseek-chat-v3-0324:free",
+    "OpenRouter - Google: Gemini 2.5 Pro Experimental (free)": "openrouter/google/gemini-2.5-pro-exp-03-25:free",
+    "OpenRouter - Google: Gemini 2.0 Flash Thinking Experimental (free)": "openrouter/google/gemini-2.0-flash-thinking-exp:free",
+    "OpenRouter - Google: Gemini 2.0 Flash Experimental (free)": "openroutergoogle/gemini-2.0-flash-exp:free",
+    "OpenRouter - Meta: Llama 4 Maverick (free)": "openrouter/meta-llama/llama-4-maverick:free",
+    "OpenRouter - Meta: Llama 4 Maverick": "openrouter/meta-llama/llama-4-maverick",
+    "OpenRouter - Meta: Llama 4 Scout (free)": "openrouter/meta-llama/llama-4-scout:free",
+    "OpenRouter - Meta: Llama 4 Scout": "openrouter/meta-llama/llama-4-scout",
+    "OpenRouter - Qwen 2.5 VL 32B (free)": "openrouter/qwen/qwen2.5-vl-32b-instruct:free",
+    "OpenRouter - Qwen 2.5 Coder 32B": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
+    "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
+    "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
     "Ollama - Deepseek R1 1.5B": "ollama/deepseek-r1:1.5b",
     "Ollama - Deepseek R1 7B": "ollama/deepseek-r1:7b",
     "Ollama - Deepseek R1 8B": "ollama/deepseek-r1:8b",
@@ -97,9 +109,6 @@ MODEL_ALIAS_MAP = {
     "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
     "Google - gemini-1.5-pro-002": "gemini/gemini-1.5-pro-002",
     "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
-    "OpenRouter - Qwen2.5-coder 32b": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
-    "OpenRouter - Mistral 7b instruct": "openrouter/mistralai/mistral-7b-instruct",
-    "OpenRouter - Mistral 7b instruct Free": "openrouter/mistralai/mistral-7b-instruct:free",
 }
 
 ICONS_PROVIDER_MAP = {
