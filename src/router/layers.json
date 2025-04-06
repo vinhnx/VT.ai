@@ -1,6 +1,6 @@
 {
-    "encoder_type": "openai",
-    "encoder_name": "text-embedding-3-small",
+    "encoder_type": "fastembed",
+    "encoder_name": "BAAI/bge-small-en-v1.5",
     "routes": [
         {
             "name": "text-processing",
@@ -27,7 +27,7 @@
             "description": null,
             "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.3,
+            "score_threshold": 0.5,
             "metadata": {}
         },
         {
@@ -49,7 +49,7 @@
             "description": null,
             "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.3,
+            "score_threshold": 0.5,
             "metadata": {}
         },
         {
@@ -74,7 +74,7 @@
             "description": null,
             "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.3,
+            "score_threshold": 0.5,
             "metadata": {}
         },
         {
@@ -125,7 +125,7 @@
             "description": null,
             "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.3,
+            "score_threshold": 0.5,
             "metadata": {}
         },
         {
@@ -150,7 +150,7 @@
             "description": null,
             "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.3,
+            "score_threshold": 0.5,
             "metadata": {}
         }
     ]

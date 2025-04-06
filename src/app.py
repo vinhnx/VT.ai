@@ -477,8 +477,7 @@ async def __handle_vision(
             cl.Action(
                 name="speak_chat_response_action",
                 payload={"value": description},
-                tooltip="Speak response",
-                icon="🔊",
+                label="Speak response",
             )
         ],
     )
@@ -520,10 +519,11 @@ async def __handle_trigger_async_chat(
         if enable_tts_response:
             current_message.actions = [
                 cl.Action(
+                    icon="speech",
                     name="speak_chat_response_action",
                     payload={"value": content},
                     tooltip="Speak response",
-                    icon="🔊",
+                    label="Speak response"
                 )
             ]
 
@@ -615,10 +615,11 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
             ],
             actions=[
                 cl.Action(
+                    icon="speech",
                     name="speak_chat_response_action",
                     payload={"value": revised_prompt},
                     tooltip="Speak response",
-                    icon="🔊",
+                    label="Speak response"
                 )
             ],
         )
@@ -806,8 +807,7 @@ async def __process_thread_message(
                         cl.Action(
                             name="speak_chat_response_action",
                             payload={"value": res_message},
-                            tooltip="Speak response",
-                            icon="🔊",
+                            label="Speak response",
                         )
                     ]
 
@@ -842,8 +842,7 @@ async def __process_thread_message(
                         cl.Action(
                             name="speak_chat_response_action",
                             payload={"value": res_message},
-                            tooltip="Speak response",
-                            icon="🔊",
+                            label="Speak response",
                         )
                     ]
 
