@@ -167,6 +167,9 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Ollama - Command R+": "ollama/command-r-plus",
     "Ollama - Mistral 7B Instruct": "ollama/mistral",
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
+    # Mistral
+    "Mistral Small": "mistral/mistral-small-latest",
+    "Mistral Large": "mistral/mistral-large-latest",
     # Groq models
     "Groq - Llama 4 Scout 17b Instruct": "meta-llama/llama-4-scout-17b-16e-instruct",
     "Groq - Llama 3 8b": "groq/llama3-8b-8192",
