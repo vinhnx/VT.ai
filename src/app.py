@@ -1,104 +1,36 @@
-import os
-import pathlib
-import tempfile
+"""
+VT.ai - Main application entry point.
+
+A multimodal AI chat application with dynamic conversation routing.
+"""
+
 import json
-import logging
-from datetime import datetime
-from getpass import getpass
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional
 
 import chainlit as cl
-import dotenv
-import litellm
-from litellm.exceptions import BadRequestError, RateLimitError, ServiceUnavailableError
+from openai import AsyncOpenAI, OpenAI
+from openai.types.beta.thread import Thread
 
 import utils.constants as const
 from assistants.mino.create_assistant import tool_map
-from assistants.mino.mino import INSTRUCTIONS, MinoAssistant
-from litellm.utils import trim_messages
-from openai import AsyncOpenAI, OpenAI
-from openai.types.beta.thread import Thread
-from openai.types.beta.threads import (
-    ImageFileContentBlock,
-    Message,
-    TextContentBlock,
-)
-from openai.types.beta.threads.runs import RunStep
-from openai.types.beta.threads.runs.tool_call import ToolCall
-from router.constants import SemanticRouterType
-from semantic_router.layer import RouteLayer
+from assistants.mino.mino import MinoAssistant
 from utils import llm_settings_config as conf
-from utils.chat_profile import AppChatProfileType
-from utils.dict_to_object import DictToObject
-
-from utils.llm_profile_builder import build_llm_profile
-from utils.settings_builder import build_settings
-from utils.url_extractor import extract_url
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+from utils.assistant_tools import process_thread_message, process_tool_call
+from utils.config import initialize_app, logger
+from utils.conversation_handlers import (
+    config_chat_session,
+    handle_conversation,
+    handle_files_attachment,
 )
-logger = logging.getLogger("vt.ai")
+from utils.error_handlers import handle_exception
+from utils.file_handlers import process_files
+from utils.llm_profile_builder import build_llm_profile
+from utils.media_processors import handle_tts_response
+from utils.settings_builder import build_settings
+from utils.user_session_helper import is_in_assistant_profile
 
-# Load .env after setup
-dotenv.load_dotenv(dotenv.find_dotenv())
-
-# Model alias map for litellm
-litellm.model_alias_map = conf.MODEL_ALIAS_MAP
-
-# Load semantic router layer from JSON file
-route_layer = RouteLayer.from_json("./src/router/layers.json")
-
-# Create temporary directory for TTS audio files
-temp_dir = tempfile.TemporaryDirectory()
-
-def load_api_keys() -> None:
-    """
-    Load API keys from environment variables and set them in os.environ.
-    Logs which keys were successfully loaded to help with debugging.
-    """
-    api_keys = {
-        "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
-        "COHERE_API_KEY": os.getenv("COHERE_API_KEY"),
-        "HUGGINGFACE_API_KEY": os.getenv("HUGGINGFACE_API_KEY"),
-        "ANTHROPIC_API_KEY": os.getenv("ANTHROPIC_API_KEY"),
-        "GROQ_API_KEY": os.getenv("GROQ_API_KEY"),
-        "OPENROUTER_API_KEY": os.getenv("OPENROUTER_API_KEY"),
-        "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY"),
-        "MISTRAL_API_KEY": os.getenv("MISTRAL_API_KEY"),
-    }
-
-    # Set API keys in environment
-    loaded_keys = []
-    for key, value in api_keys.items():
-        if value:
-            os.environ[key] = value
-            loaded_keys.append(key)
-
-    logger.info(f"Loaded API keys: {', '.join(loaded_keys)}")
-    if not loaded_keys:
-        logger.warning("No API keys were loaded from environment")
-
-# Load API keys
-load_api_keys()
-
-assistant_id = os.environ.get("ASSISTANT_ID")
-
-# List of allowed mime types
-allowed_mime = [
-    "text/csv",
-    "application/pdf",
-    "image/png",
-    "image/jpeg",
-    "image/jpg",
-    "audio/mpeg",
-    "audio/mp3",
-    "audio/wav"
-]
+# Initialize the application
+route_layer, assistant_id = initialize_app()
 
 # Initialize OpenAI client with better error handling
 try:
@@ -109,46 +41,52 @@ except Exception as e:
     logger.error(f"Failed to initialize OpenAI clients: {e}")
     raise
 
-# constants
+# App name constant
 APP_NAME = const.APP_NAME
-
-# NOTE: 💡 Check ./TODO file for TODO list
 
 
 @cl.set_chat_profiles
 async def build_chat_profile(user=None):
+    """Define and set available chat profiles."""
     return conf.CHAT_PROFILES
 
 
 @cl.on_chat_start
 async def start_chat():
     """
-    Initializes the chat session.
-    Builds LLM profiles, configures chat settings, and sets initial system message.
+    Initialize the chat session with settings and system message.
     """
     # Initialize default settings
     cl.user_session.set(
         conf.SETTINGS_CHAT_MODEL, "default_model_name"
-    )  # Set your default model
+    )
 
-    # build llm profile
+    # Build LLM profile
     build_llm_profile(conf.ICONS_PROVIDER_MAP)
 
-    # settings configuration
+    # Settings configuration
     settings = await build_settings()
 
-    # set selected LLM model for current settion's model
-    await __config_chat_session(settings)
+    # Configure chat session with selected model
+    await config_chat_session(settings)
 
-    if _is_currently_in_assistant_profile():
+    if is_in_assistant_profile():
         thread = await async_openai_client.beta.threads.create()
         cl.user_session.set("thread", thread)
 
 
 @cl.step(name=APP_NAME, type="run")
 async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = None):
+    """
+    Run the assistant with the user query and manage the response.
+    
+    Args:
+        thread_id: Thread ID to interact with
+        human_query: User's message
+        file_ids: Optional list of file IDs to attach
+    """
     # Add the message to the thread
-    file_ids = file_ids or []  # Safe handling of mutable default argument
+    file_ids = file_ids or []
     init_message = await async_openai_client.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
@@ -156,7 +94,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
     )
 
     # Create the run
-    if assistant_id is None or len(assistant_id) == 0:
+    if not assistant_id:
         mino = MinoAssistant(openai_client=async_openai_client)
         assistant = await mino.run_assistant()
         run_instance = await async_openai_client.beta.threads.runs.create(
@@ -172,6 +110,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
     message_references = {}  # type: Dict[str, cl.Message]
     step_references = {}  # type: Dict[str, cl.Step]
     tool_outputs = []
+    
     # Periodically check for updates
     while True:
         run_instance = await async_openai_client.beta.threads.runs.retrieve(
@@ -189,7 +128,8 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                 thread_id=thread_id, run_id=run_instance.id, step_id=step.id
             )
             step_details = run_step.step_details
-            # Update step content in the Chainlit UI
+            
+            # Process message creation
             if step_details.type == "message_creation":
                 thread_message = (
                     await async_openai_client.beta.threads.messages.retrieve(
@@ -197,15 +137,16 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                         thread_id=thread_id,
                     )
                 )
-                await __process_thread_message(message_references, thread_message)
+                await process_thread_message(message_references, thread_message, async_openai_client)
 
+            # Process tool calls
             if step_details.type == "tool_calls":
                 for tool_call in step_details.tool_calls:
                     if isinstance(tool_call, dict):
                         tool_call = DictToObject(tool_call)
 
                     if tool_call.type == "code_interpreter":
-                        await __process_tool_call(
+                        await process_tool_call(
                             step_references=step_references,
                             step=step,
                             tool_call=tool_call,
@@ -224,7 +165,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                         )
 
                     elif tool_call.type == "retrieval":
-                        await __process_tool_call(
+                        await process_tool_call(
                             step_references=step_references,
                             step=step,
                             tool_call=tool_call,
@@ -241,7 +182,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                             **json.loads(tool_call.function.arguments)
                         )
 
-                        await __process_tool_call(
+                        await process_tool_call(
                             step_references=step_references,
                             step=step,
                             tool_call=tool_call,
@@ -254,6 +195,8 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                         tool_outputs.append(
                             {"output": function_output, "tool_call_id": tool_call.id}
                         )
+                        
+            # Submit tool outputs if required
             if (
                 run_instance.status == "requires_action"
                 and run_instance.required_action.type == "submit_tool_outputs"
@@ -272,702 +215,70 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
     """
-    Handles incoming messages from the user.
-    Processes text messages, file attachment, and routes conversations accordingly.
+    Handle incoming user messages and route them appropriately.
+    
+    Args:
+        message: The user message object
     """
-
-    if _is_currently_in_assistant_profile():
-        thread = cl.user_session.get("thread")  # type: Thread
-        files_ids = await __process_files(message.elements)
-        await run(thread_id=thread.id, human_query=message.content, file_ids=files_ids)
-
-    else:
-        # Chatbot memory
-        messages = cl.user_session.get("message_history") or []  # Get message history
-
-        if message.elements and len(message.elements) > 0:
-            await __handle_files_attachment(
-                message, messages
-            )  # Process file attachments
+    try:
+        if is_in_assistant_profile():
+            thread = cl.user_session.get("thread")  # type: Thread
+            files_ids = await process_files(message.elements, async_openai_client)
+            await run(thread_id=thread.id, human_query=message.content, file_ids=files_ids)
         else:
-            await __handle_conversation(message, messages)  # Process text messages
+            # Get message history
+            messages = cl.user_session.get("message_history") or [] 
+
+            if message.elements and len(message.elements) > 0:
+                await handle_files_attachment(message, messages, async_openai_client)
+            else:
+                await handle_conversation(message, messages, route_layer)
+    except Exception as e:
+        await handle_exception(e)
 
 
 @cl.on_settings_update
 async def update_settings(settings: Dict[str, Any]) -> None:
     """
-    Updates chat settings based on user preferences.
+    Update user settings based on preferences.
+    
+    Args:
+        settings: Dictionary of user settings
     """
-
+    # Update temperature if provided
     if settings_temperature := settings.get(conf.SETTINGS_TEMPERATURE):
         cl.user_session.set(conf.SETTINGS_TEMPERATURE, settings_temperature)
 
+    # Update top_p if provided
     if settings_top_p := settings.get(conf.SETTINGS_TOP_P):
         cl.user_session.set(conf.SETTINGS_TOP_P, settings_top_p)
 
-    cl.user_session.set(conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL))
-    cl.user_session.set(
+    # Update all other settings
+    setting_keys = [
+        conf.SETTINGS_CHAT_MODEL,
         conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE,
-        settings.get(conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE),
-    )
-    cl.user_session.set(
         conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY,
-        settings.get(conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY),
-    )
-    cl.user_session.set(
-        conf.SETTINGS_VISION_MODEL, settings.get(conf.SETTINGS_VISION_MODEL)
-    )
-    cl.user_session.set(
+        conf.SETTINGS_VISION_MODEL,
         conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING,
-        settings.get(conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING),
-    )
-    cl.user_session.set(conf.SETTINGS_TTS_MODEL, settings.get(conf.SETTINGS_TTS_MODEL))
-    cl.user_session.set(
+        conf.SETTINGS_TTS_MODEL,
         conf.SETTINGS_TTS_VOICE_PRESET_MODEL,
-        settings.get(conf.SETTINGS_TTS_VOICE_PRESET_MODEL),
-    )
-    cl.user_session.set(
-        conf.SETTINGS_ENABLE_TTS_RESPONSE, settings.get(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-    )
+        conf.SETTINGS_ENABLE_TTS_RESPONSE,
+        conf.SETTINGS_TRIMMED_MESSAGES,
+    ]
+    
+    for key in setting_keys:
+        if key in settings:
+            cl.user_session.set(key, settings.get(key))
 
 
 @cl.action_callback("speak_chat_response_action")
 async def on_speak_chat_response(action: cl.Action) -> None:
     """
-    Handles the action triggered by the user.
+    Handle TTS action triggered by the user.
+    
+    Args:
+        action: The action object containing payload
     """
     await action.remove()
     value = action.payload.get("value") or ""
-    return await __handle_tts_response(value)
-
-
-async def __handle_tts_response(context: str) -> None:
-    """
-    Generates and sends a TTS audio response using OpenAI's Audio API.
-    """
-    enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-    if enable_tts_response is False:
-        return
-
-    if len(context) == 0:
-        return
-
-    model = __get_settings(conf.SETTINGS_TTS_MODEL)
-    voice = __get_settings(conf.SETTINGS_TTS_VOICE_PRESET_MODEL)
-
-    with openai_client.audio.speech.with_streaming_response.create(
-        model=model, voice=voice, input=context
-    ) as response:
-        temp_filepath = os.path.join(temp_dir.name, "tts-output.mp3")
-        response.stream_to_file(temp_filepath)
-
-        await cl.Message(
-            author=model,
-            content="",
-            elements=[
-                cl.Audio(path=temp_filepath, display="inline"),
-                cl.Text(
-                    content=f"You're hearing an AI voice generated by OpenAI's {model} model, using the {voice} style.  You can customize this in Settings if you'd like!",
-                    display="inline",
-                ),
-            ],
-        ).send()
-
-        __update_msg_history_from_assistant_with_ctx(context)
-
-
-def __update_msg_history_from_user_with_ctx(context: str):
-    __update_msg_history_with_ctx(context=context, role="user")
-
-
-def __update_msg_history_from_assistant_with_ctx(context: str):
-    __update_msg_history_with_ctx(context=context, role="assistant")
-
-
-def __update_msg_history_with_ctx(context: str, role: str):
-    if len(role) == 0 or len(context) == 0:
-        return
-
-    messages = cl.user_session.get("message_history") or []
-    messages.append({"role": role, "content": context})
-
-
-async def __handle_conversation(
-    message: cl.Message, messages: List[Dict[str, str]]
-) -> None:
-    """
-    Handles text-based conversations with the user.
-    Routes the conversation based on settings and semantic understanding.
-    """
-    model = __get_settings(conf.SETTINGS_CHAT_MODEL)  # Get selected LLM model
-    msg = cl.Message(content="", author=model)
-    await msg.send()
-
-    query = message.content  # Get user query
-    # Add query to message history
-    __update_msg_history_from_user_with_ctx(query)
-
-    if _is_currently_in_assistant_profile():
-        mino = MinoAssistant(openai_client=async_openai_client)
-        msg = cl.Message(content="", author=mino.name)
-        await msg.send()
-        await mino.run_assistant()
-
-    else:
-        use_dynamic_conversation_routing = __get_settings(
-            conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
-        )
-
-        if use_dynamic_conversation_routing:
-            await __handle_dynamic_conversation_routing_chat(
-                messages, model, msg, query
-            )
-        else:
-            await __handle_trigger_async_chat(
-                llm_model=model, messages=messages, current_message=msg
-            )
-
-
-def __get_user_session_id() -> str:
-    return cl.user_session.get("id") or ""
-
-
-def __get_settings(key: str) -> Any:
-    """
-    Retrieves a specific setting value from the user session.
-    """
-    settings = cl.user_session.get("chat_settings")
-    if settings is None:
-        return None
-
-    return settings.get(key)
-
-
-async def __handle_vision(
-    input_image: str,
-    prompt: str,
-    is_local: bool = False,
-) -> None:
-    """
-    Handles vision processing tasks using the specified vision model.
-    Sends the processed image and description to the user.
-    """
-    vision_model = (
-        conf.DEFAULT_VISION_MODEL
-        if is_local
-        else __get_settings(conf.SETTINGS_VISION_MODEL)
-    )
-
-    supports_vision = litellm.supports_vision(model=vision_model)
-
-    if supports_vision is False:
-        print(f"Unsupported vision model: {vision_model}")
-        await cl.Message(
-            content="",
-            elements=[
-                cl.Text(
-                    content=f"It seems the vision model `{vision_model}` doesn't support image processing. Please choose a different model in Settings that offers Vision capabilities.",
-                    display="inline",
-                )
-            ],
-        ).send()
-        return
-
-    message = cl.Message(
-        content="I'm analyzing the image. This might take a moment.",
-        author=vision_model,
-    )
-
-    await message.send()
-    vresponse = await litellm.acompletion(
-        user=__get_user_session_id(),
-        model=vision_model,
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": input_image}},
-                ],
-            }
-        ],
-    )
-
-    description = vresponse.choices[0].message.content
-
-    if is_local:
-        image = cl.Image(path=input_image, display="inline")
-    else:
-        image = cl.Image(url=input_image, display="inline")
-
-    message = cl.Message(
-        author=vision_model,
-        content="",
-        elements=[
-            image,
-            cl.Text(content=description, display="inline"),
-        ],
-        actions=[
-            cl.Action(
-                name="speak_chat_response_action",
-                payload={"value": description},
-                label="Speak response",
-            )
-        ],
-    )
-
-    __update_msg_history_from_assistant_with_ctx(description)
-
-    await message.send()
-
-
-async def __handle_trigger_async_chat(
-    llm_model: str, messages, current_message: cl.Message
-) -> None:
-    """
-    Triggers an asynchronous chat completion using the specified LLM model.
-    Streams the response back to the user and updates the message history.
-    """
-
-    temperature = __get_settings(conf.SETTINGS_TEMPERATURE)
-    top_p = __get_settings(conf.SETTINGS_TOP_P)
-    try:
-        # use LiteLLM for other providers
-        stream = await litellm.acompletion(
-            model=llm_model,
-            messages=messages,
-            stream=True,  # TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
-            num_retries=2,
-            temperature=temperature,
-            top_p=top_p,
-        )
-
-        async for part in stream:
-            if token := part.choices[0].delta.content or "":
-                await current_message.stream_token(token)
-
-        content = current_message.content
-        __update_msg_history_from_assistant_with_ctx(content)
-
-        enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-        if enable_tts_response:
-            current_message.actions = [
-                cl.Action(
-                    icon="speech",
-                    name="speak_chat_response_action",
-                    payload={"value": content},
-                    tooltip="Speak response",
-                    label="Speak response"
-                )
-            ]
-
-        await current_message.update()
-
-    except Exception as e:
-        await __handle_exception_error(e)
-
-
-async def __handle_exception_error(e: Exception) -> None:
-    """
-    Handles exceptions that occur during LLM interactions with more specific error messages
-    based on the type of exception.
-
-    Args:
-        e: The exception that was raised
-    """
-    error_message = "Something went wrong. "
-
-    if isinstance(e, RateLimitError):
-        error_message += "Rate limit exceeded. Please try again in a few moments."
-    elif isinstance(e, BadRequestError):
-        error_message += "Invalid request parameters. Please check your inputs and try again."
-    elif isinstance(e, ServiceUnavailableError):
-        error_message += "The service is temporarily unavailable. Please try again later."
-    elif isinstance(e, ValueError):
-        error_message += f"Invalid value: {str(e)}"
-    elif isinstance(e, TimeoutError):
-        error_message += "The request timed out. Please try again."
-    else:
-        error_message += f"Unexpected error: {str(e)}"
-
-    logger.error(f"Error details: {type(e).__name__}: {str(e)}")
-
-    await cl.Message(content=error_message).send()
-
-
-async def __config_chat_session(settings: Dict[str, Any]) -> None:
-    """
-    Configures the chat session based on user settings and sets the initial system message.
-    """
-
-    chat_profile = cl.user_session.get("chat_profile")
-    if chat_profile == AppChatProfileType.CHAT.value:
-        cl.user_session.set(
-            conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL)
-        )
-
-        system_message = {
-            "role": "system",
-            "content": "You are a helpful assistant who tries their best to answer questions: ",
-        }
-
-        cl.user_session.set("message_history", [system_message])
-
-        msg = "Hello! I'm here to assist you. Please don't hesitate to ask me anything you'd like to know."
-        await cl.Message(content=msg).send()
-
-    elif chat_profile == AppChatProfileType.ASSISTANT.value:
-        system_message = {"role": "system", "content": INSTRUCTIONS}
-
-        cl.user_session.set("message_history", [system_message])
-
-        msg = "Hello! I'm Mino, your Assistant. I'm here to assist you. Please don't hesitate to ask me anything you'd like to know. Currently, I can write and run code to answer math questions."
-        await cl.Message(content=msg).send()
-
-
-async def __handle_trigger_async_image_gen(query: str) -> None:
-    """
-    Triggers asynchronous image generation using the default image generation model.
-    Sends the generated image and description to the user.
-    """
-    image_gen_model = conf.DEFAULT_IMAGE_GEN_MODEL
-    __update_msg_history_from_user_with_ctx(query)
-
-    message = cl.Message(
-        content="Sure! I'll create an image based on your description. This might take a moment, please be patient.",
-        author=image_gen_model,
-    )
-    await message.send()
-
-    style = __get_settings(conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE)
-    quality = __get_settings(conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY)
-    try:
-        image_response = await litellm.aimage_generation(
-            user=__get_user_session_id(),
-            prompt=query,
-            model=image_gen_model,
-            style=style,
-            quality=quality,
-        )
-
-        image_gen_data = image_response["data"][0]
-        image_url = image_gen_data["url"]
-        revised_prompt = image_gen_data["revised_prompt"]
-
-        message = cl.Message(
-            author=image_gen_model,
-            content="Here's the image, along with a refined description based on your input:",
-            elements=[
-                cl.Image(url=image_url, display="inline"),
-                cl.Text(content=revised_prompt, display="inline"),
-            ],
-            actions=[
-                cl.Action(
-                    icon="speech",
-                    name="speak_chat_response_action",
-                    payload={"value": revised_prompt},
-                    tooltip="Speak response",
-                    label="Speak response"
-                )
-            ],
-        )
-
-        __update_msg_history_from_assistant_with_ctx(revised_prompt)
-
-        await message.send()
-
-    except Exception as e:
-        await __handle_exception_error(e)
-
-
-async def __handle_files_attachment(
-    message: cl.Message, messages: List[Dict[str, str]]
-) -> None:
-    """
-    Handles file attachments from the user.
-    Processes images using vision models and text files as chat input.
-    """
-    if not message.elements:
-        await cl.Message(content="No file attached").send()
-        return
-
-    prompt = message.content
-
-    for file in message.elements:
-        path = str(file.path)
-        mime_type = file.mime or ""
-
-        if "image" in mime_type:
-            await __handle_vision(path, prompt=prompt, is_local=True)
-
-        elif "text" in mime_type:
-            p = pathlib.Path(path)
-            s = p.read_text(encoding="utf-8")
-            message.content = s
-            await __handle_conversation(message, messages)
-
-        elif "audio" in mime_type:
-            f = pathlib.Path(path)
-            await __handle_audio_transcribe(path, f)
-
-
-async def __handle_audio_transcribe(path, audio_file):
-    model = conf.DEFAULT_WHISPER_MODEL
-    transcription = await async_openai_client.audio.transcriptions.create(
-        model=model, file=audio_file
-    )
-    text = transcription.text
-
-    await cl.Message(
-        content="",
-        author=model,
-        elements=[
-            cl.Audio(path=path, display="inline"),
-            cl.Text(content=text, display="inline"),
-        ],
-    ).send()
-
-    __update_msg_history_from_assistant_with_ctx(text)
-    return text
-
-
-async def __handle_dynamic_conversation_routing_chat(
-    messages: List[Dict[str, str]], model: str, msg: cl.Message, query: str
-) -> None:
-    """
-    Routes the conversation dynamically based on the semantic understanding of the user's query.
-    Handles image generation, vision processing, and default chat interactions.
-    """
-    route_choice = route_layer(query)
-    route_choice_name = route_choice.name
-
-    should_trimmed_messages = __get_settings(conf.SETTINGS_TRIMMED_MESSAGES)
-    if should_trimmed_messages:
-        messages = trim_messages(messages, model)
-
-    print(
-        f"""💡
-          Query: {query}
-          Is classified as route: {route_choice_name}
-          running router..."""
-    )
-
-    if route_choice_name == SemanticRouterType.IMAGE_GENERATION:
-        print(
-            f"""💡
-            Running route_choice_name: {route_choice_name}.
-            Processing image generation..."""
-        )
-        await __handle_trigger_async_image_gen(query)
-
-    elif route_choice_name == SemanticRouterType.VISION_IMAGE_PROCESSING:
-        urls = extract_url(query)
-        if len(urls) > 0:
-            print(
-                f"""💡
-                Running route_choice_name: {route_choice_name}.
-                Received image urls/paths.
-                Processing with Vision model..."""
-            )
-            url = urls[0]
-            await __handle_vision(input_image=url, prompt=query, is_local=False)
-        else:
-            print(
-                f"""💡
-                Running route_choice_name: {route_choice_name}.
-                Received no image urls/paths.
-                Processing with async chat..."""
-            )
-            await __handle_trigger_async_chat(
-                llm_model=model, messages=messages, current_message=msg
-            )
-    else:
-        print(
-            f"""💡
-            Running route_choice_name: {route_choice_name}.
-            Processing with async chat..."""
-        )
-        await __handle_trigger_async_chat(
-            llm_model=model, messages=messages, current_message=msg
-        )
-
-
-def _is_currently_in_assistant_profile() -> bool:
-    chat_profile = cl.user_session.get("chat_profile")
-    return chat_profile == "Assistant"
-
-
-# Check if the files uploaded are allowed
-async def __check_files(files: List) -> Tuple[bool, Optional[str]]:
-    """
-    Check if all files are of allowed mime types
-
-    Args:
-        files: List of files to check
-
-    Returns:
-        Tuple of (is_valid, error_message)
-    """
-    invalid_files = []
-    for file in files:
-        if file.mime not in allowed_mime:
-            invalid_files.append(f"{file.name} ({file.mime})")
-
-    if invalid_files:
-        error_msg = (
-            f"The following files are not supported: {', '.join(invalid_files)}. "
-            f"Please upload only: {', '.join(allowed_mime)}"
-        )
-        return False, error_msg
-
-    return True, None
-
-
-# Upload files to the assistant
-async def __upload_files(files: List):
-    file_ids = []
-    for file in files:
-        uploaded_file = await async_openai_client.files.create(
-            file=Path(file.path), purpose="assistants"
-        )
-        file_ids.append(uploaded_file.id)
-    return file_ids
-
-
-async def __process_files(files: List) -> List[str]:
-    """
-    Process files and upload them to the assistant if valid
-
-    Args:
-        files: List of files to process
-
-    Returns:
-        List of file IDs
-    """
-    file_ids = []
-    if not files:
-        return file_ids
-
-    is_valid, error_message = await __check_files(files)
-    if not is_valid:
-        await cl.Message(content=error_message).send()
-        logger.warning(f"Invalid files rejected: {error_message}")
-        return file_ids
-
-    try:
-        file_ids = await __upload_files(files)
-        logger.info(f"Successfully uploaded {len(file_ids)} files")
-    except Exception as e:
-        logger.error(f"Error uploading files: {e}")
-        await __handle_exception_error(e)
-
-    return file_ids
-
-
-async def __process_thread_message(
-    message_references: Dict[str, cl.Message], thread_message: Message
-):
-    for idx, content_message in enumerate(thread_message.content):
-        id = thread_message.id + str(idx)
-        if isinstance(content_message, TextContentBlock):
-            if id in message_references:
-                msg = message_references[id]
-                msg.content = content_message.text.value
-                await msg.update()
-            else:
-                message_references[id] = cl.Message(
-                    author=APP_NAME,
-                    content=content_message.text.value,
-                )
-
-                res_message = message_references[id].content
-                enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-                if enable_tts_response:
-                    message_references[id].actions = [
-                        cl.Action(
-                            name="speak_chat_response_action",
-                            payload={"value": res_message},
-                            label="Speak response",
-                        )
-                    ]
-
-                await message_references[id].send()
-        elif isinstance(content_message, ImageFileContentBlock):
-            image_id = content_message.image_file.file_id
-            response = (
-                await async_openai_client.files.with_raw_response.retrieve_content(
-                    image_id
-                )
-            )
-            elements = [
-                cl.Image(
-                    content=response.content,
-                    display="inline",
-                    size="large",
-                ),
-            ]
-
-            if id not in message_references:
-                message_references[id] = cl.Message(
-                    author=APP_NAME,
-                    content="",
-                    elements=elements,
-                )
-
-                res_message = message_references[id].content
-
-                enable_tts_response = __get_settings(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-                if enable_tts_response:
-                    message_references[id].actions = [
-                        cl.Action(
-                            name="speak_chat_response_action",
-                            payload={"value": res_message},
-                            label="Speak response",
-                        )
-                    ]
-
-                await message_references[id].send()
-        else:
-            print("unknown message type", type(content_message))
-
-
-async def __process_tool_call(
-    step_references: Dict[str, cl.Step],
-    step: RunStep,
-    tool_call: Any,  # Change type to Any to handle different tool call types
-    name: str,
-    input: Any,
-    output: Any,
-    show_input: Optional[str] = None,  # Fix None default for string parameter
-):
-    cl_step = None
-    update = False
-
-    # Safely handle tool_call as both object and dict
-    tool_call_id = getattr(tool_call, "id", None)
-    if tool_call_id is None and isinstance(tool_call, dict):
-        tool_call_id = tool_call.get("id")
-
-    if tool_call_id not in step_references:
-        cl_step = cl.Step(
-            name=name,
-            type="tool",
-            parent_id=cl.context.current_step.id if cl.context.current_step else None,
-            language=show_input,
-        )
-        step_references[tool_call_id] = cl_step
-    else:
-        update = True
-        cl_step = step_references[tool_call_id]
-
-    if step.created_at:
-        cl_step.start = datetime.fromtimestamp(step.created_at).isoformat()
-    if step.completed_at:
-        cl_step.end = datetime.fromtimestamp(step.completed_at).isoformat()
-    cl_step.input = input
-    cl_step.output = output
-
-    if update:
-        await cl_step.update()
-    else:
-        await cl_step.send()
+    await handle_tts_response(value, openai_client)
