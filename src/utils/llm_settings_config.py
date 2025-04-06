@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+import chainlit as cl
 from chainlit.types import ChatProfile
 
 from utils.chat_profile import AppChatProfileModel, AppChatProfileType
@@ -246,6 +247,27 @@ APP_CHAT_PROFILES: List[AppChatProfileModel] = [
 
 # Update to use markdown_description instead of description for Chainlit v2.0.0
 CHAT_PROFILES: List[ChatProfile] = [
-    ChatProfile(name=profile.title, markdown_description=profile.description)
+    ChatProfile(
+        name=profile.title,
+        markdown_description=profile.description,
+        starters=[
+            cl.Starter(
+                label="Brainstorm Blog Post Ideas",
+                message="I want to write a blog post about sustainable living. Can you help me brainstorm 5 potential article titles and a brief outline for one of them?",
+            ),
+            cl.Starter(
+                label="Plan a Healthy Meal",
+                message="Suggest a healthy and balanced dinner recipe that includes chicken and vegetables, and takes less than 45 minutes to prepare. Please list the ingredients and step-by-step instructions.",
+            ),
+            cl.Starter(
+                label="Learn a New Skill",
+                message="I want to start learning Python programming. Can you outline the basic concepts I should focus on first and suggest some beginner-friendly online resources?",
+            ),
+            cl.Starter(
+                label="Creative Story Prompt",
+                message="Give me a creative writing prompt involving a hidden world discovered through an old bookstore.",
+            ),
+        ],
+    )
     for profile in APP_CHAT_PROFILES
 ]

@@ -4,20 +4,21 @@ Media processing utilities for VT.ai application.
 Handles audio transcription, text-to-speech, and image processing.
 """
 
-import os
-import pathlib
 import asyncio
+import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 
 import chainlit as cl
 import litellm
 from openai import AsyncOpenAI, OpenAI
-from httpx import AsyncHTTPTransport, HTTPTransport, Timeout, AsyncClient, ReadTimeout
 
 from utils import llm_settings_config as conf
-from utils.config import temp_dir, logger
-from utils.user_session_helper import get_setting, get_user_session_id, update_message_history_from_assistant
+from utils.config import logger, temp_dir
+from utils.user_session_helper import (
+    get_setting,
+    get_user_session_id,
+    update_message_history_from_assistant,
+)
 
 
 async def handle_tts_response(context: str, openai_client: OpenAI) -> None:
@@ -40,9 +41,7 @@ async def handle_tts_response(context: str, openai_client: OpenAI) -> None:
 
         # Using a custom timeout for the TTS request to avoid hanging connections
         with openai_client.audio.speech.with_streaming_response.create(
-            model=model,
-            voice=voice,
-            input=context
+            model=model, voice=voice, input=context
         ) as response:
             response.stream_to_file(temp_filepath)
 
@@ -75,7 +74,9 @@ async def handle_tts_response(context: str, openai_client: OpenAI) -> None:
         await cl.Message(content=f"Failed to generate speech: {str(e)}").send()
 
 
-async def handle_audio_transcribe(path: str, audio_file: Path, async_openai_client: AsyncOpenAI) -> str:
+async def handle_audio_transcribe(
+    path: str, audio_file: Path, async_openai_client: AsyncOpenAI
+) -> str:
     """
     Transcribes audio to text using OpenAI's Whisper model.
 
@@ -91,8 +92,10 @@ async def handle_audio_transcribe(path: str, audio_file: Path, async_openai_clie
     try:
         # Add a timeout to the transcription request
         transcription = await asyncio.wait_for(
-            async_openai_client.audio.transcriptions.create(model=model, file=audio_file),
-            timeout=30.0  # 30 second timeout
+            async_openai_client.audio.transcriptions.create(
+                model=model, file=audio_file
+            ),
+            timeout=30.0,  # 30 second timeout
         )
         text = transcription.text
 
@@ -109,7 +112,9 @@ async def handle_audio_transcribe(path: str, audio_file: Path, async_openai_clie
         return text
     except asyncio.TimeoutError:
         logger.error("Audio transcription request timed out")
-        await cl.Message(content="Audio transcription timed out. Please try with a shorter audio file.").send()
+        await cl.Message(
+            content="Audio transcription timed out. Please try with a shorter audio file."
+        ).send()
         return ""
     except asyncio.CancelledError:
         logger.warning("Audio transcription was cancelled")
@@ -176,9 +181,9 @@ async def handle_vision(
                         ],
                     }
                 ],
-                timeout=45.0  # Add a specific timeout in litellm
+                timeout=45.0,  # Add a specific timeout in litellm
             ),
-            timeout=60.0  # Overall operation timeout
+            timeout=60.0,  # Overall operation timeout
         )
 
         description = vresponse.choices[0].message.content
@@ -197,6 +202,7 @@ async def handle_vision(
             ],
             actions=[
                 cl.Action(
+                    icon="speech",
                     name="speak_chat_response_action",
                     payload={"value": description},
                     label="Speak response",
@@ -208,7 +214,9 @@ async def handle_vision(
         await message.send()
     except asyncio.TimeoutError:
         logger.error("Vision processing request timed out")
-        await cl.Message(content="Image analysis timed out. The image might be too complex or the service is busy.").send()
+        await cl.Message(
+            content="Image analysis timed out. The image might be too complex or the service is busy."
+        ).send()
     except asyncio.CancelledError:
         logger.warning("Vision processing was cancelled")
         raise
@@ -244,9 +252,9 @@ async def handle_trigger_async_image_gen(query: str) -> None:
                 model=image_gen_model,
                 style=style,
                 quality=quality,
-                timeout=45.0  # Add a specific timeout
+                timeout=45.0,  # Add a specific timeout
             ),
-            timeout=60.0  # Overall operation timeout
+            timeout=60.0,  # Overall operation timeout
         )
 
         image_gen_data = image_response["data"][0]
@@ -266,7 +274,7 @@ async def handle_trigger_async_image_gen(query: str) -> None:
                     name="speak_chat_response_action",
                     payload={"value": revised_prompt},
                     tooltip="Speak response",
-                    label="Speak response"
+                    label="Speak response",
                 )
             ],
         )
@@ -275,7 +283,9 @@ async def handle_trigger_async_image_gen(query: str) -> None:
         await message.send()
     except asyncio.TimeoutError:
         logger.error("Image generation request timed out")
-        await cl.Message(content="Image generation timed out. Please try a simpler description or try again later.").send()
+        await cl.Message(
+            content="Image generation timed out. Please try a simpler description or try again later."
+        ).send()
     except asyncio.CancelledError:
         logger.warning("Image generation was cancelled")
         raise

@@ -6,13 +6,12 @@ Handles chat interactions, semantic routing, and message processing.
 
 import asyncio
 import pathlib
-from typing import Any, Dict, List, Optional, Tuple
 import time
+from typing import Any, Dict, List
 
 import chainlit as cl
 import litellm
 from litellm.utils import trim_messages
-from openai.types.beta.thread import Thread
 
 from router.constants import SemanticRouterType
 from utils import llm_settings_config as conf
@@ -60,9 +59,9 @@ async def handle_trigger_async_chat(
                 num_retries=3,
                 temperature=temperature,
                 top_p=top_p,
-                timeout=90.0  # Set LiteLLM timeout slightly less than our overall timeout
+                timeout=90.0,  # Set LiteLLM timeout slightly less than our overall timeout
             ),
-            timeout=completion_timeout
+            timeout=completion_timeout,
         )
 
         # Process the stream safely with proper cancellation handling
@@ -73,9 +72,9 @@ async def handle_trigger_async_chat(
         except asyncio.CancelledError:
             logger.warning("Stream processing was cancelled")
             # Make sure we handle cancellation properly
-            if hasattr(stream, 'aclose') and callable(stream.aclose):
+            if hasattr(stream, "aclose") and callable(stream.aclose):
                 await stream.aclose()
-            elif hasattr(stream, 'aclose_async') and callable(stream.aclose_async):
+            elif hasattr(stream, "aclose_async") and callable(stream.aclose_async):
                 await stream.aclose_async()
             raise
 
@@ -92,7 +91,7 @@ async def handle_trigger_async_chat(
                     name="speak_chat_response_action",
                     payload={"value": content},
                     tooltip="Speak response",
-                    label="Speak response"
+                    label="Speak response",
                 )
             ]
 
@@ -100,7 +99,9 @@ async def handle_trigger_async_chat(
 
     except asyncio.TimeoutError:
         logger.error(f"Timeout while processing chat completion with model {llm_model}")
-        await current_message.stream_token("\n\nI apologize, but the response timed out. Please try again with a shorter query.")
+        await current_message.stream_token(
+            "\n\nI apologize, but the response timed out. Please try again with a shorter query."
+        )
         await current_message.update()
     except asyncio.CancelledError:
         logger.warning("Chat completion was cancelled")
@@ -155,7 +156,7 @@ async def handle_dynamic_conversation_routing(
     model: str,
     msg: cl.Message,
     query: str,
-    route_layer: Any
+    route_layer: Any,
 ) -> None:
     """
     Routes the conversation dynamically based on the semantic understanding of the user's query.
@@ -188,7 +189,9 @@ async def handle_dynamic_conversation_routing(
                 url = urls[0]
                 await handle_vision(input_image=url, prompt=query, is_local=False)
             else:
-                logger.info(f"Processing {route_choice_name} - No image URL, using chat")
+                logger.info(
+                    f"Processing {route_choice_name} - No image URL, using chat"
+                )
                 await handle_trigger_async_chat(
                     llm_model=model, messages=messages, current_message=msg
                 )
@@ -210,9 +213,7 @@ async def handle_dynamic_conversation_routing(
 
 
 async def handle_files_attachment(
-    message: cl.Message,
-    messages: List[Dict[str, str]],
-    async_openai_client: Any
+    message: cl.Message, messages: List[Dict[str, str]], async_openai_client: Any
 ) -> None:
     """
     Handles file attachments from the user.
@@ -250,7 +251,9 @@ async def handle_files_attachment(
                         await handle_conversation(message, messages, None)
                     except Exception as e:
                         logger.error(f"Error reading text file: {e}")
-                        await cl.Message(content=f"Failed to read text file: {str(e)}").send()
+                        await cl.Message(
+                            content=f"Failed to read text file: {str(e)}"
+                        ).send()
 
             elif "audio" in mime_type:
                 f = pathlib.Path(path)
@@ -258,7 +261,9 @@ async def handle_files_attachment(
 
             else:
                 logger.warning(f"Unsupported mime type: {mime_type}")
-                await cl.Message(content=f"File type {mime_type} is not supported for direct processing.").send()
+                await cl.Message(
+                    content=f"File type {mime_type} is not supported for direct processing."
+                ).send()
 
     except asyncio.CancelledError:
         logger.warning("File attachment handling was cancelled")
@@ -291,9 +296,6 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
             }
 
             cl.user_session.set("message_history", [system_message])
-
-            msg = "Hello! I'm here to assist you. Please don't hesitate to ask me anything you'd like to know."
-            await cl.Message(content=msg).send()
 
         elif chat_profile == AppChatProfileType.ASSISTANT.value:
             system_message = {"role": "system", "content": INSTRUCTIONS}
@@ -335,15 +337,14 @@ async def handle_thinking_conversation(
     # Add special instruction to the model to use <think> tags
     thinking_messages = [m.copy() for m in messages]
     # Add a system message with instructions about using <think> tags
-    thinking_messages.append({
-        "role": "system",
-        "content": "When responding to this query, first use <think> tag to show your reasoning process, then close it with </think> and provide your final answer."
-    })
+    thinking_messages.append(
+        {
+            "role": "system",
+            "content": "When responding to this query, first use <think> tag to show your reasoning process, then close it with </think> and provide your final answer.",
+        }
+    )
     # Add the user query
-    thinking_messages.append({
-        "role": "user",
-        "content": query
-    })
+    thinking_messages.append({"role": "user", "content": query})
 
     try:
         # Create the stream
@@ -396,7 +397,10 @@ async def handle_thinking_conversation(
         # Send the final answer after thinking is complete
         if not final_answer.content:
             # If no final answer was provided, create a fallback message
-            await cl.Message(content="I've thought about this but don't have a specific answer to provide.", author=model).send()
+            await cl.Message(
+                content="I've thought about this but don't have a specific answer to provide.",
+                author=model,
+            ).send()
         else:
             # Update message history and add TTS action
             content = final_answer.content
@@ -411,7 +415,7 @@ async def handle_thinking_conversation(
                         name="speak_chat_response_action",
                         payload={"value": content},
                         tooltip="Speak response",
-                        label="Speak response"
+                        label="Speak response",
                     )
                 ]
 
@@ -419,7 +423,9 @@ async def handle_thinking_conversation(
 
     except asyncio.TimeoutError:
         logger.error(f"Timeout while processing chat completion with model {model}")
-        await cl.Message(content="\n\nI apologize, but the response timed out. Please try again with a shorter query.").send()
+        await cl.Message(
+            content="\n\nI apologize, but the response timed out. Please try again with a shorter query."
+        ).send()
     except asyncio.CancelledError:
         logger.warning("Chat completion was cancelled")
         raise
