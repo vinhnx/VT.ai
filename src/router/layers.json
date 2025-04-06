@@ -25,9 +25,10 @@
                 "Edit this document for style and clarity"
             ],
             "description": null,
-            "function_schema": null,
+            "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.82
+            "score_threshold": 0.3,
+            "metadata": {}
         },
         {
             "name": "vision-image-processing",
@@ -46,9 +47,10 @@
                 "Explain what's depicted in this visual representation"
             ],
             "description": null,
-            "function_schema": null,
+            "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.82
+            "score_threshold": 0.3,
+            "metadata": {}
         },
         {
             "name": "casual-conversation",
@@ -70,9 +72,10 @@
                 "Do you have any book recommendations?"
             ],
             "description": null,
-            "function_schema": null,
+            "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.82
+            "score_threshold": 0.3,
+            "metadata": {}
         },
         {
             "name": "image-generation",
@@ -120,9 +123,10 @@
                 "a photo of a dog wearing a colorful bandana"
             ],
             "description": null,
-            "function_schema": null,
+            "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.82
+            "score_threshold": 0.3,
+            "metadata": {}
         },
         {
             "name": "curious",
@@ -144,9 +148,10 @@
                 "I love learning new things, what can you tell me?"
             ],
             "description": null,
-            "function_schema": null,
+            "function_schemas": null,
             "llm": null,
-            "score_threshold": 0.82
+            "score_threshold": 0.3,
+            "metadata": {}
         }
     ]
 }

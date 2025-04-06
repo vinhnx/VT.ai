@@ -160,6 +160,7 @@ APP_CHAT_PROFILE_ASSISTANT = AppChatProfileModel(
 
 APP_CHAT_PROFILES = [APP_CHAT_PROFILE_CHAT, APP_CHAT_PROFILE_ASSISTANT]
 
+# Update to use markdown_description instead of description for Chainlit v2.0.0
 CHAT_PROFILES = [
     ChatProfile(name=profile.title, markdown_description=profile.description)
     for profile in APP_CHAT_PROFILES

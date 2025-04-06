@@ -122,7 +122,7 @@
                 },
                 "inputBox": {
                     "input": {
-                        "placeholder": "Type your message here..."
+                        "placeholder": "Ask me anything..."
                     },
                     "speechButton": {
                         "start": "Start recording",
