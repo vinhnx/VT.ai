@@ -121,6 +121,10 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
     "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
+    # Google models
+    "Google - Gemini 2.0 Pro": "gemini/gemini-2.0-pro",
+    "Google - Gemini 2.0 Flash": "gemini/gemini-2.0-flash",
+    "Google - Gemini 2.0 Flash Exp": "gemini/gemini-2.0-flash-exp",
     # OpenRouter models
     "OpenRouter - DeepSeek R1 (free)": "openrouter/deepseek/deepseek-r1:free",
     "OpenRouter - DeepSeek R1": "openrouter/deepseek/deepseek-r1",
@@ -172,10 +176,6 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Cohere - Command-R": "command-r",
     "Cohere - Command-Light": "command-light",
     "Cohere - Command-R-Plus": "command-r-plus",
-    # Google models
-    "Google - Gemini 1.5 Pro": "gemini/gemini-1.5-pro-latest",
-    "Google - gemini-1.5-pro-002": "gemini/gemini-1.5-pro-002",
-    "Google - Gemini 1.5 Flash": "gemini/gemini-1.5-flash-latest",
 }
 
 ICONS_PROVIDER_MAP: Dict[str, str] = {
