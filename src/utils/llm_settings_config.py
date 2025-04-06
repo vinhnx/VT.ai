@@ -75,8 +75,10 @@ VISION_MODEL_MAP: Dict[str, str] = {
 
 MODEL_ALIAS_MAP: Dict[str, str] = {
     # OpenRouter models
+    "OpenRouter - DeepSeek R1 (free)": "openrouter/deepseek/deepseek-r1:free",
+    "OpenRouter - DeepSeek R1": "openrouter/deepseek/deepseek-r1",
     "OpenRouter - DeepSeek V3 0324 (free)": "openrouter/deepseek/deepseek-chat-v3-0324:free",
-    "OpenRouter - DeepSeek R1 Zero (free)": "openrouter/deepseek/deepseek-r1-zero:free",
+    "OpenRouter - DeepSeek V3 0324": "openrouter/deepseek/deepseek-chat-v3-0324",
     "OpenRouter - Google: Gemini 2.5 Pro Experimental (free)": "openrouter/google/gemini-2.5-pro-exp-03-25:free",
     "OpenRouter - Google: Gemini 2.0 Flash Thinking Experimental (free)": "openrouter/google/gemini-2.0-flash-thinking-exp:free",
     "OpenRouter - Google: Gemini 2.0 Flash Experimental (free)": "openroutergoogle/gemini-2.0-flash-exp:free",
