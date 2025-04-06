@@ -61,10 +61,10 @@ REASONING_MODELS = [
 def is_reasoning_model(model_id: str) -> bool:
     """
     Check if a model is a reasoning model that benefits from <think> tags.
-    
+
     Args:
         model_id: The ID of the model to check
-        
+
     Returns:
         bool: True if the model is a reasoning model, False otherwise
     """
