@@ -4,16 +4,14 @@ VT.ai - Main application entry point.
 A multimodal AI chat application with dynamic conversation routing.
 """
 
-import json
 import asyncio
+import json
 import time
-from typing import Any, Dict, List, Optional
 from contextlib import asynccontextmanager
+from typing import Any, Dict, List, Optional
 
 import chainlit as cl
 import litellm
-from openai import AsyncOpenAI, OpenAI
-from openai.types.beta.thread import Thread
 
 import utils.constants as const
 from assistants.mino.create_assistant import tool_map
@@ -27,19 +25,18 @@ from utils.conversation_handlers import (
     handle_files_attachment,
     handle_thinking_conversation,
 )
+from utils.dict_to_object import DictToObject
 from utils.error_handlers import handle_exception
 from utils.file_handlers import process_files
 from utils.llm_profile_builder import build_llm_profile
 from utils.media_processors import handle_tts_response
 from utils.settings_builder import build_settings
 from utils.user_session_helper import (
-    is_in_assistant_profile,
     get_setting,
-    get_user_session_id,
+    is_in_assistant_profile,
     update_message_history_from_assistant,
-    update_message_history_from_user
+    update_message_history_from_user,
 )
-from utils.dict_to_object import DictToObject
 
 # Initialize the application with improved client configuration
 route_layer, assistant_id, openai_client, async_openai_client = initialize_app()
@@ -60,9 +57,7 @@ async def start_chat():
     Initialize the chat session with settings and system message.
     """
     # Initialize default settings
-    cl.user_session.set(
-        conf.SETTINGS_CHAT_MODEL, "default_model_name"
-    )
+    cl.user_session.set(conf.SETTINGS_CHAT_MODEL, "default_model_name")
 
     # Build LLM profile
     build_llm_profile(conf.ICONS_PROVIDER_MAP)
@@ -99,8 +94,7 @@ async def managed_run_execution(thread_id, run_id):
         try:
             # Attempt to cancel the run if it was cancelled externally
             await async_openai_client.beta.threads.runs.cancel(
-                thread_id=thread_id,
-                run_id=run_id
+                thread_id=thread_id, run_id=run_id
             )
         except Exception as e:
             logger.error(f"Error cancelling run: {e}")
@@ -130,7 +124,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                 role="user",
                 content=human_query,
             ),
-            timeout=30.0
+            timeout=30.0,
         )
 
         # Create the run
@@ -159,7 +153,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                     async_openai_client.beta.threads.runs.retrieve(
                         thread_id=thread_id, run_id=run_instance.id
                     ),
-                    timeout=30.0
+                    timeout=30.0,
                 )
 
                 # Fetch the run steps with timeout
@@ -167,7 +161,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                     async_openai_client.beta.threads.runs.steps.list(
                         thread_id=thread_id, run_id=run_instance.id, order="asc"
                     ),
-                    timeout=30.0
+                    timeout=30.0,
                 )
 
                 for step in run_steps.data:
@@ -176,7 +170,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                         async_openai_client.beta.threads.runs.steps.retrieve(
                             thread_id=thread_id, run_id=run_instance.id, step_id=step.id
                         ),
-                        timeout=30.0
+                        timeout=30.0,
                     )
                     step_details = run_step.step_details
 
@@ -187,9 +181,11 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                                 message_id=step_details.message_creation.message_id,
                                 thread_id=thread_id,
                             ),
-                            timeout=30.0
+                            timeout=30.0,
                         )
-                        await process_thread_message(message_references, thread_message, async_openai_client)
+                        await process_thread_message(
+                            message_references, thread_message, async_openai_client
+                        )
 
                     # Process tool calls
                     if step_details.type == "tool_calls":
@@ -211,7 +207,8 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
 
                                 tool_outputs.append(
                                     {
-                                        "output": tool_call.code_interpreter.outputs or "",
+                                        "output": tool_call.code_interpreter.outputs
+                                        or "",
                                         "tool_call_id": tool_call.id,
                                     }
                                 )
@@ -245,7 +242,10 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                                 )
 
                                 tool_outputs.append(
-                                    {"output": function_output, "tool_call_id": tool_call.id}
+                                    {
+                                        "output": function_output,
+                                        "tool_call_id": tool_call.id,
+                                    }
                                 )
 
                 # Submit tool outputs if required
@@ -259,19 +259,28 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                             run_id=run_instance.id,
                             tool_outputs=tool_outputs,
                         ),
-                        timeout=30.0
+                        timeout=30.0,
                     )
 
                 # Wait between polling to reduce API load
                 await asyncio.sleep(2)
 
-                if run_instance.status in ["cancelled", "failed", "completed", "expired"]:
-                    logger.info(f"Run {run_instance.id} finished with status: {run_instance.status}")
+                if run_instance.status in [
+                    "cancelled",
+                    "failed",
+                    "completed",
+                    "expired",
+                ]:
+                    logger.info(
+                        f"Run {run_instance.id} finished with status: {run_instance.status}"
+                    )
                     break
 
     except asyncio.TimeoutError:
         logger.error("Timeout occurred during run execution")
-        await cl.Message(content="The operation timed out. Please try again with a simpler query.").send()
+        await cl.Message(
+            content="The operation timed out. Please try again with a simpler query."
+        ).send()
     except Exception as e:
         logger.error(f"Error in run: {e}")
         await handle_exception(e)
@@ -289,35 +298,43 @@ async def on_message(message: cl.Message) -> None:
         if is_in_assistant_profile():
             thread = cl.user_session.get("thread")  # type: Thread
             files_ids = await process_files(message.elements, async_openai_client)
-            await run(thread_id=thread.id, human_query=message.content, file_ids=files_ids)
+            await run(
+                thread_id=thread.id, human_query=message.content, file_ids=files_ids
+            )
         else:
             # Get message history
             messages = cl.user_session.get("message_history") or []
-            
+
             # Check if current model is a reasoning model that benefits from <think> tags
             current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
             is_reasoning = conf.is_reasoning_model(current_model)
-            
+
             # If this is a reasoning model and <think> is not already in content, add it
             if is_reasoning and "<think>" not in message.content:
                 # Clone the original message content
                 original_content = message.content
                 # Modify the message content to include <think> tag
                 message.content = f"<think>{original_content}"
-                logger.info(f"Automatically added <think> tag for reasoning model: {current_model}")
+                logger.info(
+                    f"Automatically added <think> tag for reasoning model: {current_model}"
+                )
 
             if message.elements and len(message.elements) > 0:
                 await handle_files_attachment(message, messages, async_openai_client)
             else:
                 # Check for <think> tag directly in user request
                 if "<think>" in message.content.lower():
-                    logger.info("Processing message with <think> tag using thinking conversation handler")
+                    logger.info(
+                        "Processing message with <think> tag using thinking conversation handler"
+                    )
                     await handle_thinking_conversation(message, messages, route_layer)
                 else:
                     await handle_conversation(message, messages, route_layer)
     except asyncio.CancelledError:
         logger.warning("Message processing was cancelled")
-        await cl.Message(content="The operation was cancelled. Please try again.").send()
+        await cl.Message(
+            content="The operation was cancelled. Please try again."
+        ).send()
     except Exception as e:
         logger.error(f"Error processing message: {e}")
         await handle_exception(e)
@@ -349,9 +366,12 @@ async def handle_thinking_conversation(
         stream = await litellm.acompletion(
             model=model,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant. First use <think> tag to show your reasoning process, then close it with </think> and provide your final answer."},
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant. First use <think> tag to show your reasoning process, then close it with </think> and provide your final answer.",
+                },
                 *messages,
-                {"role": "user", "content": query}
+                {"role": "user", "content": query},
             ],
             temperature=float(temperature),
             top_p=float(top_p),
@@ -402,18 +422,23 @@ async def handle_thinking_conversation(
                         name="speak_chat_response_action",
                         payload={"value": final_answer.content},
                         tooltip="Speak response",
-                        label="Speak response"
+                        label="Speak response",
                     )
                 ]
 
             await final_answer.send()
         else:
             # If no final answer was provided, create a fallback message
-            await cl.Message(content="I've thought about this but don't have a specific answer to provide.", author=model).send()
+            await cl.Message(
+                content="I've thought about this but don't have a specific answer to provide.",
+                author=model,
+            ).send()
 
     except asyncio.TimeoutError:
         logger.error(f"Timeout while processing chat completion with model {model}")
-        await cl.Message(content="The operation timed out. Please try again with a shorter query.").send()
+        await cl.Message(
+            content="The operation timed out. Please try again with a shorter query."
+        ).send()
     except asyncio.CancelledError:
         logger.warning("Chat completion was cancelled")
         raise
