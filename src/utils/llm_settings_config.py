@@ -34,7 +34,7 @@ DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
 DEFAULT_MODEL: str = "gpt-4o-mini"
 DEFAULT_IMAGE_GEN_MODEL: str = "dall-e-3"
-DEFAULT_VISION_MODEL: str = "gemini/gemini-1.5-pro-latest"
+DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
 DEFAULT_TTS_MODEL: str = "gpt-4o-mini-tts"
 DEFAULT_TTS_PRESET: str = "nova"
 DEFAULT_WHISPER_MODEL: str = "whisper-1"
@@ -102,8 +102,8 @@ IMAGE_GEN_MODELS_ALIAS_MAP: Dict[str, str] = {
 VISION_MODEL_MAP: Dict[str, str] = {
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
-    "Google - Gemini 1.5 Flash": "gemini/gemini-2.0-flash-latest",
-    "Google - Gemini 1.5 Pro": "gemini/gemini-2.0-pro-latest",
+    "Google - Gemini 1.5 Flash": "gemini/gemini-2.0-flash",
+    "Google - Gemini 1.5 Pro": "gemini/gemini-2.0-pro",
     "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
 }
 
