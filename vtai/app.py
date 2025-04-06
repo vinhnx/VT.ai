@@ -13,10 +13,7 @@ from typing import Any, Dict, List, Optional
 
 import chainlit as cl
 
-from vtai.assistants.mino.create_assistant import tool_map
-from vtai.assistants.mino.mino import MinoAssistant
-
-# Fix imports to use the correct package namespace
+# Import modules
 from vtai.utils import constants as const
 from vtai.utils import llm_settings_config as conf
 from vtai.utils.assistant_tools import process_thread_message, process_tool_call
@@ -43,7 +40,7 @@ APP_NAME = const.APP_NAME
 
 
 @cl.set_chat_profiles
-async def build_chat_profile(user=None):
+async def build_chat_profile(_=None):
     """Define and set available chat profiles."""
     return conf.CHAT_PROFILES
 
@@ -70,8 +67,15 @@ async def start_chat():
             thread = await async_openai_client.beta.threads.create()
             cl.user_session.set("thread", thread)
             logger.info("Created new thread: %s", thread.id)
-        except Exception as e:
+        except (
+            asyncio.TimeoutError,
+            ConnectionError,
+            ValueError,
+        ) as e:
             logger.error("Failed to create thread: %s", e)
+            await handle_exception(e)
+        except Exception as e:
+            logger.error("Unexpected error creating thread: %s", repr(e))
             await handle_exception(e)
 
 
@@ -155,37 +159,25 @@ async def process_function_tool(
     function_name = tool_call.function.name
     function_args = json.loads(tool_call.function.arguments)
 
-    try:
-        function_output = tool_map[function_name](
-            **json.loads(tool_call.function.arguments)
-        )
+    # Since tools are temporarily removed, log and return placeholder
+    logger.warning(
+        "Function tool call received but tools are disabled: %s", function_name
+    )
 
-        await process_tool_call(
-            step_references=step_references,
-            step=step,
-            tool_call=tool_call,
-            name=function_name,
-            input=function_args,
-            output=function_output,
-            show_input="json",
-        )
+    await process_tool_call(
+        step_references=step_references,
+        step=step,
+        tool_call=tool_call,
+        name=function_name,
+        input=function_args,
+        output="Function tools are temporarily disabled",
+        show_input="json",
+    )
 
-        return {
-            "output": function_output,
-            "tool_call_id": tool_call.id,
-        }
-    except KeyError:
-        logger.error("Function %s not found in tool_map", function_name)
-        return {
-            "output": f"Error: Function {function_name} not found",
-            "tool_call_id": tool_call.id,
-        }
-    except Exception as e:
-        logger.error("Error executing function %s: %s", function_name, e)
-        return {
-            "output": f"Error executing function: {str(e)}",
-            "tool_call_id": tool_call.id,
-        }
+    return {
+        "output": "Function tools are temporarily disabled",
+        "tool_call_id": tool_call.id,
+    }
 
 
 async def process_retrieval_tool(
@@ -220,12 +212,9 @@ async def create_run_instance(thread_id: str) -> Any:
         Run instance object
     """
     if not assistant_id:
-        mino = MinoAssistant(openai_client=async_openai_client)
-        assistant = await mino.run_assistant()
-        return await async_openai_client.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=assistant.id,
-        )
+        # Log warning that we're using a placeholder as Mino is disabled
+        logger.warning("No assistant ID provided and Mino assistant is disabled")
+        raise ValueError("No assistant ID available. Please configure an assistant ID")
     else:
         return await async_openai_client.beta.threads.runs.create(
             thread_id=thread_id,
@@ -350,6 +339,9 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                 # Submit tool outputs if required
                 if (
                     run_instance.status == "requires_action"
+                    and hasattr(run_instance, "required_action")
+                    and run_instance.required_action is not None
+                    and hasattr(run_instance.required_action, "type")
                     and run_instance.required_action.type == "submit_tool_outputs"
                     and tool_outputs
                 ):
@@ -398,7 +390,7 @@ async def on_message(message: cl.Message) -> None:
     """
     try:
         if is_in_assistant_profile():
-            thread = cl.user_session.get("thread")  # type: Thread
+            thread: Thread = cl.user_session.get("thread")
             files_ids = await process_files(message.elements, async_openai_client)
             await run(
                 thread_id=thread.id, human_query=message.content, file_ids=files_ids
@@ -407,7 +399,7 @@ async def on_message(message: cl.Message) -> None:
             # Get message history
             messages = cl.user_session.get("message_history") or []
 
-            # Check if current model is a reasoning model that benefits from <think> tags
+            # Check if current model is a reasoning model that benefits from <think>
             current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
             is_reasoning = conf.is_reasoning_model(current_model)
 
@@ -428,7 +420,8 @@ async def on_message(message: cl.Message) -> None:
                 # Check for <think> tag directly in user request
                 if "<think>" in message.content.lower():
                     logger.info(
-                        "Processing message with <think> tag using thinking conversation handler"
+                        "Processing message with <think> tag using thinking "
+                        "conversation handler"
                     )
                     await handle_thinking_conversation(message, messages, route_layer)
                 else:
@@ -438,8 +431,11 @@ async def on_message(message: cl.Message) -> None:
         await cl.Message(
             content="The operation was cancelled. Please try again."
         ).send()
+    except (ValueError, KeyError, AttributeError) as e:
+        logger.error("Error in message processing: %s", e)
+        await handle_exception(e)
     except Exception as e:
-        logger.error("Error processing message: %s", e)
+        logger.error("Unexpected error processing message: %s", repr(e))
         await handle_exception(e)
 
 

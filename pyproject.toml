@@ -1,6 +1,6 @@
 [project]
 name = "vtai"
-version = "0.1.1"
+version = "0.1.2"
 description = " VT.ai - Minimal multimodal AI chat app with dynamic conversation routing "
 authors = [{ name = "Vinh Nguyen" }]
 dependencies = [
