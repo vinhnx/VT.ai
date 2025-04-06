@@ -1,39 +1,65 @@
 <p align="center">
-  <h1 align="center">VT.ai</h1>
+    <img src="./vtai/resources/vt.jpg" alt="VT.ai Logo" width="300">
+</p>
 
-  <img src="./public/screenshot.jpg" alt="screenshot" />
+<h1 align="center">
+VT - Minimal Multimodal AI Chat App with Dynamic Routing
+</h1>
 
-  Multimodal AI chat application with semantic-based conversation routing
+<p align="center">
+  <img src="./public/screenshot.jpg" alt="VT.ai screenshot">
+</p>
 
-  [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/vinhnx/VT.ai)
-  [![Twitter Follow](https://img.shields.io/twitter/follow/vinhnx?style=social)](https://x.com/vinhnx)
-  [![Twitter Follow](https://img.shields.io/twitter/follow/vtdotai?style=social)](https://x.com/vtdotai)
+<p align="center">
+  <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/vtai">
+  <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/vinhnx/vt.ai">
+  <a href="https://codespaces.new/vinhnx/VT.ai"><img alt="Open in GitHub Codespaces" src="https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github"/></a>
+  <a href="https://x.com/vinhnx"><img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/vinhnx?style=social"/></a>
+  <a href="https://x.com/vtdotai"><img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/vtdotai?style=social"/></a>
 </p>
 
 ## Features
 
-### Multi-Provider AI Integration
-**Supported AI Model Providers**:
-- OpenAI (GPT-o1, GPT-o3, GPT-4.5, GPT-4o)
-- Anthropic (Claude 3.5, Claude 3.7 Sonnet)
-- Google (Gemini 1.5/2.0/2.5 Pro/Flash series)
-- DeepSeek (DeepSeek R1 and V3 series)
-- Meta (Llama 3 & 4, including Maverick & Scout)
-- Cohere (Command, Command-R, Command-R-Plus)
-- Local Models via Ollama (Llama3, Phi-3, Mistral, DeepSeek R1)
-- Groq (Llama 3 70B, Mixtral 8x7B)
-- OpenRouter (unified access to multiple providers)
+### [Multi-Provider AI Integration](#multi-provider-ai-integration)
 
-**Core Capabilities**:
-- Semantic-based routing using embedding-based classification
-- Multi-modal interactions across text, image, and audio
-- Vision analysis for images and URLs
-- Image generation with DALL-E 3
-- Text-to-Speech with multiple voice models
-- Assistant framework with code interpreter
-- Thinking mode with transparent reasoning steps
-- Real-time streaming responses
-- Provider-agnostic model switching
+Supports OpenAI (o1, o3, 4o), Anthropic (Claude 3.5, 3.7), Google (Gemini series), DeepSeek, Meta (Llama), Cohere, local models via Ollama, and more.
+
+### [Semantic-Based Routing](#semantic-router)
+
+Smart routing system that automatically directs queries to specialized handlers based on vector-based classification.
+
+### [Multimodal Capabilities](#core-capabilities)
+
+Support for text, image, and audio inputs with vision analysis for images and URLs, plus DALL-E 3 image generation.
+
+### [Voice Interaction](#specialized-features)
+
+Use speech recognition for input and text-to-speech for responses with multiple voice models.
+
+
+### [Assistant Framework](#assistant-framework)
+
+Code interpreter for computations and data analysis with function calling for external integrations.
+
+### [Thinking Mode](#chat-modes)
+
+Access step-by-step reasoning from the models with transparent thinking processes.
+
+## Getting Started
+
+```bash
+# Install VT.ai from PyPI
+pip install vtai
+
+# Run the application
+vtai
+
+# With additional arguments
+vtai --help  # Show command-line options
+vtai -w      # Run with auto-reload for development
+```
+
+See the [Setup Guide](#setup-guide) for more detailed instructions on installation and configuration.
 
 ## Architecture
 
@@ -56,55 +82,44 @@ VT.ai implements a modular architecture centered on a semantic routing system th
                      └──────────────┘
 ```
 
-### Key Components
+## Key Components
 
-1. **Semantic Router** (`/vtai/router/`)
-   - Vector-based query classification system using FastEmbed embeddings
-   - Routes user queries to specialized handlers using the `SemanticRouterType` enum
-   - Supports five distinct routing categories:
-     - Text processing (summaries, translations, analysis)
-     - Image generation (DALL-E prompt crafting)
-     - Vision analysis (image interpretation)
-     - Casual conversation (social interactions)
-     - Curious inquiries (informational requests)
+### Semantic Router
 
-2. **Model Management** (`/vtai/utils/llm_settings_config.py`)
-   - Unified API abstractions through LiteLLM
-   - Provider-agnostic model switching with dynamic parameters
-   - Centralized configuration for model settings and routing
+- Vector-based query classification using FastEmbed embeddings
+- Routes user queries to specialized handlers
+- Supports five distinct routing categories:
+  - Text processing (summaries, translations, analysis)
+  - Image generation (DALL-E prompt crafting)
+  - Vision analysis (image interpretation)
+  - Casual conversation (social interactions)
+  - Curious inquiries (informational requests)
 
-3. **Conversation Handling** (`/vtai/utils/conversation_handlers.py`)
-   - Streaming response processing with backpressure handling
-   - Multi-modal content parsing and rendering
-   - Thinking mode implementation showing reasoning steps
-   - Error handling with graceful fallbacks
+### Model Management
 
-4. **Assistant Framework** (`/vtai/assistants/mino/`)
-   - Tool use capabilities with function calling
-   - Code interpreter integration for computation
-   - File attachment processing with multiple formats
-   - Assistant state management
+- Unified API abstractions through LiteLLM
+- Provider-agnostic model switching with dynamic parameters
+- Centralized configuration for model settings and routing
 
-5. **Media Processing** (`/vtai/utils/media_processors.py`)
-   - Image generation pipeline for DALL-E 3
-   - Vision analysis with cross-provider model support
-   - Audio transcription and Text-to-Speech integration
+### Conversation Handling
 
-## Installation from PyPI
+- Streaming response processing with backpressure handling
+- Multi-modal content parsing and rendering
+- Thinking mode implementation showing reasoning steps
+- Error handling with graceful fallbacks
 
-```bash
-# Install VT.ai from PyPI
-pip install vtai
+### Assistant Framework
 
-# Run the application
-vtai
+- Tool use capabilities with function calling
+- Code interpreter integration for computation
+- File attachment processing with multiple formats
+- Assistant state management
 
-# With additional arguments
-vtai --help  # Show command-line options
-vtai -w      # Run with auto-reload for development
-```
+### Media Processing
 
-This installs the `vtai` command which lets you launch the application directly from your terminal.
+- Image generation pipeline for DALL-E 3
+- Vision analysis with cross-provider model support
+- Audio transcription and Text-to-Speech integration
 
 ## Setup Guide
 
@@ -167,34 +182,6 @@ chainlit run vtai/app.py -w
 ```
 
 The `-w` flag enables auto-reloading during development.
-
-### Dependency Management
-
-The project uses uv for faster and more reliable dependency management:
-
-```bash
-# Add a new dependency
-uv pip install package-name
-
-# Update a dependency
-uv pip install --upgrade package-name
-
-# Export dependencies to requirements.txt
-uv pip freeze > requirements.txt
-
-# Install from requirements.txt
-uv pip install -r requirements.txt
-```
-
-### Customizing the Semantic Router
-
-To customize the semantic router for specific use cases:
-
-```bash
-python vtai/router/trainer.py
-```
-
-This utility updates the `layers.json` file with new routing rules and requires an OpenAI API key to generate embeddings.
 
 ## Usage Guide
 
@@ -283,6 +270,15 @@ uv pip install -e ".[dev]"
 3. Add type hints for new functions
 4. Update documentation to reflect changes
 5. Submit a Pull Request with comprehensive description
+
+## More Information
+
+### Documentation
+- [Setup Guide](#setup-guide)
+- [Usage Guide](#usage-guide)
+- [Supported Models](#supported-models)
+- [Architecture](#architecture)
+- [Key Components](#key-components)
 
 ## License
 
