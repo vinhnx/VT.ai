@@ -6,12 +6,10 @@ A multimodal AI chat application with dynamic conversation routing.
 
 import asyncio
 import json
-import time
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
 import chainlit as cl
-import litellm
 
 import utils.constants as const
 from assistants.mino.create_assistant import tool_map
@@ -31,12 +29,7 @@ from utils.file_handlers import process_files
 from utils.llm_profile_builder import build_llm_profile
 from utils.media_processors import handle_tts_response
 from utils.settings_builder import build_settings
-from utils.user_session_helper import (
-    get_setting,
-    is_in_assistant_profile,
-    update_message_history_from_assistant,
-    update_message_history_from_user,
-)
+from utils.user_session_helper import get_setting, is_in_assistant_profile
 
 # Initialize the application with improved client configuration
 route_layer, assistant_id, openai_client, async_openai_client = initialize_app()
@@ -72,9 +65,9 @@ async def start_chat():
         try:
             thread = await async_openai_client.beta.threads.create()
             cl.user_session.set("thread", thread)
-            logger.info(f"Created new thread: {thread.id}")
+            logger.info("Created new thread: %s", thread.id)
         except Exception as e:
-            logger.error(f"Failed to create thread: {e}")
+            logger.error("Failed to create thread: %s", e)
             await handle_exception(e)
 
 
@@ -90,18 +83,187 @@ async def managed_run_execution(thread_id, run_id):
     try:
         yield
     except asyncio.CancelledError:
-        logger.warning(f"Run execution canceled for run {run_id}")
+        logger.warning("Run execution canceled for run %s", run_id)
         try:
             # Attempt to cancel the run if it was cancelled externally
             await async_openai_client.beta.threads.runs.cancel(
                 thread_id=thread_id, run_id=run_id
             )
         except Exception as e:
-            logger.error(f"Error cancelling run: {e}")
+            logger.error("Error cancelling run: %s", e)
         raise
     except Exception as e:
-        logger.error(f"Error in run execution: {e}")
+        logger.error("Error in run execution: %s", e)
         await handle_exception(e)
+
+
+async def process_code_interpreter_tool(
+    step_references: Dict[str, cl.Step], step: Any, tool_call: Any
+) -> Dict[str, Any]:
+    """
+    Process code interpreter tool calls.
+
+    Args:
+        step_references: Dictionary of step references
+        step: The run step
+        tool_call: The tool call to process
+
+    Returns:
+        Tool output dictionary
+    """
+    output_value = ""
+    if (
+        tool_call.code_interpreter.outputs
+        and len(tool_call.code_interpreter.outputs) > 0
+    ):
+        output_value = tool_call.code_interpreter.outputs[0]
+
+    await process_tool_call(
+        step_references=step_references,
+        step=step,
+        tool_call=tool_call,
+        name=tool_call.type,
+        input=tool_call.code_interpreter.input or "# Generating code",
+        output=output_value,
+        show_input="python",
+    )
+
+    return {
+        "output": tool_call.code_interpreter.outputs or "",
+        "tool_call_id": tool_call.id,
+    }
+
+
+async def process_function_tool(
+    step_references: Dict[str, cl.Step], step: Any, tool_call: Any
+) -> Dict[str, Any]:
+    """
+    Process function tool calls.
+
+    Args:
+        step_references: Dictionary of step references
+        step: The run step
+        tool_call: The tool call to process
+
+    Returns:
+        Tool output dictionary
+    """
+    function_name = tool_call.function.name
+    function_args = json.loads(tool_call.function.arguments)
+
+    try:
+        function_output = tool_map[function_name](
+            **json.loads(tool_call.function.arguments)
+        )
+
+        await process_tool_call(
+            step_references=step_references,
+            step=step,
+            tool_call=tool_call,
+            name=function_name,
+            input=function_args,
+            output=function_output,
+            show_input="json",
+        )
+
+        return {
+            "output": function_output,
+            "tool_call_id": tool_call.id,
+        }
+    except KeyError:
+        logger.error("Function %s not found in tool_map", function_name)
+        return {
+            "output": f"Error: Function {function_name} not found",
+            "tool_call_id": tool_call.id,
+        }
+    except Exception as e:
+        logger.error("Error executing function %s: %s", function_name, e)
+        return {
+            "output": f"Error executing function: {str(e)}",
+            "tool_call_id": tool_call.id,
+        }
+
+
+async def process_retrieval_tool(
+    step_references: Dict[str, cl.Step], step: Any, tool_call: Any
+) -> None:
+    """
+    Process retrieval tool calls.
+
+    Args:
+        step_references: Dictionary of step references
+        step: The run step
+        tool_call: The tool call to process
+    """
+    await process_tool_call(
+        step_references=step_references,
+        step=step,
+        tool_call=tool_call,
+        name=tool_call.type,
+        input="Retrieving information",
+        output="Retrieved information",
+    )
+
+
+async def create_run_instance(thread_id: str) -> Any:
+    """
+    Create a run instance for the assistant.
+
+    Args:
+        thread_id: Thread ID to create run for
+
+    Returns:
+        Run instance object
+    """
+    if not assistant_id:
+        mino = MinoAssistant(openai_client=async_openai_client)
+        assistant = await mino.run_assistant()
+        return await async_openai_client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=assistant.id,
+        )
+    else:
+        return await async_openai_client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=assistant_id,
+        )
+
+
+async def process_tool_calls(
+    step_details: Any, step_references: Dict[str, cl.Step], step: Any
+) -> List[Dict[str, Any]]:
+    """
+    Process all tool calls from a step.
+
+    Args:
+        step_details: The step details object
+        step_references: Dictionary of step references
+        step: The run step
+
+    Returns:
+        List of tool outputs
+    """
+    tool_outputs = []
+
+    if step_details.type != "tool_calls":
+        return tool_outputs
+
+    for tool_call in step_details.tool_calls:
+        if isinstance(tool_call, dict):
+            tool_call = DictToObject(tool_call)
+
+        if tool_call.type == "code_interpreter":
+            output = await process_code_interpreter_tool(
+                step_references, step, tool_call
+            )
+            tool_outputs.append(output)
+        elif tool_call.type == "retrieval":
+            await process_retrieval_tool(step_references, step, tool_call)
+        elif tool_call.type == "function":
+            output = await process_function_tool(step_references, step, tool_call)
+            tool_outputs.append(output)
+
+    return tool_outputs
 
 
 @cl.step(name=APP_NAME, type="run")
@@ -118,7 +280,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
     file_ids = file_ids or []
     try:
         # Add message to thread with timeout
-        init_message = await asyncio.wait_for(
+        await asyncio.wait_for(
             async_openai_client.beta.threads.messages.create(
                 thread_id=thread_id,
                 role="user",
@@ -128,21 +290,10 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
         )
 
         # Create the run
-        if not assistant_id:
-            mino = MinoAssistant(openai_client=async_openai_client)
-            assistant = await mino.run_assistant()
-            run_instance = await async_openai_client.beta.threads.runs.create(
-                thread_id=thread_id,
-                assistant_id=assistant.id,
-            )
-        else:
-            run_instance = await async_openai_client.beta.threads.runs.create(
-                thread_id=thread_id,
-                assistant_id=assistant_id,
-            )
+        run_instance = await create_run_instance(thread_id)
 
-        message_references = {}  # type: Dict[str, cl.Message]
-        step_references = {}  # type: Dict[str, cl.Step]
+        message_references: Dict[str, cl.Message] = {}
+        step_references: Dict[str, cl.Step] = {}
         tool_outputs = []
 
         # Use context manager for safer execution
@@ -188,70 +339,15 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                         )
 
                     # Process tool calls
-                    if step_details.type == "tool_calls":
-                        for tool_call in step_details.tool_calls:
-                            if isinstance(tool_call, dict):
-                                tool_call = DictToObject(tool_call)
-
-                            if tool_call.type == "code_interpreter":
-                                await process_tool_call(
-                                    step_references=step_references,
-                                    step=step,
-                                    tool_call=tool_call,
-                                    name=tool_call.type,
-                                    input=tool_call.code_interpreter.input
-                                    or "# Generating code",
-                                    output=tool_call.code_interpreter.outputs,
-                                    show_input="python",
-                                )
-
-                                tool_outputs.append(
-                                    {
-                                        "output": tool_call.code_interpreter.outputs
-                                        or "",
-                                        "tool_call_id": tool_call.id,
-                                    }
-                                )
-
-                            elif tool_call.type == "retrieval":
-                                await process_tool_call(
-                                    step_references=step_references,
-                                    step=step,
-                                    tool_call=tool_call,
-                                    name=tool_call.type,
-                                    input="Retrieving information",
-                                    output="Retrieved information",
-                                )
-
-                            elif tool_call.type == "function":
-                                function_name = tool_call.function.name
-                                function_args = json.loads(tool_call.function.arguments)
-
-                                function_output = tool_map[function_name](
-                                    **json.loads(tool_call.function.arguments)
-                                )
-
-                                await process_tool_call(
-                                    step_references=step_references,
-                                    step=step,
-                                    tool_call=tool_call,
-                                    name=function_name,
-                                    input=function_args,
-                                    output=function_output,
-                                    show_input="json",
-                                )
-
-                                tool_outputs.append(
-                                    {
-                                        "output": function_output,
-                                        "tool_call_id": tool_call.id,
-                                    }
-                                )
+                    tool_outputs.extend(
+                        await process_tool_calls(step_details, step_references, step)
+                    )
 
                 # Submit tool outputs if required
                 if (
                     run_instance.status == "requires_action"
                     and run_instance.required_action.type == "submit_tool_outputs"
+                    and tool_outputs
                 ):
                     await asyncio.wait_for(
                         async_openai_client.beta.threads.runs.submit_tool_outputs(
@@ -272,7 +368,9 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
                     "expired",
                 ]:
                     logger.info(
-                        f"Run {run_instance.id} finished with status: {run_instance.status}"
+                        "Run %s finished with status: %s",
+                        run_instance.id,
+                        run_instance.status,
                     )
                     break
 
@@ -282,7 +380,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
             content="The operation timed out. Please try again with a simpler query."
         ).send()
     except Exception as e:
-        logger.error(f"Error in run: {e}")
+        logger.error("Error in run: %s", e)
         await handle_exception(e)
 
 
@@ -316,7 +414,8 @@ async def on_message(message: cl.Message) -> None:
                 # Modify the message content to include <think> tag
                 message.content = f"<think>{original_content}"
                 logger.info(
-                    f"Automatically added <think> tag for reasoning model: {current_model}"
+                    "Automatically added <think> tag for reasoning model: %s",
+                    current_model,
                 )
 
             if message.elements and len(message.elements) > 0:
@@ -336,114 +435,7 @@ async def on_message(message: cl.Message) -> None:
             content="The operation was cancelled. Please try again."
         ).send()
     except Exception as e:
-        logger.error(f"Error processing message: {e}")
-        await handle_exception(e)
-
-
-async def handle_thinking_conversation(
-    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
-) -> None:
-    """
-    Handles conversations with visible thinking process.
-    Shows the AI's reasoning before presenting the final answer.
-
-    This implementation exactly follows the pattern provided in the reference code.
-    """
-    # Get model and settings
-    model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    temperature = get_setting(conf.SETTINGS_TEMPERATURE) or 0.7
-    top_p = get_setting(conf.SETTINGS_TOP_P) or 0.9
-
-    # Remove the <think> tag from the query
-    query = message.content.replace("<think>", "").strip()
-    update_message_history_from_user(query)
-
-    # Track start time for the thinking duration
-    start = time.time()
-
-    try:
-        # Create the stream
-        stream = await litellm.acompletion(
-            model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant. First use <think> tag to show your reasoning process, then close it with </think> and provide your final answer.",
-                },
-                *messages,
-                {"role": "user", "content": query},
-            ],
-            temperature=float(temperature),
-            top_p=float(top_p),
-            stream=True,
-        )
-
-        thinking = False
-
-        # Streaming the thinking
-        async with cl.Step(name="Thinking") as thinking_step:
-            final_answer = cl.Message(content="", author=model)
-
-            async for chunk in stream:
-                delta = chunk.choices[0].delta
-
-                # Only check content if it exists
-                if delta.content:
-                    # Check for exact <think> tag
-                    if delta.content == "<think>":
-                        thinking = True
-                        continue
-
-                    # Check for exact </think> tag
-                    if delta.content == "</think>":
-                        thinking = False
-                        thought_for = round(time.time() - start)
-                        thinking_step.name = f"Thought for {thought_for}s"
-                        await thinking_step.update()
-                        continue
-
-                    # Route content based on thinking flag
-                    if thinking:
-                        await thinking_step.stream_token(delta.content)
-                    else:
-                        await final_answer.stream_token(delta.content)
-
-        # Send final answer after completing the thinking step
-        if final_answer.content:
-            # Update message history
-            update_message_history_from_assistant(final_answer.content)
-
-            # Add TTS action if enabled
-            enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-            if enable_tts_response:
-                final_answer.actions = [
-                    cl.Action(
-                        icon="speech",
-                        name="speak_chat_response_action",
-                        payload={"value": final_answer.content},
-                        tooltip="Speak response",
-                        label="Speak response",
-                    )
-                ]
-
-            await final_answer.send()
-        else:
-            # If no final answer was provided, create a fallback message
-            await cl.Message(
-                content="I've thought about this but don't have a specific answer to provide.",
-                author=model,
-            ).send()
-
-    except asyncio.TimeoutError:
-        logger.error(f"Timeout while processing chat completion with model {model}")
-        await cl.Message(
-            content="The operation timed out. Please try again with a shorter query."
-        ).send()
-    except asyncio.CancelledError:
-        logger.warning("Chat completion was cancelled")
-        raise
-    except Exception as e:
-        logger.error(f"Error in handle_thinking_conversation: {e}")
+        logger.error("Error processing message: %s", e)
         await handle_exception(e)
 
 
@@ -483,7 +475,7 @@ async def update_settings(settings: Dict[str, Any]) -> None:
 
         logger.info("Settings updated successfully")
     except Exception as e:
-        logger.error(f"Error updating settings: {e}")
+        logger.error("Error updating settings: %s", e)
 
 
 @cl.action_callback("speak_chat_response_action")
@@ -499,5 +491,5 @@ async def on_speak_chat_response(action: cl.Action) -> None:
         value = action.payload.get("value") or ""
         await handle_tts_response(value, openai_client)
     except Exception as e:
-        logger.error(f"Error handling TTS response: {e}")
+        logger.error("Error handling TTS response: %s", e)
         await cl.Message(content="Failed to generate speech. Please try again.").send()

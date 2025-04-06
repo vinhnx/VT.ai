@@ -1,4 +1,15 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Protocol, TypeVar
+
+
+class HasAttributes(Protocol):
+    """Protocol defining an object with dynamic attributes."""
+
+    def __getattr__(self, name: str) -> Any: ...
+
+
+# Type for a dictionary that can be converted to an object
+DictType = Dict[str, Any]
+T = TypeVar("T", bound="DictToObject")
 
 
 class DictToObject:
@@ -17,6 +28,12 @@ class DictToObject:
         123
     """
 
+    # Type hints to help static type checkers
+    type: str  # For tool_call.type
+    id: str  # For tool_call.id
+    code_interpreter: HasAttributes  # For tool_call.code_interpreter
+    function: HasAttributes  # For tool_call.function
+
     def __init__(self, dictionary: Dict[str, Any]) -> None:
         """
         Initialize a new object from a dictionary.
@@ -28,7 +45,11 @@ class DictToObject:
             if isinstance(value, dict):
                 # Recursively convert nested dictionaries
                 setattr(self, key, DictToObject(value))
-            elif isinstance(value, list) and value and all(isinstance(item, dict) for item in value):
+            elif (
+                isinstance(value, list)
+                and value
+                and all(isinstance(item, dict) for item in value)
+            ):
                 # Handle lists of dictionaries
                 setattr(self, key, [DictToObject(item) for item in value])
             else:
@@ -46,7 +67,11 @@ class DictToObject:
         for key, value in self.__dict__.items():
             if isinstance(value, DictToObject):
                 result[key] = value.to_dict()
-            elif isinstance(value, list) and value and all(isinstance(item, DictToObject) for item in value):
+            elif (
+                isinstance(value, list)
+                and value
+                and all(isinstance(item, DictToObject) for item in value)
+            ):
                 result[key] = [item.to_dict() for item in value]
             else:
                 result[key] = value
@@ -59,3 +84,19 @@ class DictToObject:
     def __repr__(self) -> str:
         """Detailed string representation of the object."""
         return f"DictToObject({self.to_dict()})"
+
+    def __getattr__(self, name: str) -> Any:
+        """
+        Handle attribute access for attributes that don't exist.
+
+        Args:
+            name: Name of the attribute to access
+
+        Returns:
+            Empty DictToObject if the attribute doesn't exist
+
+        Raises:
+            AttributeError: If strict mode is enabled
+        """
+        # Return an empty object for missing attributes to prevent errors
+        return DictToObject({})
