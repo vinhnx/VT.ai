@@ -104,6 +104,24 @@ VISION_MODEL_MAP: Dict[str, str] = {
 }
 
 MODEL_ALIAS_MAP: Dict[str, str] = {
+
+    # OpenAI models
+    "OpenAI - GPT-o1": "o1",
+    "OpenAI - GPT-o1 Mini": "o1-mini",
+    "OpenAI - GPT-o1 Pro": "o1-pro",
+    "OpenAI - GPT-o3 Mini": "o3-mini",
+    "OpenAI - GPT-o1 Pro": "o1-pro",
+    "OpenAI - GPT-o1 Pro": "o1-pro",
+    "OpenAI - GPT-o1 Pro": "o1-pro",
+    "OpenAI - GPT-4.5 Preview": "gpt-4.5-preview",
+    "OpenAI - GPT-4o": "gpt-4o",
+    "OpenAI - GPT-4o Mini": "gpt-4o-mini",
+
+    # Anthropic models
+    "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
+    "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
+    "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
+
     # OpenRouter models
     "OpenRouter - DeepSeek R1 (free)": "openrouter/deepseek/deepseek-r1:free",
     "OpenRouter - DeepSeek R1": "openrouter/deepseek/deepseek-r1",
@@ -143,23 +161,6 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Ollama - Command R+": "ollama/command-r-plus",
     "Ollama - Mistral 7B Instruct": "ollama/mistral",
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
-
-    # OpenAI models
-    "OpenAI - GPT-o1": "o1",
-    "OpenAI - GPT-o1 Mini": "o1-mini",
-    "OpenAI - GPT-o1 Pro": "o1-pro",
-    "OpenAI - GPT-o3 Mini": "o3-mini",
-    "OpenAI - GPT-o1 Pro": "o1-pro",
-    "OpenAI - GPT-o1 Pro": "o1-pro",
-    "OpenAI - GPT-o1 Pro": "o1-pro",
-    "OpenAI - GPT-4.5 Preview": "gpt-4.5-preview",
-    "OpenAI - GPT-4o": "gpt-4o",
-    "OpenAI - GPT-4o Mini": "gpt-4o-mini",
-
-    # Anthropic models
-    "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
-    "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
-    "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
 
     # Groq models
     "Groq - Llama 4 Scout 17b Instruct": "meta-llama/llama-4-scout-17b-16e-instruct",
