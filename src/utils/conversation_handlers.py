@@ -7,6 +7,7 @@ Handles chat interactions, semantic routing, and message processing.
 import asyncio
 import pathlib
 from typing import Any, Dict, List, Optional, Tuple
+import time
 
 import chainlit as cl
 import litellm
@@ -303,4 +304,125 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
             await cl.Message(content=msg).send()
     except Exception as e:
         logger.error(f"Error configuring chat session: {e}")
+        await handle_exception(e)
+
+
+async def handle_thinking_conversation(
+    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
+) -> None:
+    """
+    Handles conversations with visible thinking process.
+    Shows the AI's reasoning before presenting the final answer.
+    Uses <think> and </think> tags within the model's response to toggle between thinking and final answer.
+
+    Args:
+        message: The user message object
+        messages: The conversation history
+        route_layer: The semantic router layer
+    """
+    # Track start time for the thinking duration
+    start = time.time()
+
+    # Get model and settings
+    model = get_setting(conf.SETTINGS_CHAT_MODEL)
+    temperature = get_setting(conf.SETTINGS_TEMPERATURE) or 0.7
+    top_p = get_setting(conf.SETTINGS_TOP_P) or 0.9
+
+    # Remove the <think> tag from the query if it exists in the user message
+    query = message.content.replace("<think>", "").strip()
+    update_message_history_from_user(query)
+
+    # Add special instruction to the model to use <think> tags
+    thinking_messages = [m.copy() for m in messages]
+    # Add a system message with instructions about using <think> tags
+    thinking_messages.append({
+        "role": "system",
+        "content": "When responding to this query, first use <think> tag to show your reasoning process, then close it with </think> and provide your final answer."
+    })
+    # Add the user query
+    thinking_messages.append({
+        "role": "user",
+        "content": query
+    })
+
+    try:
+        # Create the stream
+        stream = await litellm.acompletion(
+            user=get_user_session_id(),
+            model=model,
+            messages=thinking_messages,
+            temperature=float(temperature),
+            top_p=float(top_p),
+            stream=True,
+        )
+
+        # Flag to track if we're currently in thinking mode
+        thinking = False
+
+        # Start with a thinking step
+        async with cl.Step(name="Thinking") as thinking_step:
+            # Create a message for the final answer, but don't send it yet
+            final_answer = cl.Message(content="", author=model)
+
+            # Process the stream
+            async for chunk in stream:
+                delta = chunk.choices[0].delta
+                content = delta.content or ""
+
+                # Check for <think> tag
+                if "<think>" in content:
+                    thinking = True
+                    # Remove the tag from content
+                    content = content.replace("<think>", "")
+
+                # Check for </think> tag
+                if "</think>" in content:
+                    thinking = False
+                    # Update the thinking step with duration
+                    thought_for = round(time.time() - start)
+                    thinking_step.name = f"Thought for {thought_for}s"
+                    await thinking_step.update()
+                    # Remove the tag from content
+                    content = content.replace("</think>", "")
+
+                if content:
+                    if thinking:
+                        # Stream to thinking step
+                        await thinking_step.stream_token(content)
+                    else:
+                        # Stream to final answer
+                        await final_answer.stream_token(content)
+
+        # Send the final answer after thinking is complete
+        if not final_answer.content:
+            # If no final answer was provided, create a fallback message
+            await cl.Message(content="I've thought about this but don't have a specific answer to provide.", author=model).send()
+        else:
+            # Update message history and add TTS action
+            content = final_answer.content
+            update_message_history_from_assistant(content)
+
+            # Add TTS action if enabled
+            enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+            if enable_tts_response:
+                final_answer.actions = [
+                    cl.Action(
+                        icon="speech",
+                        name="speak_chat_response_action",
+                        payload={"value": content},
+                        tooltip="Speak response",
+                        label="Speak response"
+                    )
+                ]
+
+            await final_answer.send()
+
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout while processing chat completion with model {model}")
+        await cl.Message(content="\n\nI apologize, but the response timed out. Please try again with a shorter query.").send()
+    except asyncio.CancelledError:
+        logger.warning("Chat completion was cancelled")
+        raise
+    except Exception as e:
+        logger.error(f"Error in handle_thinking_conversation: {e}")
         await handle_exception(e)

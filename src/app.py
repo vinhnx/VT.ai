@@ -6,10 +6,12 @@ A multimodal AI chat application with dynamic conversation routing.
 
 import json
 import asyncio
+import time
 from typing import Any, Dict, List, Optional
 from contextlib import asynccontextmanager
 
 import chainlit as cl
+import litellm
 from openai import AsyncOpenAI, OpenAI
 from openai.types.beta.thread import Thread
 
@@ -23,13 +25,20 @@ from utils.conversation_handlers import (
     config_chat_session,
     handle_conversation,
     handle_files_attachment,
+    handle_thinking_conversation,
 )
 from utils.error_handlers import handle_exception
 from utils.file_handlers import process_files
 from utils.llm_profile_builder import build_llm_profile
 from utils.media_processors import handle_tts_response
 from utils.settings_builder import build_settings
-from utils.user_session_helper import is_in_assistant_profile
+from utils.user_session_helper import (
+    is_in_assistant_profile,
+    get_setting,
+    get_user_session_id,
+    update_message_history_from_assistant,
+    update_message_history_from_user
+)
 from utils.dict_to_object import DictToObject
 
 # Initialize the application with improved client configuration
@@ -288,12 +297,116 @@ async def on_message(message: cl.Message) -> None:
             if message.elements and len(message.elements) > 0:
                 await handle_files_attachment(message, messages, async_openai_client)
             else:
-                await handle_conversation(message, messages, route_layer)
+                # Check for <think> tag directly in user request
+                if "<think>" in message.content.lower():
+                    logger.info("Processing message with <think> tag using thinking conversation handler")
+                    await handle_thinking_conversation(message, messages, route_layer)
+                else:
+                    await handle_conversation(message, messages, route_layer)
     except asyncio.CancelledError:
         logger.warning("Message processing was cancelled")
         await cl.Message(content="The operation was cancelled. Please try again.").send()
     except Exception as e:
         logger.error(f"Error processing message: {e}")
+        await handle_exception(e)
+
+
+async def handle_thinking_conversation(
+    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
+) -> None:
+    """
+    Handles conversations with visible thinking process.
+    Shows the AI's reasoning before presenting the final answer.
+
+    This implementation exactly follows the pattern provided in the reference code.
+    """
+    # Get model and settings
+    model = get_setting(conf.SETTINGS_CHAT_MODEL)
+    temperature = get_setting(conf.SETTINGS_TEMPERATURE) or 0.7
+    top_p = get_setting(conf.SETTINGS_TOP_P) or 0.9
+
+    # Remove the <think> tag from the query
+    query = message.content.replace("<think>", "").strip()
+    update_message_history_from_user(query)
+
+    # Track start time for the thinking duration
+    start = time.time()
+
+    try:
+        # Create the stream
+        stream = await litellm.acompletion(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant. First use <think> tag to show your reasoning process, then close it with </think> and provide your final answer."},
+                *messages,
+                {"role": "user", "content": query}
+            ],
+            temperature=float(temperature),
+            top_p=float(top_p),
+            stream=True,
+        )
+
+        thinking = False
+
+        # Streaming the thinking
+        async with cl.Step(name="Thinking") as thinking_step:
+            final_answer = cl.Message(content="", author=model)
+
+            async for chunk in stream:
+                delta = chunk.choices[0].delta
+
+                # Only check content if it exists
+                if delta.content:
+                    # Check for exact <think> tag
+                    if delta.content == "<think>":
+                        thinking = True
+                        continue
+
+                    # Check for exact </think> tag
+                    if delta.content == "</think>":
+                        thinking = False
+                        thought_for = round(time.time() - start)
+                        thinking_step.name = f"Thought for {thought_for}s"
+                        await thinking_step.update()
+                        continue
+
+                    # Route content based on thinking flag
+                    if thinking:
+                        await thinking_step.stream_token(delta.content)
+                    else:
+                        await final_answer.stream_token(delta.content)
+
+        # Send final answer after completing the thinking step
+        if final_answer.content:
+            # Update message history
+            update_message_history_from_assistant(final_answer.content)
+
+            # Add TTS action if enabled
+            enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+            if enable_tts_response:
+                final_answer.actions = [
+                    cl.Action(
+                        icon="speech",
+                        name="speak_chat_response_action",
+                        payload={"value": final_answer.content},
+                        tooltip="Speak response",
+                        label="Speak response"
+                    )
+                ]
+
+            await final_answer.send()
+        else:
+            # If no final answer was provided, create a fallback message
+            await cl.Message(content="I've thought about this but don't have a specific answer to provide.", author=model).send()
+
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout while processing chat completion with model {model}")
+        await cl.Message(content="The operation timed out. Please try again with a shorter query.").send()
+    except asyncio.CancelledError:
+        logger.warning("Chat completion was cancelled")
+        raise
+    except Exception as e:
+        logger.error(f"Error in handle_thinking_conversation: {e}")
         await handle_exception(e)
 
 
