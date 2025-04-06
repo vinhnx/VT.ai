@@ -2,7 +2,6 @@
 # Whether to enable telemetry (default: true). No personal data is collected.
 enable_telemetry = false
 
-
 # List of environment variables to be provided by each user to use the app.
 user_env = []
 
@@ -12,7 +11,7 @@ session_timeout = 3600
 # Enable third parties caching (e.g LangChain cache)
 cache = false
 
-# Authorized origins
+# Authorized origins - important for cookie-based authentication in 2.0.0
 allow_origins = ["*"]
 
 # Follow symlink for asset mount (see https://github.com/Chainlit/chainlit/issues/317)
@@ -71,36 +70,10 @@ hide_cot = false
 # The Javascript file can be served from the public directory.
 # custom_js = "/public/test.js"
 
-# Specify a custom font url.
-custom_font = "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&display=swap"
-
 # Specify a custom build directory for the frontend.
 # This can be used to customize the frontend code.
 # Be careful: If this is a relative path, it should not start with a slash.
 # custom_build = "./public/build"
 
-# Override default MUI light theme. (Check theme.ts)
-[UI.theme]
-font_family = "IBM Plex Sans, sans-serif"
-
-[UI.theme.light]
-background = "#D9D9D9"
-paper = "#F2F2F2"
-
-[UI.theme.light.primary]
-main = "#78BFBF"
-dark = "#737373"
-light = "#D9D9D9"
-
-# Override default MUI dark theme. (Check theme.ts)
-[UI.theme.dark]
-background = "#262626"
-paper = "#171C26"
-
-[UI.theme.dark.primary]
-main = "#A63333"
-dark = "#262626"
-light = "#BFB38F"
-
 [meta]
-generated_by = "1.0.504"
+generated_by = "2.0.0"

@@ -477,7 +477,8 @@ async def __handle_vision(
             cl.Action(
                 name="speak_chat_response_action",
                 payload={"value": description},
-                label="Speak response",
+                tooltip="Speak response",
+                icon="🔊",
             )
         ],
     )
@@ -521,7 +522,8 @@ async def __handle_trigger_async_chat(
                 cl.Action(
                     name="speak_chat_response_action",
                     payload={"value": content},
-                    label="Speak response",
+                    tooltip="Speak response",
+                    icon="🔊",
                 )
             ]
 
@@ -615,7 +617,8 @@ async def __handle_trigger_async_image_gen(query: str) -> None:
                 cl.Action(
                     name="speak_chat_response_action",
                     payload={"value": revised_prompt},
-                    label="Speak response",
+                    tooltip="Speak response",
+                    icon="🔊",
                 )
             ],
         )
@@ -803,7 +806,8 @@ async def __process_thread_message(
                         cl.Action(
                             name="speak_chat_response_action",
                             payload={"value": res_message},
-                            label="Speak response",
+                            tooltip="Speak response",
+                            icon="🔊",
                         )
                     ]
 
@@ -838,7 +842,8 @@ async def __process_thread_message(
                         cl.Action(
                             name="speak_chat_response_action",
                             payload={"value": res_message},
-                            label="Speak response",
+                            tooltip="Speak response",
+                            icon="🔊",
                         )
                     ]
 
