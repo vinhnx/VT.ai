@@ -1,7 +1,10 @@
+
 <p align="center">
-  <img src="./public/logo_dark.png" height="200" alt="VT.ai Logo" />
   <h1 align="center">VT.ai</h1>
-  <p align="center">Multimodal AI chat application with semantic-based conversation routing</p>
+
+  <img src="./public/screenshot.jpg" alt="screenshot" />
+
+  Multimodal AI chat application with semantic-based conversation routing
 
   [![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/vinhnx/VT.ai)
   [![Twitter Follow](https://img.shields.io/twitter/follow/vinhnx?style=social)](https://x.com/vinhnx)
