@@ -1,75 +1,37 @@
-# TODO: https://docs.litellm.ai/docs/completion/token_usage
+# TODO List
 
-# TODO: update vision handling handling (local & remote) with gpt-4o https://platform.openai.com/docs/guides/vision
-
-# TODO handle vision capability for GPT-4o
-
-# TODO Hello GPT-4o https://openai.com/index/hello-gpt-4o/
-https://platform.openai.com/docs/models/gpt-4o
-
-# TODO: hugging face support https://docs.litellm.ai/docs/providers/huggingface
-
-# TODO: embed llama.cpp Python binding for Local LLM https://github.com/abetlen/llama-cpp-python
-
-
-# TODO: HN API tools https://github.com/HackerNews/API
-
-# TODO: deploy 💰 Budgets, Rate Limits https://docs.litellm.ai/docs/proxy/users
-
-
-
-# TODO: 🐳 Docker, Deploying LiteLLM Proxy https://docs.litellm.ai/docs/proxy/deploy
-
-
-# TODO: model fallback https://docs.litellm.ai/docs/tutorials/model_fallbacks
-
-
-# TODO: check Cohere docs, seems like currenlty had error https://docs.litellm.ai/docs/providers/cohere
-
-# TODO: IMPORTANT: about tool use, note to self tool use streaming is not support for most LLM provider (OpenAI, Anthropic) so in other to use tool, need to disable `streaming` param
-
-# TODO: idea integrate token cost counter https://github.com/AgentOps-AI/tokencost?tab=readme-ov-file
-
-# TODO: proper support local LLM <https://github.com/Chainlit/cookbook/tree/main/local-llm>
-
-# TODO: handle passing file to code-interpreter for Mino Assistant <https://platform.openai.com/docs/assistants/tools/code-interpreter/passing-files-to-code-interpreter>
-
-# TODO: https://github.com/jakecyr/openai-function-calling
-
-# TODO: https://github.com/Chainlit/cookbook/tree/main/openai-functions
-
-# TODO: https://github.com/Chainlit/cookbook/tree/main/openai-functions-streaming
-
-# TODO: https://github.com/Chainlit/cookbook/tree/main/openai-concurrent-streaming
-
-# TODO: https://github.com/Chainlit/cookbook/tree/main/openai-concurrent-functions
-
-# TODO: starting screen -> generate list of conversation starter buttons.
-
-# TODO: token count, model name https://docs.litellm.ai/docs/completion/output
-
-# TODO: TaskList https://docs.chainlit.io/api-reference/elements/tasklist
-
-# TODO: https://docs.chainlit.io/api-reference/data-persistence/custom-data-layer
-
-# TODO: callback https://docs.chainlit.io/concepts/action#define-a-python-callback
-
-# TODO: customize https://docs.chainlit.io/customisation/overview
-
-# TODO: config https://docs.chainlit.io/backend/config/overview
-
-# TODO: sync/async https://docs.chainlit.io/guides/sync-async
-
-# TODO: function call https://docs.litellm.ai/docs/completion/function_call
-
-# TODO https://docs.litellm.ai/docs/completion/reliable_completions
-
-# TODO: Auth https://docs.chainlit.io/authentication/overview
-
-# TODO: Data persistence https://docs.chainlit.io/data-persistence/overview
-
-# TODO: custom endpoint https://docs.chainlit.io/backend/custom-endpoint
-
-# TODO: deploy https://docs.chainlit.io/deployment/tutorials
-
-# TODO: copilot chat widget https://docs.chainlit.io/deployment/copilot
+- [ ] [Token Usage Documentation](https://docs.litellm.ai/docs/completion/token_usage)
+- [ ] [Update Vision Handling with GPT-4o](https://platform.openai.com/docs/guides/vision)
+- [ ] Handle Vision Capability for GPT-4o
+- [ ] [Hello GPT-4o](https://openai.com/index/hello-gpt-4o/)
+- [ ] [Hugging Face Support](https://docs.litellm.ai/docs/providers/huggingface)
+- [ ] [Embed llama.cpp Python Binding for Local LLM](https://github.com/abetlen/llama-cpp-python)
+- [ ] [HN API Tools](https://github.com/HackerNews/API)
+- [ ] [Deploy Budgets and Rate Limits](https://docs.litellm.ai/docs/proxy/users)
+- [ ] [Docker Deployment for LiteLLM Proxy](https://docs.litellm.ai/docs/proxy/deploy)
+- [ ] [Model Fallback](https://docs.litellm.ai/docs/tutorials/model_fallbacks)
+- [ ] [Check Cohere Docs for Errors](https://docs.litellm.ai/docs/providers/cohere)
+- [ ] IMPORTANT: Tool use streaming is not supported for most LLM providers (OpenAI, Anthropic). Disable `streaming` param to use tools.
+- [ ] [Integrate Token Cost Counter](https://github.com/AgentOps-AI/tokencost?tab=readme-ov-file)
+- [ ] [Proper Support for Local LLM](https://github.com/Chainlit/cookbook/tree/main/local-llm)
+- [ ] [Handle Passing File to Code-Interpreter for Mino Assistant](https://platform.openai.com/docs/assistants/tools/code-interpreter/passing-files-to-code-interpreter)
+- [ ] [OpenAI Function Calling](https://github.com/jakecyr/openai-function-calling)
+- [ ] [OpenAI Functions Cookbook](https://github.com/Chainlit/cookbook/tree/main/openai-functions)
+- [ ] [OpenAI Functions Streaming](https://github.com/Chainlit/cookbook/tree/main/openai-functions-streaming)
+- [ ] [OpenAI Concurrent Streaming](https://github.com/Chainlit/cookbook/tree/main/openai-concurrent-streaming)
+- [ ] [OpenAI Concurrent Functions](https://github.com/Chainlit/cookbook/tree/main/openai-concurrent-functions)
+- [ ] Starting Screen: Generate List of Conversation Starter Buttons
+- [ ] [Token Count and Model Name](https://docs.litellm.ai/docs/completion/output)
+- [ ] [TaskList API Reference](https://docs.chainlit.io/api-reference/elements/tasklist)
+- [ ] [Custom Data Layer](https://docs.chainlit.io/api-reference/data-persistence/custom-data-layer)
+- [ ] [Callback Definition](https://docs.chainlit.io/concepts/action#define-a-python-callback)
+- [ ] [Customization Overview](https://docs.chainlit.io/customisation/overview)
+- [ ] [Configuration Overview](https://docs.chainlit.io/backend/config/overview)
+- [ ] [Sync/Async Guide](https://docs.chainlit.io/guides/sync-async)
+- [ ] [Function Call Documentation](https://docs.litellm.ai/docs/completion/function_call)
+- [ ] [Reliable Completions](https://docs.litellm.ai/docs/completion/reliable_completions)
+- [ ] [Authentication Overview](https://docs.chainlit.io/authentication/overview)
+- [ ] [Data Persistence Overview](https://docs.chainlit.io/data-persistence/overview)
+- [ ] [Custom Endpoint](https://docs.chainlit.io/backend/custom-endpoint)
+- [ ] [Deployment Tutorials](https://docs.chainlit.io/deployment/tutorials)
+- [ ] [Copilot Chat Widget](https://docs.chainlit.io/deployment/copilot)
