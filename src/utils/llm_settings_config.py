@@ -33,7 +33,7 @@ DEFAULT_TOP_P: float = 1.0
 DEFAULT_MODEL: str = "gpt-4o-mini"
 DEFAULT_IMAGE_GEN_MODEL: str = "dall-e-3"
 DEFAULT_VISION_MODEL: str = "gemini/gemini-1.5-pro-latest"
-DEFAULT_TTS_MODEL: str = "tts-1"
+DEFAULT_TTS_MODEL: str = "gpt-4o-mini-tts"
 DEFAULT_TTS_PRESET: str = "nova"
 DEFAULT_WHISPER_MODEL: str = "whisper-1"
 
@@ -86,6 +86,7 @@ TTS_VOICE_PRESETS: List[str] = [
 
 # Model mappings
 TTS_MODELS_MAP: Dict[str, str] = {
+    "OpenAI - GPT-4o mini TTS": "gpt-4o-mini-tts",
     "OpenAI - Text-to-speech 1": "tts-1",
     "OpenAI - Text-to-speech 1 HD": "tts-1-hd",
 }
@@ -144,8 +145,16 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
 
     # OpenAI models
+    "OpenAI - GPT-o1": "o1",
+    "OpenAI - GPT-o1 Mini": "o1-mini",
+    "OpenAI - GPT-o1 Pro": "o1-pro",
+    "OpenAI - GPT-o3 Mini": "o3-mini",
+    "OpenAI - GPT-o1 Pro": "o1-pro",
+    "OpenAI - GPT-o1 Pro": "o1-pro",
+    "OpenAI - GPT-o1 Pro": "o1-pro",
+    "OpenAI - GPT-4.5 Preview": "gpt-4.5-preview",
     "OpenAI - GPT-4o": "gpt-4o",
-    "OpenAI - GPT-4o-Mini": "gpt-4o-mini",
+    "OpenAI - GPT-4o Mini": "gpt-4o-mini",
 
     # Anthropic models
     "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
