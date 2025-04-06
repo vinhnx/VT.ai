@@ -1,17 +1,15 @@
-import os
 import argparse
-from getpass import getpass
 
 import dotenv
 from semantic_router import Route
-from semantic_router.encoders import FastEmbedEncoder, OpenAIEncoder
+from semantic_router.encoders import FastEmbedEncoder
 from semantic_router.layer import RouteLayer
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 
 # usage:
 # ```
-# $ python src/router/trainer.py --encoder openai
+# $ python vtai/router/trainer.py
 # ```
 # then layers.json file will be updated
 
@@ -152,52 +150,26 @@ def create_routes() -> list[Route]:
     return routes
 
 
-def get_encoder(encoder_type: str) -> FastEmbedEncoder | OpenAIEncoder:
-    """
-    Get the appropriate encoder based on the specified type.
-
-    Args:
-        encoder_type: The type of encoder to use ('fast' or 'openai')
-
-    Returns:
-        An instance of the specified encoder
-    """
-    if encoder_type.lower() == "openai":
-        # Check for OpenAI API key and prompt if missing
-        openai_api_key = os.getenv("OPENAI_API_KEY")
-        if not openai_api_key:
-            os.environ["OPENAI_API_KEY"] = getpass("Enter OpenAI API Key: ")
-        return OpenAIEncoder(name="text-embedding-3-small")
-    else:
-        return FastEmbedEncoder()
-
-
 def main() -> None:
     """
     Main function to train and save the semantic router.
     """
-    parser = argparse.ArgumentParser(description="Train semantic router with specified encoder")
-    parser.add_argument(
-        "--encoder",
-        type=str,
-        default="fast",
-        choices=["fast", "openai"],
-        help="Encoder to use: 'fast' for FastEmbedEncoder or 'openai' for OpenAIEncoder"
-    )
+    parser = argparse.ArgumentParser(description="Train semantic router")
     parser.add_argument(
         "--output",
         type=str,
-        default="./src/router/layers.json",
-        help="Path to save the trained layer"
+        default="./vtai/router/layers.json",
+        help="Path to save the trained layer",
     )
 
     args = parser.parse_args()
 
     try:
         routes = create_routes()
-        encoder = get_encoder(args.encoder)
+        # Initialize FastEmbedEncoder explicitly without falling back to OpenAI
+        encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
 
-        print(f"Training semantic router using {encoder.__class__.__name__}...")
+        print("Training semantic router using FastEmbedEncoder...")
         layer = RouteLayer(encoder=encoder, routes=routes)
 
         # Save the trained layer

@@ -143,7 +143,8 @@ def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
 
             # Create routes from the JSON data
             routes = []
-            encoder = FastEmbedEncoder()
+            # Initialize FastEmbedEncoder explicitly with the model name
+            encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
 
             for route_data in router_json["routes"]:
                 route_name = route_data["name"]
@@ -163,7 +164,8 @@ def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
         logger.warning(f"Could not load layers.json from package resources: {e}")
         try:
             # Try the original path as last resort
-            encoder = FastEmbedEncoder()
+            # Initialize FastEmbedEncoder explicitly with the model name
+            encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
 
             # Load routes directly from the original path
             with open("./src/router/layers.json", "r") as f:

@@ -280,7 +280,7 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
     Args:
         settings: User settings dictionary
     """
-    from assistants.mino.mino import INSTRUCTIONS
+    from vtai.assistants.mino.mino import INSTRUCTIONS
     from vtai.utils.chat_profile import AppChatProfileType
 
     try:

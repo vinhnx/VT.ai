@@ -4,6 +4,8 @@ Configuration module for VT.ai application.
 Handles loading environment variables, API keys, and application configuration.
 """
 
+import importlib.resources
+import json
 import logging
 import os
 import tempfile
@@ -13,6 +15,8 @@ import dotenv
 import httpx
 import litellm
 from openai import AsyncOpenAI, OpenAI
+from semantic_router import Route
+from semantic_router.encoders import FastEmbedEncoder
 from semantic_router.layer import RouteLayer
 
 from vtai.utils import llm_settings_config as conf
@@ -125,8 +129,64 @@ def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
     # Configure litellm for better timeout handling
     litellm.request_timeout = 60  # 60 seconds timeout
 
-    # Load semantic router layer from JSON file
-    route_layer = RouteLayer.from_json("./src/router/layers.json")
+    # Load semantic router layer from JSON file - use proper path for installed package
+    try:
+        # First try to load from package resources (for pip installation)
+        with (
+            importlib.resources.files("src.router")
+            .joinpath("layers.json")
+            .open("r") as f
+        ):
+            router_json = json.load(f)
+
+            # Create routes from the JSON data
+            routes = []
+            # Initialize FastEmbedEncoder explicitly with the model name
+            encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
+
+            for route_data in router_json["routes"]:
+                route_name = route_data["name"]
+                route_utterances = route_data["utterances"]
+
+                # Create Route object - passing the required utterances field
+                route = Route(
+                    name=route_name, utterances=route_utterances, encoder=encoder
+                )
+                routes.append(route)
+
+            # Create RouteLayer with the routes
+            route_layer = RouteLayer(routes=routes)
+
+    except (ImportError, FileNotFoundError) as e:
+        # Fallback to original behavior for development
+        logger.warning(f"Could not load layers.json from package resources: {e}")
+        try:
+            # Try the original path as last resort
+            # Initialize FastEmbedEncoder explicitly with the model name
+            encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
+
+            # Load routes directly from the original path
+            with open("./src/router/layers.json", "r") as f:
+                router_json = json.load(f)
+
+                # Create routes from the JSON data
+                routes = []
+                for route_data in router_json["routes"]:
+                    route_name = route_data["name"]
+                    route_utterances = route_data["utterances"]
+
+                    # Create Route object - passing the required utterances field
+                    route = Route(
+                        name=route_name, utterances=route_utterances, encoder=encoder
+                    )
+                    routes.append(route)
+
+            # Create RouteLayer with the routes
+            route_layer = RouteLayer(routes=routes)
+        except Exception as e:
+            logger.error(f"Failed to load routes: {e}")
+            # Create empty route layer if all else fails
+            route_layer = RouteLayer(routes=[])
 
     # Get assistant ID
     assistant_id = os.environ.get("ASSISTANT_ID")

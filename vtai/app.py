@@ -54,7 +54,7 @@ async def start_chat():
     Initialize the chat session with settings and system message.
     """
     # Initialize default settings
-    cl.user_session.set(conf.SETTINGS_CHAT_MODEL, "default_model_name")
+    cl.user_session.set(conf.SETTINGS_CHAT_MODEL, conf.DEFAULT_MODEL)
 
     # Build LLM profile
     build_llm_profile(conf.ICONS_PROVIDER_MAP)
