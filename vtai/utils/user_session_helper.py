@@ -1,13 +1,12 @@
 """
-User session helper utilities for VT.ai application.
-
-Centralizes user session management functions.
+User session helper utilities for the VT.ai application.
 """
 
 from typing import Any
 
 import chainlit as cl
 
+# Update imports to use vtai namespace
 from vtai.utils.chat_profile import AppChatProfileType
 
 

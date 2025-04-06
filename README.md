@@ -1,4 +1,3 @@
-
 <p align="center">
   <h1 align="center">VT.ai</h1>
 
@@ -90,6 +89,21 @@ VT.ai implements a modular architecture centered on a semantic routing system th
    - Image generation pipeline for DALL-E 3
    - Vision analysis with cross-provider model support
    - Audio transcription and Text-to-Speech integration
+
+## Installation from PyPI
+
+```bash
+# Install VT.ai from PyPI
+pip install vtai
+
+# Run the application
+vtai
+
+# With additional arguments
+vtai -w  # Run with auto-reload for development
+```
+
+This installs the `vtai` command which lets you launch the application directly from your terminal.
 
 ## Setup Guide
 

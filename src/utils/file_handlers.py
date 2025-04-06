@@ -4,15 +4,14 @@ File handling utilities for VT.ai application.
 Handles file validation, processing, and uploading to various services.
 """
 
-import logging
-import pathlib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import chainlit as cl
 from openai import AsyncOpenAI
 
-from utils.config import allowed_mime, logger
+from vtai.utils.config import allowed_mime, logger
+
 
 async def check_files(files: List) -> Tuple[bool, Optional[str]]:
     """

@@ -13,7 +13,7 @@ import chainlit as cl
 import litellm
 from litellm.utils import trim_messages
 
-from router.constants import SemanticRouterType
+from vtai.router.constants import SemanticRouterType
 from vtai.utils import llm_settings_config as conf
 from vtai.utils.config import logger
 from vtai.utils.error_handlers import handle_exception

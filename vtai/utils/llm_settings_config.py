@@ -1,9 +1,25 @@
+"""
+Settings configuration for LLM models and chat profiles.
+"""
+
 from typing import Dict, List
 
 import chainlit as cl
-from chainlit.types import ChatProfile
+from pydantic import BaseModel
 
-from vtai.utils.chat_profile import AppChatProfileModel, AppChatProfileType
+# Update imports to use vtai namespace
+from vtai.utils.chat_profile import AppChatProfileType
+
+
+# Define AppChatProfileModel class
+class AppChatProfileModel(BaseModel):
+    title: str
+    description: str
+    icon: str
+    is_default: bool = False
+
+
+from chainlit.types import ChatProfile
 
 # Settings keys - grouped for better organization
 # Chat settings

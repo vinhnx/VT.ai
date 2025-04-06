@@ -15,6 +15,22 @@ dependencies = [
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Development Status :: 4 - Beta",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/vinhnx/VT.ai"
+"Bug Tracker" = "https://github.com/vinhnx/VT.ai/issues"
+
+[project.scripts]
+vtai = "vtai_runner:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -24,7 +40,7 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["vtai"]
 
 [dependency-groups]
 dev = [
