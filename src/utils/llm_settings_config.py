@@ -114,7 +114,6 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "OpenAI - GPT-o1 Mini": "o1-mini",
     "OpenAI - GPT-o1 Pro": "o1-pro",
     "OpenAI - GPT-o3 Mini": "o3-mini",
-    "OpenAI - GPT-o1 Pro": "o1-pro",
     "OpenAI - GPT-4.5 Preview": "gpt-4.5-preview",
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT-4o Mini": "gpt-4o-mini",
@@ -236,11 +235,15 @@ TTS_MODEL_MODELS: List[str] = list(TTS_MODELS_MAP.values())
 APP_CHAT_PROFILE_CHAT = AppChatProfileModel(
     title=AppChatProfileType.CHAT.value,
     description="Multi-modal chat with LLM.",
+    icon=ICONS_PROVIDER_MAP["Mino"],
+    is_default=True,
 )
 
 APP_CHAT_PROFILE_ASSISTANT = AppChatProfileModel(
     title=AppChatProfileType.ASSISTANT.value,
     description="[Beta] Use Mino built-in Assistant to ask complex question. Currently support Math Calculator",
+    icon=ICONS_PROVIDER_MAP["Mino"],
+    is_default=True,
 )
 
 APP_CHAT_PROFILES: List[AppChatProfileModel] = [
