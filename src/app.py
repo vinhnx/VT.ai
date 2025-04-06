@@ -293,6 +293,18 @@ async def on_message(message: cl.Message) -> None:
         else:
             # Get message history
             messages = cl.user_session.get("message_history") or []
+            
+            # Check if current model is a reasoning model that benefits from <think> tags
+            current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
+            is_reasoning = conf.is_reasoning_model(current_model)
+            
+            # If this is a reasoning model and <think> is not already in content, add it
+            if is_reasoning and "<think>" not in message.content:
+                # Clone the original message content
+                original_content = message.content
+                # Modify the message content to include <think> tag
+                message.content = f"<think>{original_content}"
+                logger.info(f"Automatically added <think> tag for reasoning model: {current_model}")
 
             if message.elements and len(message.elements) > 0:
                 await handle_files_attachment(message, messages, async_openai_client)

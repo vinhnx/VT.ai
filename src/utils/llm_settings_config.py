@@ -25,6 +25,7 @@ SETTINGS_ENABLE_TTS_RESPONSE: str = "settings_enable_tts_response"
 
 # Routing settings
 SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING: str = "settings_use_dynamic_conversation_routing"
+SETTINGS_USE_THINKING_MODEL: str = "settings_use_thinking_model"
 
 # Default values
 DEFAULT_TEMPERATURE: float = 0.8
@@ -40,6 +41,34 @@ DEFAULT_WHISPER_MODEL: str = "whisper-1"
 SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE: bool = True
 SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE: bool = True
 SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE: bool = True
+SETTINGS_USE_THINKING_MODEL_DEFAULT_VALUE: bool = False
+
+# List of models that benefit from <think> tag for reasoning
+REASONING_MODELS = [
+    "openrouter/deepseek/deepseek-r1:free",
+    "openrouter/deepseek/deepseek-r1",
+    "openrouter/deepseek/deepseek-chat-v3-0324:free",
+    "openrouter/deepseek/deepseek-chat-v3-0324",
+    "ollama/deepseek-r1:1.5b",
+    "ollama/deepseek-r1:7b",
+    "ollama/deepseek-r1:8b",
+    "ollama/deepseek-r1:14b",
+    "ollama/deepseek-r1:32b",
+    "ollama/deepseek-r1:70b",
+]
+
+# Function to check if a model is a reasoning model
+def is_reasoning_model(model_id: str) -> bool:
+    """
+    Check if a model is a reasoning model that benefits from <think> tags.
+    
+    Args:
+        model_id: The ID of the model to check
+        
+    Returns:
+        bool: True if the model is a reasoning model, False otherwise
+    """
+    return any(reasoning_model in model_id for reasoning_model in REASONING_MODELS)
 
 # Image generation options
 SETTINGS_IMAGE_GEN_IMAGE_STYLES: List[str] = ["vivid", "natural"]
