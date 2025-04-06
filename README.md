@@ -45,7 +45,11 @@ Code interpreter for computations and data analysis with function calling for ex
 
 Access step-by-step reasoning from the models with transparent thinking processes.
 
-## Getting Started
+## Installation
+
+VT.ai can be installed and run in multiple ways depending on your needs:
+
+### Quick Install from PyPI
 
 ```bash
 # Install VT.ai from PyPI
@@ -53,82 +57,33 @@ pip install vtai
 
 # Run the application
 vtai
-
-# With additional arguments
-vtai --help  # Show command-line options
-vtai -w      # Run with auto-reload for development
 ```
 
-See the [Setup Guide](#setup-guide) for more detailed instructions on installation and configuration.
+### Install with uv
 
-## Architecture
+```bash
+# If you need to install uv first
+python -m pip install uv
 
-VT.ai implements a modular architecture centered on a semantic routing system that directs user queries to specialized handlers:
-
-```
-┌────────────────┐     ┌─────────────────┐     ┌───────────────────────┐
-│  User Request  │────▶│ Semantic Router │────▶│ Route-Specific Handler │
-└────────────────┘     └─────────────────┘     └───────────────────────┘
-                             │                            │
-                             ▼                            ▼
-                     ┌──────────────┐           ┌──────────────────┐
-                     │ Model Select │◀─────────▶│ Provider API     │
-                     └──────────────┘           │ (OpenAI,Gemini,  │
-                             │                  │  Anthropic,etc.) │
-                             ▼                  └──────────────────┘
-                     ┌──────────────┐
-                     │  Response    │
-                     │  Processing  │
-                     └──────────────┘
+# Install VT.ai with uv
+uv tool install --force --python python3.11 vtai@latest
 ```
 
-## Key Components
+This will install uv using your existing Python version and use it to install VT.ai. If needed, uv will automatically install a separate Python 3.11 to use with VT.ai.
 
-### Semantic Router
+### Install with pipx
 
-- Vector-based query classification using FastEmbed embeddings
-- Routes user queries to specialized handlers
-- Supports five distinct routing categories:
-  - Text processing (summaries, translations, analysis)
-  - Image generation (DALL-E prompt crafting)
-  - Vision analysis (image interpretation)
-  - Casual conversation (social interactions)
-  - Curious inquiries (informational requests)
+```bash
+# If you need to install pipx first
+python -m pip install pipx
 
-### Model Management
+# Install VT.ai with pipx
+pipx install vtai
+```
 
-- Unified API abstractions through LiteLLM
-- Provider-agnostic model switching with dynamic parameters
-- Centralized configuration for model settings and routing
+You can use pipx to install VT.ai with Python versions 3.9-3.12.
 
-### Conversation Handling
-
-- Streaming response processing with backpressure handling
-- Multi-modal content parsing and rendering
-- Thinking mode implementation showing reasoning steps
-- Error handling with graceful fallbacks
-
-### Assistant Framework
-
-- Tool use capabilities with function calling
-- Code interpreter integration for computation
-- File attachment processing with multiple formats
-- Assistant state management
-
-### Media Processing
-
-- Image generation pipeline for DALL-E 3
-- Vision analysis with cross-provider model support
-- Audio transcription and Text-to-Speech integration
-
-## Setup Guide
-
-### Prerequisites
-- Python 3.11+ (specified in `.python-version`)
-- [uv](https://github.com/astral-sh/uv) for dependency management
-- [Ollama](https://github.com/ollama/ollama) (optional, for local models)
-
-### Installation
+### Development Install (from source)
 
 ```bash
 # Clone repository
@@ -140,14 +95,66 @@ uv venv
 source .venv/bin/activate  # Linux/Mac
 .venv\Scripts\activate     # Windows
 
-# Install dependencies using uv
-uv pip install -e .         # Install main dependencies
-uv pip install -e ".[dev]"  # Optional: Install development dependencies
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys
+# Install dependencies
+uv pip install -e .
 ```
+
+### Platform-Specific Instructions
+
+#### macOS
+
+```bash
+# Install Python 3.11+ if needed
+brew install python@3.11
+
+# Install VT.ai
+pip3 install vtai
+
+# Run
+vtai
+```
+
+#### Linux
+
+```bash
+# Ensure Python 3.11+ is installed
+sudo apt install python3.11 python3.11-venv  # Ubuntu/Debian
+# or
+sudo dnf install python3.11  # Fedora
+
+# Install VT.ai
+pip3 install vtai
+
+# Run
+vtai
+```
+
+#### Windows
+
+```powershell
+# Install VT.ai
+pip install vtai
+
+# Run
+vtai
+```
+
+### Command-Line Options
+
+```bash
+# Show help and options
+vtai --help
+
+# Run with hot-reload for development
+vtai -w
+```
+
+## Setup Guide
+
+### Prerequisites
+- Python 3.11+ (specified in `.python-version`)
+- [uv](https://github.com/astral-sh/uv) for dependency management (recommended)
+- [Ollama](https://github.com/ollama/ollama) (optional, for local models)
 
 ### Configuration
 
@@ -170,7 +177,7 @@ HUGGINGFACE_API_KEY=your-huggingface-key
 OLLAMA_HOST=http://localhost:11434
 ```
 
-### Starting the Application
+### Starting from Source
 
 ```bash
 # Activate the virtual environment (if not already active)
