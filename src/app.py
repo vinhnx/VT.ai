@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from getpass import getpass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import chainlit as cl
 import dotenv
@@ -15,13 +15,14 @@ from assistants.mino.create_assistant import tool_map
 from assistants.mino.mino import INSTRUCTIONS, MinoAssistant
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI, OpenAI
+from openai.types.beta.thread import Thread
 from openai.types.beta.threads import (
     ImageFileContentBlock,
     Message,
     TextContentBlock,
 )
 from openai.types.beta.threads.runs import RunStep
-from openai.types.beta.threads.runs.tool_calls_step_details import ToolCall
+from openai.types.beta.threads.runs.tool_call import ToolCall
 from router.constants import SemanticRouterType
 from semantic_router.layer import RouteLayer
 from utils import llm_settings_config as conf
@@ -81,7 +82,7 @@ APP_NAME = const.APP_NAME
 
 
 @cl.set_chat_profiles
-async def build_chat_profile():
+async def build_chat_profile(user=None):
     return conf.CHAT_PROFILES
 
 
@@ -111,8 +112,9 @@ async def start_chat():
 
 
 @cl.step(name=APP_NAME, type="run")
-async def run(thread_id: str, human_query: str, file_ids: List[str] = []):
+async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = None):
     # Add the message to the thread
+    file_ids = file_ids or []  # Safe handling of mutable default argument
     init_message = await async_openai_client.beta.threads.messages.create(
         thread_id=thread_id,
         role="user",
@@ -123,12 +125,12 @@ async def run(thread_id: str, human_query: str, file_ids: List[str] = []):
     if assistant_id is None or len(assistant_id) == 0:
         mino = MinoAssistant(openai_client=async_openai_client)
         assistant = await mino.run_assistant()
-        run = await async_openai_client.beta.threads.runs.create(
+        run_instance = await async_openai_client.beta.threads.runs.create(
             thread_id=thread_id,
             assistant_id=assistant.id,
         )
     else:
-        run = await async_openai_client.beta.threads.runs.create(
+        run_instance = await async_openai_client.beta.threads.runs.create(
             thread_id=thread_id,
             assistant_id=assistant_id,
         )
@@ -138,19 +140,19 @@ async def run(thread_id: str, human_query: str, file_ids: List[str] = []):
     tool_outputs = []
     # Periodically check for updates
     while True:
-        run = await async_openai_client.beta.threads.runs.retrieve(
-            thread_id=thread_id, run_id=run.id
+        run_instance = await async_openai_client.beta.threads.runs.retrieve(
+            thread_id=thread_id, run_id=run_instance.id
         )
 
         # Fetch the run steps
         run_steps = await async_openai_client.beta.threads.runs.steps.list(
-            thread_id=thread_id, run_id=run.id, order="asc"
+            thread_id=thread_id, run_id=run_instance.id, order="asc"
         )
 
         for step in run_steps.data:
             # Fetch step details
             run_step = await async_openai_client.beta.threads.runs.steps.retrieve(
-                thread_id=thread_id, run_id=run.id, step_id=step.id
+                thread_id=thread_id, run_id=run_instance.id, step_id=step.id
             )
             step_details = run_step.step_details
             # Update step content in the Chainlit UI
@@ -219,17 +221,17 @@ async def run(thread_id: str, human_query: str, file_ids: List[str] = []):
                             {"output": function_output, "tool_call_id": tool_call.id}
                         )
             if (
-                run.status == "requires_action"
-                and run.required_action.type == "submit_tool_outputs"
+                run_instance.status == "requires_action"
+                and run_instance.required_action.type == "submit_tool_outputs"
             ):
                 await async_openai_client.beta.threads.runs.submit_tool_outputs(
                     thread_id=thread_id,
-                    run_id=run.id,
+                    run_id=run_instance.id,
                     tool_outputs=tool_outputs,
                 )
 
         await cl.sleep(2)  # Refresh every 2 seconds
-        if run.status in ["cancelled", "failed", "completed", "expired"]:
+        if run_instance.status in ["cancelled", "failed", "completed", "expired"]:
             break
 
 
@@ -647,7 +649,7 @@ async def __handle_files_attachment(
             await __handle_vision(path, prompt=prompt, is_local=True)
 
         elif "text" in mime_type:
-            p = pathlib.Path(path, encoding="utf-8")
+            p = pathlib.Path(path)
             s = p.read_text(encoding="utf-8")
             message.content = s
             await __handle_conversation(message, messages)
@@ -848,25 +850,31 @@ async def __process_thread_message(
 async def __process_tool_call(
     step_references: Dict[str, cl.Step],
     step: RunStep,
-    tool_call: ToolCall,
+    tool_call: Any,  # Change type to Any to handle different tool call types
     name: str,
     input: Any,
     output: Any,
-    show_input: str = None,
+    show_input: Optional[str] = None,  # Fix None default for string parameter
 ):
     cl_step = None
     update = False
-    if tool_call.id not in step_references:
+
+    # Safely handle tool_call as both object and dict
+    tool_call_id = getattr(tool_call, "id", None)
+    if tool_call_id is None and isinstance(tool_call, dict):
+        tool_call_id = tool_call.get("id")
+
+    if tool_call_id not in step_references:
         cl_step = cl.Step(
             name=name,
             type="tool",
-            parent_id=cl.context.current_step.id,
+            parent_id=cl.context.current_step.id if cl.context.current_step else None,
             language=show_input,
         )
-        step_references[tool_call.id] = cl_step
+        step_references[tool_call_id] = cl_step
     else:
         update = True
-        cl_step = step_references[tool_call.id]
+        cl_step = step_references[tool_call_id]
 
     if step.created_at:
         cl_step.start = datetime.fromtimestamp(step.created_at).isoformat()
