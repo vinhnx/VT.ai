@@ -6,10 +6,10 @@ import chainlit as cl
 def build_llm_profile(icons_provider_map: Dict[str, str]) -> List[cl.ChatProfile]:
     """
     Builds LLM profiles for all models in the provided map.
-    
+
     Args:
         icons_provider_map: Dictionary mapping model names to their icon paths
-        
+
     Returns:
         List of chat profiles for all models
     """

@@ -13,12 +13,12 @@ async def handle_exception(e: Exception) -> None:
     """
     Handles exceptions that occur during LLM interactions with specific error messages
     based on the type of exception.
-    
+
     Args:
         e: The exception that was raised
     """
     error_message = "Something went wrong. "
-    
+
     if isinstance(e, RateLimitError):
         error_message += "Rate limit exceeded. Please try again in a few moments."
     elif isinstance(e, BadRequestError):
@@ -31,7 +31,7 @@ async def handle_exception(e: Exception) -> None:
         error_message += "The request timed out. Please try again."
     else:
         error_message += f"Unexpected error: {str(e)}"
-    
+
     logger.error(f"Error details: {type(e).__name__}: {str(e)}")
-    
+
     await cl.Message(content=error_message).send()

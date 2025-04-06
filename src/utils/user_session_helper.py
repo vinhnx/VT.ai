@@ -14,7 +14,7 @@ from utils.chat_profile import AppChatProfileType
 def update_message_history_from_user(context: str) -> None:
     """
     Update message history with user content
-    
+
     Args:
         context: Message content to add
     """
@@ -24,7 +24,7 @@ def update_message_history_from_user(context: str) -> None:
 def update_message_history_from_assistant(context: str) -> None:
     """
     Update message history with assistant content
-    
+
     Args:
         context: Message content to add
     """
@@ -34,7 +34,7 @@ def update_message_history_from_assistant(context: str) -> None:
 def update_message_history(context: str, role: str) -> None:
     """
     Update message history with specified content and role
-    
+
     Args:
         context: Message content to add
         role: Role of the message sender ('user' or 'assistant')
@@ -50,7 +50,7 @@ def update_message_history(context: str, role: str) -> None:
 def get_user_session_id() -> str:
     """
     Get the current user session ID
-    
+
     Returns:
         The user session ID string or empty string if not available
     """
@@ -60,10 +60,10 @@ def get_user_session_id() -> str:
 def get_setting(key: str) -> Any:
     """
     Retrieves a specific setting value from the user session
-    
+
     Args:
         key: The settings key to retrieve
-        
+
     Returns:
         The setting value or None if not found
     """
@@ -77,7 +77,7 @@ def get_setting(key: str) -> Any:
 def is_in_assistant_profile() -> bool:
     """
     Determines if the current session is in Assistant profile mode
-    
+
     Returns:
         True if in Assistant profile, False otherwise
     """

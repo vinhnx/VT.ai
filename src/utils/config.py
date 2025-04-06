@@ -7,10 +7,12 @@ Handles loading environment variables, API keys, and application configuration.
 import logging
 import os
 import tempfile
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import dotenv
 import litellm
+import httpx
+from openai import AsyncOpenAI, OpenAI
 
 from utils import llm_settings_config as conf
 from semantic_router.layer import RouteLayer
@@ -28,10 +30,10 @@ temp_dir = tempfile.TemporaryDirectory()
 
 # List of allowed mime types
 allowed_mime = [
-    "text/csv", 
-    "application/pdf", 
-    "image/png", 
-    "image/jpeg", 
+    "text/csv",
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
     "image/jpg",
     "audio/mpeg",
     "audio/mp3",
@@ -45,7 +47,7 @@ def load_api_keys() -> None:
     """
     # Load .env file
     dotenv.load_dotenv(dotenv.find_dotenv())
-    
+
     api_keys = {
         "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
         "COHERE_API_KEY": os.getenv("COHERE_API_KEY"),
@@ -56,35 +58,79 @@ def load_api_keys() -> None:
         "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY"),
         "MISTRAL_API_KEY": os.getenv("MISTRAL_API_KEY"),
     }
-    
+
     # Set API keys in environment
     loaded_keys = []
     for key, value in api_keys.items():
         if value:
             os.environ[key] = value
             loaded_keys.append(key)
-    
+
     logger.info(f"Loaded API keys: {', '.join(loaded_keys)}")
     if not loaded_keys:
         logger.warning("No API keys were loaded from environment")
 
-def initialize_app():
+def create_openai_clients() -> Tuple[OpenAI, AsyncOpenAI]:
+    """
+    Create OpenAI clients with optimized connection settings.
+
+    Returns:
+        Tuple of (sync_client, async_client)
+    """
+    # Configure timeout settings for better connection handling
+    timeout_settings = httpx.Timeout(
+        connect=10.0,     # Connection timeout
+        read=300.0,       # Read timeout for longer operations
+        write=60.0,       # Write timeout
+        pool=10.0         # Connection pool timeout
+    )
+
+    # Create synchronous client with custom timeout
+    sync_client = OpenAI(
+        timeout=timeout_settings,
+        max_retries=3,    # Increase retries to handle transient errors
+        http_client=httpx.Client(timeout=timeout_settings)
+    )
+
+    # Create asynchronous client with custom timeout
+    async_client = AsyncOpenAI(
+        timeout=timeout_settings,
+        max_retries=3,
+        http_client=httpx.AsyncClient(
+            timeout=timeout_settings,
+            limits=httpx.Limits(
+                max_connections=100,
+                max_keepalive_connections=20,
+                keepalive_expiry=30.0
+            )
+        )
+    )
+
+    return sync_client, async_client
+
+def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
     """
     Initialize the application configuration.
-    
+
     Returns:
-        Tuple of (route_layer, assistant_id)
+        Tuple of (route_layer, assistant_id, openai_client, async_openai_client)
     """
     # Load API keys
     load_api_keys()
-    
+
     # Model alias map for litellm
     litellm.model_alias_map = conf.MODEL_ALIAS_MAP
-    
+
+    # Configure litellm for better timeout handling
+    litellm.request_timeout = 60  # 60 seconds timeout
+
     # Load semantic router layer from JSON file
     route_layer = RouteLayer.from_json("./src/router/layers.json")
-    
+
     # Get assistant ID
     assistant_id = os.environ.get("ASSISTANT_ID")
-    
-    return route_layer, assistant_id
+
+    # Initialize OpenAI clients
+    openai_client, async_openai_client = create_openai_clients()
+
+    return route_layer, assistant_id, openai_client, async_openai_client

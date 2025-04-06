@@ -156,10 +156,10 @@ def create_routes() -> list[Route]:
 def get_encoder(encoder_type: str) -> FastEmbedEncoder | OpenAIEncoder:
     """
     Get the appropriate encoder based on the specified type.
-    
+
     Args:
         encoder_type: The type of encoder to use ('fast' or 'openai')
-        
+
     Returns:
         An instance of the specified encoder
     """
@@ -179,33 +179,33 @@ def main() -> None:
     """
     parser = argparse.ArgumentParser(description="Train semantic router with specified encoder")
     parser.add_argument(
-        "--encoder", 
-        type=str, 
+        "--encoder",
+        type=str,
         default="fast",
         choices=["fast", "openai"],
         help="Encoder to use: 'fast' for FastEmbedEncoder or 'openai' for OpenAIEncoder"
     )
     parser.add_argument(
-        "--output", 
-        type=str, 
+        "--output",
+        type=str,
         default="./src/router/layers.json",
         help="Path to save the trained layer"
     )
-    
+
     args = parser.parse_args()
-    
+
     try:
         routes = create_routes()
         encoder = get_encoder(args.encoder)
-        
+
         print(f"Training semantic router using {encoder.__class__.__name__}...")
         layer = RouteLayer(encoder=encoder, routes=routes)
-        
+
         # Save the trained layer
         output_path = args.output
         layer.to_json(output_path)
         print(f"Successfully saved semantic router layer to {output_path}")
-        
+
     except Exception as e:
         print(f"Error training semantic router: {str(e)}")
         return

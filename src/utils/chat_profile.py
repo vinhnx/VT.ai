@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 class AppChatProfileType(str, Enum):
     """
     Enumeration of available chat profile types in the application.
-    
+
     Attributes:
         CHAT: Regular chat interface with LLM
         ASSISTANT: Advanced assistant with additional capabilities
@@ -19,7 +19,7 @@ class AppChatProfileType(str, Enum):
 class AppChatProfileModel(BaseModel):
     """
     Model representing a chat profile configuration.
-    
+
     Attributes:
         title: Display name of the chat profile
         description: Markdown-compatible description of the profile capabilities

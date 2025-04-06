@@ -22,7 +22,7 @@ async def process_thread_message(
 ) -> None:
     """
     Process a thread message from the OpenAI Assistant API.
-    
+
     Args:
         message_references: Dictionary of message references
         thread_message: The thread message to process
@@ -30,7 +30,7 @@ async def process_thread_message(
     """
     for idx, content_message in enumerate(thread_message.content):
         id = thread_message.id + str(idx)
-        
+
         if isinstance(content_message, TextContentBlock):
             if id in message_references:
                 msg = message_references[id]
@@ -54,7 +54,7 @@ async def process_thread_message(
                     ]
 
                 await message_references[id].send()
-                
+
         elif isinstance(content_message, ImageFileContentBlock):
             image_id = content_message.image_file.file_id
             try:
@@ -109,7 +109,7 @@ async def process_tool_call(
 ) -> None:
     """
     Process a tool call from the OpenAI Assistant API.
-    
+
     Args:
         step_references: Dictionary of step references
         step: The run step
@@ -143,7 +143,7 @@ async def process_tool_call(
         cl_step.start = datetime.fromtimestamp(step.created_at).isoformat()
     if step.completed_at:
         cl_step.end = datetime.fromtimestamp(step.completed_at).isoformat()
-    
+
     cl_step.input = input
     cl_step.output = output
 

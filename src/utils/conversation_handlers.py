@@ -4,6 +4,7 @@ Conversation handling utilities for VT.ai application.
 Handles chat interactions, semantic routing, and message processing.
 """
 
+import asyncio
 import pathlib
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -36,7 +37,7 @@ async def handle_trigger_async_chat(
     """
     Triggers an asynchronous chat completion using the specified LLM model.
     Streams the response back to the user and updates the message history.
-    
+
     Args:
         llm_model: The LLM model to use
         messages: The conversation history messages
@@ -44,24 +45,44 @@ async def handle_trigger_async_chat(
     """
     temperature = get_setting(conf.SETTINGS_TEMPERATURE)
     top_p = get_setting(conf.SETTINGS_TOP_P)
+
     try:
-        # use LiteLLM for other providers
-        stream = await litellm.acompletion(
-            model=llm_model,
-            messages=messages,
-            stream=True,
-            num_retries=2,
-            temperature=temperature,
-            top_p=top_p,
+        # Set a reasonable timeout for completion
+        completion_timeout = 120.0  # 2 minutes
+
+        # Create the stream with timeout handling
+        stream = await asyncio.wait_for(
+            litellm.acompletion(
+                model=llm_model,
+                messages=messages,
+                stream=True,
+                num_retries=3,
+                temperature=temperature,
+                top_p=top_p,
+                timeout=90.0  # Set LiteLLM timeout slightly less than our overall timeout
+            ),
+            timeout=completion_timeout
         )
 
-        async for part in stream:
-            if token := part.choices[0].delta.content or "":
-                await current_message.stream_token(token)
+        # Process the stream safely with proper cancellation handling
+        try:
+            async for part in stream:
+                if token := part.choices[0].delta.content or "":
+                    await current_message.stream_token(token)
+        except asyncio.CancelledError:
+            logger.warning("Stream processing was cancelled")
+            # Make sure we handle cancellation properly
+            if hasattr(stream, 'aclose') and callable(stream.aclose):
+                await stream.aclose()
+            elif hasattr(stream, 'aclose_async') and callable(stream.aclose_async):
+                await stream.aclose_async()
+            raise
 
+        # After successful streaming, update the message content and history
         content = current_message.content
         update_message_history_from_assistant(content)
 
+        # Add TTS action if enabled
         enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
         if enable_tts_response:
             current_message.actions = [
@@ -76,7 +97,15 @@ async def handle_trigger_async_chat(
 
         await current_message.update()
 
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout while processing chat completion with model {llm_model}")
+        await current_message.stream_token("\n\nI apologize, but the response timed out. Please try again with a shorter query.")
+        await current_message.update()
+    except asyncio.CancelledError:
+        logger.warning("Chat completion was cancelled")
+        raise
     except Exception as e:
+        logger.error(f"Error in handle_trigger_async_chat: {e}")
         await handle_exception(e)
 
 
@@ -86,7 +115,7 @@ async def handle_conversation(
     """
     Handles text-based conversations with the user.
     Routes the conversation based on settings and semantic understanding.
-    
+
     Args:
         message: The user message object
         messages: The conversation history
@@ -99,30 +128,37 @@ async def handle_conversation(
     query = message.content
     update_message_history_from_user(query)
 
-    use_dynamic_conversation_routing = get_setting(
-        conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
-    )
+    try:
+        use_dynamic_conversation_routing = get_setting(
+            conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
+        )
 
-    if use_dynamic_conversation_routing:
-        await handle_dynamic_conversation_routing(
-            messages, model, msg, query, route_layer
-        )
-    else:
-        await handle_trigger_async_chat(
-            llm_model=model, messages=messages, current_message=msg
-        )
+        if use_dynamic_conversation_routing and route_layer:
+            await handle_dynamic_conversation_routing(
+                messages, model, msg, query, route_layer
+            )
+        else:
+            await handle_trigger_async_chat(
+                llm_model=model, messages=messages, current_message=msg
+            )
+    except asyncio.CancelledError:
+        logger.warning("Conversation handling was cancelled")
+        raise
+    except Exception as e:
+        logger.error(f"Error in handle_conversation: {e}")
+        await handle_exception(e)
 
 
 async def handle_dynamic_conversation_routing(
-    messages: List[Dict[str, str]], 
-    model: str, 
-    msg: cl.Message, 
+    messages: List[Dict[str, str]],
+    model: str,
+    msg: cl.Message,
     query: str,
     route_layer: Any
 ) -> None:
     """
     Routes the conversation dynamically based on the semantic understanding of the user's query.
-    
+
     Args:
         messages: The conversation history
         model: The LLM model to use
@@ -130,45 +166,56 @@ async def handle_dynamic_conversation_routing(
         query: The user's query
         route_layer: The semantic router layer
     """
-    route_choice = route_layer(query)
-    route_choice_name = route_choice.name
+    try:
+        route_choice = route_layer(query)
+        route_choice_name = route_choice.name
 
-    should_trimmed_messages = get_setting(conf.SETTINGS_TRIMMED_MESSAGES)
-    if should_trimmed_messages:
-        messages = trim_messages(messages, model)
+        should_trimmed_messages = get_setting(conf.SETTINGS_TRIMMED_MESSAGES)
+        if should_trimmed_messages:
+            messages = trim_messages(messages, model)
 
-    logger.info(f"Query: {query} classified as route: {route_choice_name}")
+        logger.info(f"Query: {query} classified as route: {route_choice_name}")
 
-    if route_choice_name == SemanticRouterType.IMAGE_GENERATION:
-        logger.info(f"Processing {route_choice_name} - Image generation")
-        await handle_trigger_async_image_gen(query)
+        if route_choice_name == SemanticRouterType.IMAGE_GENERATION:
+            logger.info(f"Processing {route_choice_name} - Image generation")
+            await handle_trigger_async_image_gen(query)
 
-    elif route_choice_name == SemanticRouterType.VISION_IMAGE_PROCESSING:
-        urls = extract_url(query)
-        if len(urls) > 0:
-            logger.info(f"Processing {route_choice_name} - Vision with URL")
-            url = urls[0]
-            await handle_vision(input_image=url, prompt=query, is_local=False)
+        elif route_choice_name == SemanticRouterType.VISION_IMAGE_PROCESSING:
+            urls = extract_url(query)
+            if len(urls) > 0:
+                logger.info(f"Processing {route_choice_name} - Vision with URL")
+                url = urls[0]
+                await handle_vision(input_image=url, prompt=query, is_local=False)
+            else:
+                logger.info(f"Processing {route_choice_name} - No image URL, using chat")
+                await handle_trigger_async_chat(
+                    llm_model=model, messages=messages, current_message=msg
+                )
         else:
-            logger.info(f"Processing {route_choice_name} - No image URL, using chat")
+            logger.info(f"Processing {route_choice_name} - Default chat")
             await handle_trigger_async_chat(
                 llm_model=model, messages=messages, current_message=msg
             )
-    else:
-        logger.info(f"Processing {route_choice_name} - Default chat")
+    except asyncio.CancelledError:
+        logger.warning("Dynamic conversation routing was cancelled")
+        raise
+    except Exception as e:
+        logger.error(f"Error in handle_dynamic_conversation_routing: {e}")
+        await handle_exception(e)
+        # Fallback to regular chat if routing fails
         await handle_trigger_async_chat(
             llm_model=model, messages=messages, current_message=msg
         )
 
 
 async def handle_files_attachment(
-    message: cl.Message, 
+    message: cl.Message,
     messages: List[Dict[str, str]],
     async_openai_client: Any
 ) -> None:
     """
     Handles file attachments from the user.
-    
+
     Args:
         message: The user message with attachments
         messages: The conversation history
@@ -180,58 +227,80 @@ async def handle_files_attachment(
 
     prompt = message.content
 
-    for file in message.elements:
-        path = str(file.path)
-        mime_type = file.mime or ""
+    try:
+        for file in message.elements:
+            path = str(file.path)
+            mime_type = file.mime or ""
 
-        if "image" in mime_type:
-            await handle_vision(path, prompt=prompt, is_local=True)
+            if "image" in mime_type:
+                await handle_vision(path, prompt=prompt, is_local=True)
 
-        elif "text" in mime_type:
-            p = pathlib.Path(path)
-            s = p.read_text(encoding="utf-8")
-            message.content = s
-            await handle_conversation(message, messages, None)  # Pass None for route_layer as it's not used for text files
+            elif "text" in mime_type:
+                try:
+                    p = pathlib.Path(path)
+                    s = p.read_text(encoding="utf-8")
+                    message.content = s
+                    await handle_conversation(message, messages, None)
+                except UnicodeDecodeError:
+                    # Try with a different encoding if UTF-8 fails
+                    try:
+                        s = p.read_text(encoding="latin-1")
+                        message.content = s
+                        await handle_conversation(message, messages, None)
+                    except Exception as e:
+                        logger.error(f"Error reading text file: {e}")
+                        await cl.Message(content=f"Failed to read text file: {str(e)}").send()
 
-        elif "audio" in mime_type:
-            f = pathlib.Path(path)
-            await handle_audio_transcribe(path, f, async_openai_client)
-        
-        else:
-            logger.warning(f"Unsupported mime type: {mime_type}")
-            await cl.Message(content=f"File type {mime_type} is not supported for direct processing.").send()
+            elif "audio" in mime_type:
+                f = pathlib.Path(path)
+                await handle_audio_transcribe(path, f, async_openai_client)
+
+            else:
+                logger.warning(f"Unsupported mime type: {mime_type}")
+                await cl.Message(content=f"File type {mime_type} is not supported for direct processing.").send()
+
+    except asyncio.CancelledError:
+        logger.warning("File attachment handling was cancelled")
+        raise
+    except Exception as e:
+        logger.error(f"Error handling file attachment: {e}")
+        await handle_exception(e)
 
 
 async def config_chat_session(settings: Dict[str, Any]) -> None:
     """
     Configures the chat session based on user settings and sets the initial system message.
-    
+
     Args:
         settings: User settings dictionary
     """
     from assistants.mino.mino import INSTRUCTIONS
     from utils.chat_profile import AppChatProfileType
 
-    chat_profile = cl.user_session.get("chat_profile")
-    if chat_profile == AppChatProfileType.CHAT.value:
-        cl.user_session.set(
-            conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL)
-        )
+    try:
+        chat_profile = cl.user_session.get("chat_profile")
+        if chat_profile == AppChatProfileType.CHAT.value:
+            cl.user_session.set(
+                conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL)
+            )
 
-        system_message = {
-            "role": "system",
-            "content": "You are a helpful assistant who tries their best to answer questions: ",
-        }
+            system_message = {
+                "role": "system",
+                "content": "You are a helpful assistant who tries their best to answer questions: ",
+            }
 
-        cl.user_session.set("message_history", [system_message])
+            cl.user_session.set("message_history", [system_message])
 
-        msg = "Hello! I'm here to assist you. Please don't hesitate to ask me anything you'd like to know."
-        await cl.Message(content=msg).send()
+            msg = "Hello! I'm here to assist you. Please don't hesitate to ask me anything you'd like to know."
+            await cl.Message(content=msg).send()
 
-    elif chat_profile == AppChatProfileType.ASSISTANT.value:
-        system_message = {"role": "system", "content": INSTRUCTIONS}
+        elif chat_profile == AppChatProfileType.ASSISTANT.value:
+            system_message = {"role": "system", "content": INSTRUCTIONS}
 
-        cl.user_session.set("message_history", [system_message])
+            cl.user_session.set("message_history", [system_message])
 
-        msg = "Hello! I'm Mino, your Assistant. I'm here to assist you. Please don't hesitate to ask me anything you'd like to know. Currently, I can write and run code to answer math questions."
-        await cl.Message(content=msg).send()
+            msg = "Hello! I'm Mino, your Assistant. I'm here to assist you. Please don't hesitate to ask me anything you'd like to know. Currently, I can write and run code to answer math questions."
+            await cl.Message(content=msg).send()
+    except Exception as e:
+        logger.error(f"Error configuring chat session: {e}")
+        await handle_exception(e)
