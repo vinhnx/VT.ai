@@ -287,6 +287,63 @@ uv pip install -e ".[dev]"
 - [Architecture](#architecture)
 - [Key Components](#key-components)
 
+## Troubleshooting
+
+### ModuleNotFoundError: No module named 'vtai'
+
+If you encounter this error when running `vtai -w`:
+
+```
+ModuleNotFoundError: No module named 'vtai'
+```
+
+This usually happens when you've installed VT.ai using `uv tool install` or a similar method that puts the package in an isolated environment, but you're trying to run it from within the source directory.
+
+#### Solutions:
+
+1. **Use the development install method instead:**
+
+   ```bash
+   # In the VT.ai repository root
+   uv venv
+   source .venv/bin/activate  # Linux/Mac
+   .venv\Scripts\activate     # Windows
+   
+   # Install in development mode
+   uv pip install -e .
+   
+   # Run directly with chainlit
+   chainlit run vtai/app.py -w
+   ```
+
+2. **Run the installed vtai command outside of the source directory:**
+
+   ```bash
+   # Move to a different directory
+   cd ..
+   
+   # Then run vtai
+   vtai -w
+   ```
+
+3. **Update your PYTHONPATH:**
+
+   ```bash
+   # Linux/Mac
+   export PYTHONPATH=/path/to/VT.ai:$PYTHONPATH
+   
+   # Windows
+   set PYTHONPATH=C:\path\to\VT.ai;%PYTHONPATH%
+   ```
+
+### For other issues
+
+If you're experiencing other problems, please check:
+
+1. That all required API keys are set in your `.env` file
+2. Python version is 3.11 or higher
+3. All dependencies are properly installed
+
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
