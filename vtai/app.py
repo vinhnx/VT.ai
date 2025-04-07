@@ -551,18 +551,21 @@ def setup_chainlit_config():
 
             logger.info(f"Copied translations to {dst_translations}")
 
-    # Also handle the chainlit.md file
+    # Handle the chainlit.md file - we'll create an empty one to prevent Chainlit from creating its own
     src_md = pkg_dir / "chainlit.md"
     central_md = user_config_dir / "chainlit.md"
 
-    # Copy the chainlit.md file to the central location if it exists
-    if src_md.exists():
-        if (
-            not central_md.exists()
-            or src_md.stat().st_mtime > central_md.stat().st_mtime
-        ):
+    # If our source package has a custom chainlit.md, use that, otherwise create empty file
+    if src_md.exists() and src_md.stat().st_size > 0:
+        # Copy the non-empty chainlit.md file to the central location
+        if not central_md.exists() or src_md.stat().st_mtime > central_md.stat().st_mtime:
             shutil.copy2(src_md, central_md)
-            logger.info(f"Copied chainlit.md to {central_md}")
+            logger.info(f"Copied custom chainlit.md to {central_md}")
+    else:
+        # Create an empty chainlit.md file in the central location if it doesn't exist
+        if not central_md.exists():
+            central_md.touch()
+            logger.info(f"Created empty chainlit.md at {central_md}")
 
     # Create symbolic links in current directory to point to the central config
     current_dir = Path.cwd()
@@ -594,37 +597,28 @@ def setup_chainlit_config():
                     f"Created symlink from {local_chainlit_dir} to {chainlit_config_dir}"
                 )
 
-            # Handle chainlit.md file
-            if local_md.exists():
-                if local_md.is_symlink():
-                    # Already a symlink, nothing to do
-                    pass
-                else:
-                    # Regular file, backup and create symlink
-                    backup_md = current_dir / "chainlit.md.backup"
-                    if backup_md.exists():
-                        os.remove(backup_md)
-                    local_md.rename(backup_md)
-                    os.symlink(str(central_md), str(local_md))
-                    logger.info(f"Created symlink from {local_md} to {central_md}")
-            else:
-                # Create a symlink to the central chainlit.md
-                os.symlink(str(central_md), str(local_md))
-                logger.info(f"Created symlink from {local_md} to {central_md}")
+            # Handle chainlit.md file - CRITICAL: Create this BEFORE Chainlit starts
+            # Create an empty chainlit.md in the current directory to prevent Chainlit from creating one
+            if not local_md.exists():
+                # Just create an empty file (not a symlink) to prevent Chainlit's default content
+                local_md.touch()
+                logger.info(
+                    f"Created empty chainlit.md at {local_md} to prevent default content"
+                )
         except Exception as e:
             logger.warning(
-                f"Could not create symlinks: {e}. Using local files instead."
+                f"Could not create symlinks or empty files: {e}. Using local files instead."
             )
             # If symlink creation fails, ensure the local directory exists
             local_chainlit_dir.mkdir(exist_ok=True)
 
-            # Also copy the chainlit.md file if symlink fails
-            if central_md.exists() and not local_md.exists():
+            # Create an empty chainlit.md file if it doesn't exist
+            if not local_md.exists():
                 try:
-                    shutil.copy2(central_md, local_md)
-                    logger.info(f"Copied {central_md} to {local_md} as fallback")
-                except Exception as copy_error:
-                    logger.warning(f"Failed to copy chainlit.md: {copy_error}")
+                    local_md.touch()
+                    logger.info(f"Created empty chainlit.md at {local_md} as fallback")
+                except Exception as create_error:
+                    logger.warning(f"Failed to create empty chainlit.md: {create_error}")
 
     return chainlit_config_dir
 
