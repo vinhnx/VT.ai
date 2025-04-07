@@ -1,7 +1,3 @@
-<p align="center">
-    <img src="./vtai/resources/vt.jpg" alt="VT.ai Logo" width="300">
-</p>
-
 <h1 align="center">VT</h1>
 
 <p align="center">
