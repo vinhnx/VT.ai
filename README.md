@@ -2,12 +2,11 @@
     <img src="./vtai/resources/vt.jpg" alt="VT.ai Logo" width="300">
 </p>
 
-<h1 align="center">
-VT - Minimal Multimodal AI Chat App with Dynamic Routing
-</h1>
+<h1 align="center">VT</h1>
 
 <p align="center">
   <img src="./public/screenshot.jpg" alt="VT.ai screenshot">
+  <p align="center">Minimal Multimodal AI Chat App with Dynamic Routing</p>
 </p>
 
 <p align="center">
