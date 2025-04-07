@@ -542,7 +542,9 @@ def main():
                     "groq": "GROQ_API_KEY",
                     "openrouter": "OPENROUTER_API_KEY",
                     "gemini": "GEMINI_API_KEY",
-                    "mistral": "MISTRAL_API_KEY"
+                    "mistral": "MISTRAL_API_KEY",
+                    "tavily": "TAVILY_API_KEY",
+                    "lmstudio": "LM_STUDIO_API_KEY"
                 }
                 
                 env_var = provider_map.get(provider.lower())

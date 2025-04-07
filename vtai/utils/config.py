@@ -79,6 +79,9 @@ def load_api_keys() -> None:
         "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY"),
         "MISTRAL_API_KEY": os.getenv("MISTRAL_API_KEY"),
         "DEEPSEEK_API_KEY": os.getenv("DEEPSEEK_API_KEY"),
+        "TAVILY_API_KEY": os.getenv("TAVILY_API_KEY"),
+        "LM_STUDIO_API_BASE": os.getenv("LM_STUDIO_API_BASE"),
+        "LM_STUDIO_API_KEY": os.getenv("LM_STUDIO_API_KEY"),
     }
 
     # Set API keys in environment
