@@ -31,10 +31,6 @@ Support for text, image, and audio inputs with vision analysis for images and UR
 
 Use speech recognition for input and text-to-speech for responses with multiple voice models.
 
-### Assistant Framework
-
-Code interpreter for computations and data analysis with function calling for external integrations.
-
 ### Thinking Mode
 
 Access step-by-step reasoning from the models with transparent thinking processes.
