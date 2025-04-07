@@ -8,6 +8,10 @@ import os
 import tempfile
 from typing import Tuple
 
+# Set TOKENIZERS_PARALLELISM explicitly at module level before any imports
+# This prevents the HuggingFace tokenizers warning
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import dotenv
 import httpx
 import litellm
@@ -158,6 +162,11 @@ def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
     from semantic_router import Route
     from semantic_router.encoders import FastEmbedEncoder
 
+    # Set the default encoder explicitly to disable any potential fallback to OpenAIEncoder
+    # Create the FastEmbedEncoder instance with explicit model specification
+    model_name = "BAAI/bge-small-en-v1.5"
+    encoder = FastEmbedEncoder(model_name=model_name)
+
     try:
         # First try to load from package resources (for pip installation)
         with (
@@ -169,29 +178,27 @@ def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
 
             # Create routes from the JSON data
             routes = []
-            # Initialize FastEmbedEncoder explicitly with the model name
-            encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
 
             for route_data in router_json["routes"]:
                 route_name = route_data["name"]
                 route_utterances = route_data["utterances"]
 
-                # Create Route object - passing the required utterances field
+                # Create Route object - passing the required utterances field and our encoder
                 route = Route(
-                    name=route_name, utterances=route_utterances, encoder=encoder
+                    name=route_name,
+                    utterances=route_utterances,
+                    encoder=encoder,  # Pass the same encoder instance to each route
                 )
                 routes.append(route)
 
-            # Create RouteLayer with the routes
-            route_layer = RouteLayer(routes=routes)
+            # Create RouteLayer with the routes and encoder
+            route_layer = RouteLayer(routes=routes, encoder=encoder)
 
     except (ImportError, FileNotFoundError) as e:
         # Fallback to original behavior for development
         logger.warning(f"Could not load layers.json from package resources: {e}")
         try:
             # Try the original path as last resort
-            # Initialize FastEmbedEncoder explicitly with the model name
-            encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
 
             # Load routes directly from the original path
             with open("./vtai/router/layers.json", "r") as f:
@@ -205,16 +212,20 @@ def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
 
                     # Create Route object - passing the required utterances field
                     route = Route(
-                        name=route_name, utterances=route_utterances, encoder=encoder
+                        name=route_name,
+                        utterances=route_utterances,
+                        encoder=encoder,  # Use the same encoder instance
                     )
                     routes.append(route)
 
-            # Create RouteLayer with the routes
-            route_layer = RouteLayer(routes=routes)
+            # Create RouteLayer with the routes and explicitly pass the encoder
+            route_layer = RouteLayer(routes=routes, encoder=encoder)
         except Exception as e:
             logger.error(f"Failed to load routes: {e}")
             # Create empty route layer if all else fails
-            route_layer = RouteLayer(routes=[])
+            route_layer = RouteLayer(
+                routes=[], encoder=encoder
+            )  # Still provide the encoder
 
     # Get assistant ID
     assistant_id = os.environ.get("ASSISTANT_ID")

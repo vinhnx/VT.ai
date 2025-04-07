@@ -162,7 +162,8 @@ def main() -> None:
         help="Path to save the trained layer",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Enable verbose output during training",
     )
@@ -172,16 +173,18 @@ def main() -> None:
     try:
         routes = create_routes()
         # Initialize FastEmbedEncoder explicitly without falling back to OpenAI
-        encoder = FastEmbedEncoder(model_name="BAAI/bge-small-en-v1.5")
+        model_name = "BAAI/bge-small-en-v1.5"
+        encoder = FastEmbedEncoder(model_name=model_name)
 
         print("Training semantic router using FastEmbedEncoder...")
         layer = RouteLayer(encoder=encoder, routes=routes)
-        
+
         if args.verbose:
             print(f"Created layer with {len(routes)} routes:")
             for i, route in enumerate(routes):
                 print(f"  {i+1}. '{route.name}' - {len(route.utterances)} utterances")
-            print(f"Encoder: {encoder.model_name}")
+            # Fixed: Access the model name from the variable instead of the attribute
+            print(f"Encoder: {model_name}")
 
         # Save the trained layer
         output_path = args.output
