@@ -551,13 +551,28 @@ def setup_chainlit_config():
 
             logger.info(f"Copied translations to {dst_translations}")
 
+    # Also handle the chainlit.md file
+    src_md = pkg_dir / "chainlit.md"
+    central_md = user_config_dir / "chainlit.md"
+
+    # Copy the chainlit.md file to the central location if it exists
+    if src_md.exists():
+        if (
+            not central_md.exists()
+            or src_md.stat().st_mtime > central_md.stat().st_mtime
+        ):
+            shutil.copy2(src_md, central_md)
+            logger.info(f"Copied chainlit.md to {central_md}")
+
     # Create symbolic links in current directory to point to the central config
     current_dir = Path.cwd()
     local_chainlit_dir = current_dir / ".chainlit"
+    local_md = current_dir / "chainlit.md"
 
     # Don't create symlinks when we're already in the project directory
     if str(current_dir) != str(pkg_dir.parent):
         try:
+            # Handle .chainlit directory
             if local_chainlit_dir.exists():
                 if local_chainlit_dir.is_symlink():
                     # If it's already a symlink, no need to do anything
@@ -578,12 +593,38 @@ def setup_chainlit_config():
                 logger.info(
                     f"Created symlink from {local_chainlit_dir} to {chainlit_config_dir}"
                 )
+
+            # Handle chainlit.md file
+            if local_md.exists():
+                if local_md.is_symlink():
+                    # Already a symlink, nothing to do
+                    pass
+                else:
+                    # Regular file, backup and create symlink
+                    backup_md = current_dir / "chainlit.md.backup"
+                    if backup_md.exists():
+                        os.remove(backup_md)
+                    local_md.rename(backup_md)
+                    os.symlink(str(central_md), str(local_md))
+                    logger.info(f"Created symlink from {local_md} to {central_md}")
+            else:
+                # Create a symlink to the central chainlit.md
+                os.symlink(str(central_md), str(local_md))
+                logger.info(f"Created symlink from {local_md} to {central_md}")
         except Exception as e:
             logger.warning(
-                f"Could not create symlink: {e}. Using local .chainlit directory."
+                f"Could not create symlinks: {e}. Using local files instead."
             )
             # If symlink creation fails, ensure the local directory exists
             local_chainlit_dir.mkdir(exist_ok=True)
+
+            # Also copy the chainlit.md file if symlink fails
+            if central_md.exists() and not local_md.exists():
+                try:
+                    shutil.copy2(central_md, local_md)
+                    logger.info(f"Copied {central_md} to {local_md} as fallback")
+                except Exception as copy_error:
+                    logger.warning(f"Failed to copy chainlit.md: {copy_error}")
 
     return chainlit_config_dir
 
