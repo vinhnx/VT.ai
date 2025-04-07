@@ -51,19 +51,21 @@ def load_api_keys() -> None:
     # First try to load from user config directory
     user_config_dir = os.path.expanduser("~/.config/vtai")
     user_env_path = os.path.join(user_config_dir, ".env")
-    
+
     env_loaded = False
-    
+
     # Try user config first
     if os.path.exists(user_env_path):
         load_dotenv(dotenv_path=user_env_path, override=True)
         logger.info(f"Loaded API keys from user config: {user_env_path}")
         env_loaded = True
-    
+
     # Fall back to project .env if user config not found or as additional source
     project_env_path = dotenv.find_dotenv()
     if project_env_path:
-        load_dotenv(dotenv_path=project_env_path, override=False)  # Don't override user config
+        load_dotenv(
+            dotenv_path=project_env_path, override=False
+        )  # Don't override user config
         if not env_loaded:
             logger.info(f"Loaded API keys from project .env: {project_env_path}")
             env_loaded = True
