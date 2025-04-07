@@ -101,4 +101,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    main()
+    # Removed duplicate main() call
