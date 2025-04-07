@@ -4,14 +4,17 @@ VT.ai - Main application entry point.
 A multimodal AI chat application with dynamic conversation routing.
 """
 
+import argparse
 import asyncio
 import json
 import os
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import chainlit as cl
+import dotenv
 
 # Import modules
 from vtai.utils import constants as const
@@ -500,14 +503,102 @@ def main():
     Entry point for the VT.ai application when installed via pip.
     This function is called when the 'vtai' command is executed.
     """
-    # Check for the chainlit run command
-    if len(sys.argv) == 1:
-        # No arguments provided, directly run the app using chainlit
-        os.system(f"chainlit run {os.path.realpath(__file__)}")
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="VT.ai Application")
+    parser.add_argument(
+        "--model",
+        type=str,
+        help="Model to use (e.g., deepseek, sonnet, o3-mini)",
+    )
+    parser.add_argument(
+        "--api-key",
+        type=str,
+        help="API key in the format provider=key (e.g., openai=sk-..., anthropic=sk-...)",
+    )
+    
+    # Parse known args to handle chainlit's own arguments
+    args, remaining_args = parser.parse_known_args()
+    
+    # Create user config directory
+    config_dir = Path(os.path.expanduser("~/.config/vtai"))
+    config_dir.mkdir(parents=True, exist_ok=True)
+    
+    env_path = config_dir / ".env"
+    
+    # Process API key if provided
+    if args.api_key:
+        try:
+            # Parse provider=key format
+            if "=" in args.api_key:
+                provider, key = args.api_key.split("=", 1)
+                
+                # Map provider to appropriate environment variable name
+                provider_map = {
+                    "openai": "OPENAI_API_KEY", 
+                    "anthropic": "ANTHROPIC_API_KEY",
+                    "deepseek": "DEEPSEEK_API_KEY",
+                    "cohere": "COHERE_API_KEY",
+                    "huggingface": "HUGGINGFACE_API_KEY",
+                    "groq": "GROQ_API_KEY",
+                    "openrouter": "OPENROUTER_API_KEY",
+                    "gemini": "GEMINI_API_KEY",
+                    "mistral": "MISTRAL_API_KEY"
+                }
+                
+                env_var = provider_map.get(provider.lower())
+                if env_var:
+                    # Create or update .env file with the API key
+                    dotenv.set_key(env_path, env_var, key)
+                    print(f"API key for {provider} saved to {env_path}")
+                else:
+                    print(f"Unknown provider: {provider}. Supported providers are: {', '.join(provider_map.keys())}")
+                    return
+            else:
+                print("API key format should be provider=key (e.g., openai=sk-...)")
+                return
+        except Exception as e:
+            print(f"Error saving API key: {e}")
+            return
+
+    # Directly load the .env file we just created/updated
+    dotenv.load_dotenv(env_path)
+    
+    # Initialize command to run
+    cmd_args = []
+    
+    # Add model selection if specified
+    if args.model:
+        # Use the model parameter to set the appropriate environment variable
+        model_map = {
+            "deepseek": ("DEEPSEEK_API_KEY", "You need to provide a DeepSeek API key with --api-key deepseek=<key>"),
+            "sonnet": ("ANTHROPIC_API_KEY", "You need to provide an Anthropic API key with --api-key anthropic=<key>"),
+            "o3-mini": ("OPENAI_API_KEY", "You need to provide an OpenAI API key with --api-key openai=<key>"),
+            # Add more model mappings here
+        }
+        
+        if args.model.lower() in model_map:
+            env_var, error_msg = model_map[args.model.lower()]
+            if not os.getenv(env_var):
+                print(error_msg)
+                return
+            
+            # Set model in environment for the chainlit process
+            os.environ["VT_DEFAULT_MODEL"] = args.model
+            print(f"Using model: {args.model}")
+        else:
+            print(f"Unknown model: {args.model}. Supported models are: {', '.join(model_map.keys())}")
+            return
+    
+    # Check for the chainlit run command in remaining args
+    if not remaining_args or "run" not in remaining_args:
+        # No run command provided, directly run the app using chainlit
+        cmd = f"chainlit run {os.path.realpath(__file__)}"
     else:
         # Pass any arguments to chainlit
-        args = " ".join(sys.argv[1:])
-        os.system(f"chainlit run {os.path.realpath(__file__)} {args}")
+        cmd = f"chainlit {' '.join(remaining_args)} {os.path.realpath(__file__)}"
+    
+    print(f"Starting VT.ai: {cmd}")
+    os.system(cmd)
 
 
 if __name__ == "__main__":

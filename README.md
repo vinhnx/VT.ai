@@ -44,9 +44,48 @@ VT.ai can be installed and run in multiple ways depending on your needs:
 ```bash
 # Install VT.ai from PyPI
 pip install vtai
+```
+
+### API Key Configuration
+
+You can set your API keys directly when using the `vtai` command:
+
+```bash
+# Set OpenAI API key
+vtai --api-key openai=<your-key>
+```
+
+```bash
+# Set API key and specify model in one command
+vtai --model o3-mini --api-key openai=<your-key>
+```
+
+```bash
+# Use Claude 3.7 Sonnet
+vtai --model sonnet --api-key anthropic=<your-key>
+```
+
+```bash
+# Use DeepSeek
+vtai --model deepseek --api-key deepseek=<your-key>
+```
+
+```bash
+# Use Gemini 2.5
+vtai --model gemini-2.5 --api-key google=<your-key>
+```
+
+API keys are saved to `~/.config/vtai/.env` and will be loaded automatically for future runs.
 
 # Run the application
+```bash
 vtai
+```
+
+# Upgrade VT.ai
+```bash
+# Upgrade VT.ai to the latest version
+pip install --upgrade vtai
 ```
 
 ### Install with uv
@@ -298,10 +337,10 @@ This usually happens when you've installed VT.ai using `uv tool install` or a si
    uv venv
    source .venv/bin/activate  # Linux/Mac
    .venv\Scripts\activate     # Windows
-   
+
    # Install in development mode
    uv pip install -e .
-   
+
    # Run directly with chainlit
    chainlit run vtai/app.py -w
    ```
@@ -311,7 +350,7 @@ This usually happens when you've installed VT.ai using `uv tool install` or a si
    ```bash
    # Move to a different directory
    cd ..
-   
+
    # Then run vtai
    vtai -w
    ```
@@ -321,7 +360,7 @@ This usually happens when you've installed VT.ai using `uv tool install` or a si
    ```bash
    # Linux/Mac
    export PYTHONPATH=/path/to/VT.ai:$PYTHONPATH
-   
+
    # Windows
    set PYTHONPATH=C:\path\to\VT.ai;%PYTHONPATH%
    ```

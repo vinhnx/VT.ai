@@ -45,11 +45,30 @@ allowed_mime = [
 def load_api_keys() -> None:
     """
     Load API keys from environment variables and set them in os.environ.
+    Prioritizes user-specific .env file before falling back to project .env
     Logs which keys were successfully loaded to help with debugging.
     """
-    # Load .env file
-    load_dotenv(dotenv.find_dotenv())
+    # First try to load from user config directory
+    user_config_dir = os.path.expanduser("~/.config/vtai")
+    user_env_path = os.path.join(user_config_dir, ".env")
+    
+    env_loaded = False
+    
+    # Try user config first
+    if os.path.exists(user_env_path):
+        load_dotenv(dotenv_path=user_env_path, override=True)
+        logger.info(f"Loaded API keys from user config: {user_env_path}")
+        env_loaded = True
+    
+    # Fall back to project .env if user config not found or as additional source
+    project_env_path = dotenv.find_dotenv()
+    if project_env_path:
+        load_dotenv(dotenv_path=project_env_path, override=False)  # Don't override user config
+        if not env_loaded:
+            logger.info(f"Loaded API keys from project .env: {project_env_path}")
+            env_loaded = True
 
+    # Get API keys from environment
     api_keys = {
         "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
         "COHERE_API_KEY": os.getenv("COHERE_API_KEY"),
@@ -59,6 +78,7 @@ def load_api_keys() -> None:
         "OPENROUTER_API_KEY": os.getenv("OPENROUTER_API_KEY"),
         "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY"),
         "MISTRAL_API_KEY": os.getenv("MISTRAL_API_KEY"),
+        "DEEPSEEK_API_KEY": os.getenv("DEEPSEEK_API_KEY"),
     }
 
     # Set API keys in environment
@@ -68,8 +88,9 @@ def load_api_keys() -> None:
             os.environ[key] = value
             loaded_keys.append(key)
 
-    logger.info(f"Loaded API keys: {', '.join(loaded_keys)}")
-    if not loaded_keys:
+    if loaded_keys:
+        logger.info(f"Loaded API keys: {', '.join(loaded_keys)}")
+    else:
         logger.warning("No API keys were loaded from environment")
 
 
