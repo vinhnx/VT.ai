@@ -6,8 +6,8 @@
 </p>
 
 <p align="center">
-  <img alt="PyPI - Version" src="https://img.shields.io/pypi/v/vtai">
-  <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/vinhnx/vt.ai">
+  <a href="https://pypi.org/project/vtai/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/vtai"></a>
+  <a href="https://github.com/vinhnx/VT.ai/stargazers"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/vinhnx/vt.ai"></a>
   <a href="https://codespaces.new/vinhnx/VT.ai"><img alt="Open in GitHub Codespaces" src="https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github"/></a>
   <a href="https://x.com/vinhnx"><img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/vinhnx?style=social"/></a>
   <a href="https://x.com/vtdotai"><img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/vtdotai?style=social"/></a>
