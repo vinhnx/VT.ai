@@ -15,28 +15,27 @@
 
 ## Features
 
-### [Multi-Provider AI Integration](#multi-provider-ai-integration)
+### Multi-Provider AI Integration
 
 Supports OpenAI (o1, o3, 4o), Anthropic (Claude 3.5, 3.7), Google (Gemini series), DeepSeek, Meta (Llama), Cohere, local models via Ollama, and more.
 
-### [Semantic-Based Routing](#semantic-router)
+### Semantic-Based Routing
 
 Smart routing system that automatically directs queries to specialized handlers based on vector-based classification.
 
-### [Multimodal Capabilities](#core-capabilities)
+### Multimodal Capabilities
 
 Support for text, image, and audio inputs with vision analysis for images and URLs, plus DALL-E 3 image generation.
 
-### [Voice Interaction](#specialized-features)
+### Voice Interaction
 
 Use speech recognition for input and text-to-speech for responses with multiple voice models.
 
-
-### [Assistant Framework](#assistant-framework)
+### Assistant Framework
 
 Code interpreter for computations and data analysis with function calling for external integrations.
 
-### [Thinking Mode](#chat-modes)
+### Thinking Mode
 
 Access step-by-step reasoning from the models with transparent thinking processes.
 
