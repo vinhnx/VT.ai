@@ -64,6 +64,7 @@ SETTINGS_USE_THINKING_MODEL_DEFAULT_VALUE: bool = False
 
 # List of models that benefit from <think> tag for reasoning
 REASONING_MODELS = [
+    "deepseek/deepseek-reasoner",
     "openrouter/deepseek/deepseek-r1:free",
     "openrouter/deepseek/deepseek-r1",
     "openrouter/deepseek/deepseek-chat-v3-0324:free",
@@ -125,6 +126,10 @@ VISION_MODEL_MAP: Dict[str, str] = {
 }
 
 MODEL_ALIAS_MAP: Dict[str, str] = {
+    # DeepSeek models
+    "DeepSeek R1": "deepseek/deepseek-reasoner",
+    "DeepSeek V3": "deepseek/deepseek-chat",
+    "DeepSeek Coder": "deepseek/deepseek-coder",
     # OpenAI models
     "OpenAI - GPT-o1": "o1",
     "OpenAI - GPT-o1 Mini": "o1-mini",

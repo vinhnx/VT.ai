@@ -58,7 +58,7 @@ dev = [
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
-    ".src/utils/llm_settings_config.py",
+    ".src/utils/llm_provider_settings.py",
     ".bzr",
     ".direnv",
     ".eggs",

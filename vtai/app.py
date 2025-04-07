@@ -18,7 +18,7 @@ import dotenv
 
 # Import modules
 from vtai.utils import constants as const
-from vtai.utils import llm_settings_config as conf
+from vtai.utils import llm_provider_settings as conf
 from vtai.utils.assistant_tools import process_thread_message, process_tool_call
 from vtai.utils.config import initialize_app, logger
 from vtai.utils.conversation_handlers import (

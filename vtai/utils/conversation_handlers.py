@@ -14,7 +14,7 @@ import litellm
 from litellm.utils import trim_messages
 
 from vtai.router.constants import SemanticRouterType
-from vtai.utils import llm_settings_config as conf
+from vtai.utils import llm_provider_settings as conf
 from vtai.utils.config import logger
 from vtai.utils.error_handlers import handle_exception
 from vtai.utils.media_processors import (
