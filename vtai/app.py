@@ -8,6 +8,7 @@ import argparse
 import asyncio
 import json
 import os
+import shutil
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -497,6 +498,96 @@ async def on_speak_chat_response(action: cl.Action) -> None:
         await cl.Message(content="Failed to generate speech. Please try again.").send()
 
 
+def setup_chainlit_config():
+    """
+    Sets up a centralized Chainlit configuration directory in ~/.config/vtai/.chainlit
+    and creates symbolic links from the current directory to avoid file duplication.
+    This process is fully automated and requires no user intervention.
+
+    Returns:
+        Path: Path to the centralized chainlit config directory
+    """
+    # Get the package installation directory
+    pkg_dir = Path(__file__).parent.parent
+    src_chainlit_dir = pkg_dir / ".chainlit"
+
+    # Create centralized Chainlit config directory
+    user_config_dir = Path(os.path.expanduser("~/.config/vtai"))
+    chainlit_config_dir = user_config_dir / ".chainlit"
+
+    # Create directory if it doesn't exist
+    user_config_dir.mkdir(parents=True, exist_ok=True)
+    chainlit_config_dir.mkdir(parents=True, exist_ok=True)
+
+    # Check if we have a config.toml in the source package
+    if src_chainlit_dir.exists() and src_chainlit_dir.is_dir():
+        # Copy config.toml if it exists and target doesn't exist or is older
+        src_config = src_chainlit_dir / "config.toml"
+        dst_config = chainlit_config_dir / "config.toml"
+
+        if src_config.exists() and (
+            not dst_config.exists()
+            or src_config.stat().st_mtime > dst_config.stat().st_mtime
+        ):
+            shutil.copy2(src_config, dst_config)
+            logger.info(f"Copied default config.toml to {dst_config}")
+
+        # Copy translations directory if it exists
+        src_translations = src_chainlit_dir / "translations"
+        dst_translations = chainlit_config_dir / "translations"
+
+        if src_translations.exists() and src_translations.is_dir():
+            # Create translations directory if it doesn't exist
+            dst_translations.mkdir(exist_ok=True)
+
+            # Copy translation files
+            for trans_file in src_translations.glob("*.json"):
+                dst_file = dst_translations / trans_file.name
+                if (
+                    not dst_file.exists()
+                    or trans_file.stat().st_mtime > dst_file.stat().st_mtime
+                ):
+                    shutil.copy2(trans_file, dst_file)
+
+            logger.info(f"Copied translations to {dst_translations}")
+
+    # Create symbolic links in current directory to point to the central config
+    current_dir = Path.cwd()
+    local_chainlit_dir = current_dir / ".chainlit"
+
+    # Don't create symlinks when we're already in the project directory
+    if str(current_dir) != str(pkg_dir.parent):
+        try:
+            if local_chainlit_dir.exists():
+                if local_chainlit_dir.is_symlink():
+                    # If it's already a symlink, no need to do anything
+                    pass
+                else:
+                    # If it's a regular directory, rename it as backup
+                    backup_dir = current_dir / ".chainlit.backup"
+                    if backup_dir.exists():
+                        shutil.rmtree(backup_dir)
+                    local_chainlit_dir.rename(backup_dir)
+                    os.symlink(str(chainlit_config_dir), str(local_chainlit_dir))
+                    logger.info(
+                        f"Created symlink from {local_chainlit_dir} to {chainlit_config_dir}"
+                    )
+            else:
+                # Create a symlink to the centralized config
+                os.symlink(str(chainlit_config_dir), str(local_chainlit_dir))
+                logger.info(
+                    f"Created symlink from {local_chainlit_dir} to {chainlit_config_dir}"
+                )
+        except Exception as e:
+            logger.warning(
+                f"Could not create symlink: {e}. Using local .chainlit directory."
+            )
+            # If symlink creation fails, ensure the local directory exists
+            local_chainlit_dir.mkdir(exist_ok=True)
+
+    return chainlit_config_dir
+
+
 def main():
     """
     Entry point for the VT.ai application when installed via pip.
@@ -521,6 +612,14 @@ def main():
     # Create user config directory
     config_dir = Path(os.path.expanduser("~/.config/vtai"))
     config_dir.mkdir(parents=True, exist_ok=True)
+
+    # Set Chainlit's config path before any imports, using environment variables
+    # that Chainlit recognizes for its paths
+    os.environ["CHAINLIT_CONFIG_DIR"] = str(config_dir)
+    os.environ["CHAINLIT_HOME"] = str(config_dir)
+
+    # Set up centralized Chainlit configuration
+    chainlit_config_dir = setup_chainlit_config()
 
     env_path = config_dir / ".env"
 

@@ -4,3 +4,4 @@ include chainlit.md
 include src/router/layers.json
 recursive-include public *
 recursive-include src/resources *
+recursive-include .chainlit *
