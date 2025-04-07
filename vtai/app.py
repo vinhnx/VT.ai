@@ -558,7 +558,10 @@ def setup_chainlit_config():
     # If our source package has a custom chainlit.md, use that, otherwise create empty file
     if src_md.exists() and src_md.stat().st_size > 0:
         # Copy the non-empty chainlit.md file to the central location
-        if not central_md.exists() or src_md.stat().st_mtime > central_md.stat().st_mtime:
+        if (
+            not central_md.exists()
+            or src_md.stat().st_mtime > central_md.stat().st_mtime
+        ):
             shutil.copy2(src_md, central_md)
             logger.info(f"Copied custom chainlit.md to {central_md}")
     else:
@@ -618,7 +621,9 @@ def setup_chainlit_config():
                     local_md.touch()
                     logger.info(f"Created empty chainlit.md at {local_md} as fallback")
                 except Exception as create_error:
-                    logger.warning(f"Failed to create empty chainlit.md: {create_error}")
+                    logger.warning(
+                        f"Failed to create empty chainlit.md: {create_error}"
+                    )
 
     return chainlit_config_dir
 
