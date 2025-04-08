@@ -9,7 +9,6 @@ import asyncio
 import json
 import os
 import shutil
-import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -78,7 +77,7 @@ async def start_chat():
         ) as e:
             logger.error("Failed to create thread: %s", e)
             await handle_exception(e)
-        except (RuntimeError, KeyError, AttributeError) as e:
+        except Exception as e:
             logger.error("Unexpected error creating thread: %s", repr(e))
             await handle_exception(e)
 
@@ -101,10 +100,10 @@ async def managed_run_execution(thread_id, run_id):
             await async_openai_client.beta.threads.runs.cancel(
                 thread_id=thread_id, run_id=run_id
             )
-        except (RuntimeError, ValueError, KeyError, ConnectionError) as e:
+        except Exception as e:
             logger.error("Error cancelling run: %s", e)
         raise
-    except (RuntimeError, ValueError, KeyError, AttributeError) as e:
+    except Exception as e:
         logger.error("Error in run execution: %s", e)
         await handle_exception(e)
 
@@ -379,7 +378,7 @@ async def run(thread_id: str, human_query: str, file_ids: Optional[List[str]] = 
         await cl.Message(
             content="The operation timed out. Please try again with a simpler query."
         ).send()
-    except (ValueError, KeyError, AttributeError, RuntimeError) as e:
+    except Exception as e:
         logger.error("Error in run: %s", e)
         await handle_exception(e)
 
@@ -394,7 +393,7 @@ async def on_message(message: cl.Message) -> None:
     """
     try:
         if is_in_assistant_profile():
-            thread: Any = cl.user_session.get("thread")
+            thread: Thread = cl.user_session.get("thread")
             files_ids = await process_files(message.elements, async_openai_client)
             await run(
                 thread_id=thread.id, human_query=message.content, file_ids=files_ids
@@ -438,7 +437,7 @@ async def on_message(message: cl.Message) -> None:
     except (ValueError, KeyError, AttributeError) as e:
         logger.error("Error in message processing: %s", e)
         await handle_exception(e)
-    except (RuntimeError, TypeError, ConnectionError, asyncio.TimeoutError) as e:
+    except Exception as e:
         logger.error("Unexpected error processing message: %s", repr(e))
         await handle_exception(e)
 
@@ -478,7 +477,7 @@ async def update_settings(settings: Dict[str, Any]) -> None:
                 cl.user_session.set(key, settings.get(key))
 
         logger.info("Settings updated successfully")
-    except (ValueError, KeyError, AttributeError, TypeError) as e:
+    except Exception as e:
         logger.error("Error updating settings: %s", e)
 
 
@@ -494,147 +493,9 @@ async def on_speak_chat_response(action: cl.Action) -> None:
         await action.remove()
         value = action.payload.get("value") or ""
         await handle_tts_response(value, openai_client)
-    except (RuntimeError, ValueError, KeyError) as e:
+    except Exception as e:
         logger.error("Error handling TTS response: %s", e)
         await cl.Message(content="Failed to generate speech. Please try again.").send()
-
-
-def _copy_config_files(src_chainlit_dir, chainlit_config_dir):
-    """
-    Copy configuration files from source directory to central config directory.
-
-    Args:
-        src_chainlit_dir: Source directory containing original config files
-        chainlit_config_dir: Destination directory for centralized config
-    """
-    # Copy config.toml if it exists and target doesn't exist or is older
-    src_config = src_chainlit_dir / "config.toml"
-    dst_config = chainlit_config_dir / "config.toml"
-
-    if src_config.exists() and (
-        not dst_config.exists()
-        or src_config.stat().st_mtime > dst_config.stat().st_mtime
-    ):
-        shutil.copy2(src_config, dst_config)
-        logger.info("Copied default config.toml to %s", dst_config)
-
-    # Copy translations directory if it exists
-    src_translations = src_chainlit_dir / "translations"
-    dst_translations = chainlit_config_dir / "translations"
-
-    if src_translations.exists() and src_translations.is_dir():
-        # Create translations directory if it doesn't exist
-        dst_translations.mkdir(exist_ok=True)
-
-        # Copy translation files
-        for trans_file in src_translations.glob("*.json"):
-            dst_file = dst_translations / trans_file.name
-            if (
-                not dst_file.exists()
-                or trans_file.stat().st_mtime > dst_file.stat().st_mtime
-            ):
-                shutil.copy2(trans_file, dst_file)
-
-        logger.info("Copied translations to %s", dst_translations)
-
-
-def _handle_markdown_file(pkg_dir, user_config_dir):
-    """
-    Handle the chainlit.md file creation or copying.
-
-    Args:
-        pkg_dir: Package directory
-        user_config_dir: User's config directory
-    """
-    src_md = pkg_dir / "chainlit.md"
-    central_md = user_config_dir / "chainlit.md"
-
-    # If our source package has a custom chainlit.md, use that, otherwise create
-    # empty file
-    if src_md.exists() and src_md.stat().st_size > 0:
-        # Copy the non-empty chainlit.md file to the central location
-        if (
-            not central_md.exists()
-            or src_md.stat().st_mtime > central_md.stat().st_mtime
-        ):
-            shutil.copy2(src_md, central_md)
-            logger.info("Copied custom chainlit.md to %s", central_md)
-    else:
-        # Create an empty chainlit.md file in the central location if it doesn't exist
-        if not central_md.exists():
-            central_md.touch()
-            logger.info("Created empty chainlit.md at %s", central_md)
-
-
-def _create_symlinks(pkg_dir, current_dir, chainlit_config_dir):
-    """
-    Create symbolic links to centralized config.
-
-    Args:
-        pkg_dir: Package directory
-        current_dir: Current working directory
-        chainlit_config_dir: Centralized chainlit config directory
-    """
-    local_chainlit_dir = current_dir / ".chainlit"
-    local_md = current_dir / "chainlit.md"
-
-    # Don't create symlinks when we're already in the project directory
-    if str(current_dir) == str(pkg_dir.parent):
-        return
-
-    try:
-        # Handle .chainlit directory
-        if local_chainlit_dir.exists():
-            if local_chainlit_dir.is_symlink():
-                # If it's already a symlink, no need to do anything
-                pass
-            else:
-                # If it's a regular directory, rename it as backup
-                backup_dir = current_dir / ".chainlit.backup"
-                if backup_dir.exists():
-                    shutil.rmtree(backup_dir)
-                local_chainlit_dir.rename(backup_dir)
-                os.symlink(str(chainlit_config_dir), str(local_chainlit_dir))
-                logger.info(
-                    "Created symlink from %s to %s",
-                    local_chainlit_dir,
-                    chainlit_config_dir,
-                )
-        else:
-            # Create a symlink to the centralized config
-            os.symlink(str(chainlit_config_dir), str(local_chainlit_dir))
-            logger.info(
-                "Created symlink from %s to %s",
-                local_chainlit_dir,
-                chainlit_config_dir,
-            )
-
-        # Handle chainlit.md file - CRITICAL: Create this BEFORE Chainlit starts
-        # Create an empty chainlit.md in the current directory to prevent Chainlit
-        # from creating one
-        if not local_md.exists():
-            # Just create an empty file (not a symlink) to prevent Chainlit's
-            # default content
-            local_md.touch()
-            logger.info(
-                "Created empty chainlit.md at %s to prevent default content",
-                local_md,
-            )
-    except (OSError, PermissionError) as e:
-        logger.warning(
-            "Could not create symlinks or empty files: %s. Using local files instead.",
-            e,
-        )
-        # If symlink creation fails, ensure the local directory exists
-        local_chainlit_dir.mkdir(exist_ok=True)
-
-        # Create an empty chainlit.md file if it doesn't exist
-        if not local_md.exists():
-            try:
-                local_md.touch()
-                logger.info("Created empty chainlit.md at %s as fallback", local_md)
-            except (OSError, PermissionError) as create_error:
-                logger.warning("Failed to create empty chainlit.md: %s", create_error)
 
 
 def setup_chainlit_config():
@@ -660,55 +521,133 @@ def setup_chainlit_config():
 
     # Check if we have a config.toml in the source package
     if src_chainlit_dir.exists() and src_chainlit_dir.is_dir():
-        _copy_config_files(src_chainlit_dir, chainlit_config_dir)
+        # Copy config.toml if it exists and target doesn't exist or is older
+        src_config = src_chainlit_dir / "config.toml"
+        dst_config = chainlit_config_dir / "config.toml"
 
-    # Handle the chainlit.md file
-    _handle_markdown_file(pkg_dir, user_config_dir)
+        if src_config.exists() and (
+            not dst_config.exists()
+            or src_config.stat().st_mtime > dst_config.stat().st_mtime
+        ):
+            shutil.copy2(src_config, dst_config)
+            logger.info(f"Copied default config.toml to {dst_config}")
+
+        # Copy translations directory if it exists
+        src_translations = src_chainlit_dir / "translations"
+        dst_translations = chainlit_config_dir / "translations"
+
+        if src_translations.exists() and src_translations.is_dir():
+            # Create translations directory if it doesn't exist
+            dst_translations.mkdir(exist_ok=True)
+
+            # Copy translation files
+            for trans_file in src_translations.glob("*.json"):
+                dst_file = dst_translations / trans_file.name
+                if (
+                    not dst_file.exists()
+                    or trans_file.stat().st_mtime > dst_file.stat().st_mtime
+                ):
+                    shutil.copy2(trans_file, dst_file)
+
+            logger.info(f"Copied translations to {dst_translations}")
+
+    # Handle the chainlit.md file - we'll create an empty one to prevent Chainlit from creating its own
+    src_md = pkg_dir / "chainlit.md"
+    central_md = user_config_dir / "chainlit.md"
+
+    # If our source package has a custom chainlit.md, use that, otherwise create empty file
+    if src_md.exists() and src_md.stat().st_size > 0:
+        # Copy the non-empty chainlit.md file to the central location
+        if (
+            not central_md.exists()
+            or src_md.stat().st_mtime > central_md.stat().st_mtime
+        ):
+            shutil.copy2(src_md, central_md)
+            logger.info(f"Copied custom chainlit.md to {central_md}")
+    else:
+        # Create an empty chainlit.md file in the central location if it doesn't exist
+        if not central_md.exists():
+            central_md.touch()
+            logger.info(f"Created empty chainlit.md at {central_md}")
 
     # Create symbolic links in current directory to point to the central config
     current_dir = Path.cwd()
-    _create_symlinks(pkg_dir, current_dir, chainlit_config_dir)
+    local_chainlit_dir = current_dir / ".chainlit"
+    local_md = current_dir / "chainlit.md"
+
+    # Don't create symlinks when we're already in the project directory
+    if str(current_dir) != str(pkg_dir.parent):
+        try:
+            # Handle .chainlit directory
+            if local_chainlit_dir.exists():
+                if local_chainlit_dir.is_symlink():
+                    # If it's already a symlink, no need to do anything
+                    pass
+                else:
+                    # If it's a regular directory, rename it as backup
+                    backup_dir = current_dir / ".chainlit.backup"
+                    if backup_dir.exists():
+                        shutil.rmtree(backup_dir)
+                    local_chainlit_dir.rename(backup_dir)
+                    os.symlink(str(chainlit_config_dir), str(local_chainlit_dir))
+                    logger.info(
+                        f"Created symlink from {local_chainlit_dir} to {chainlit_config_dir}"
+                    )
+            else:
+                # Create a symlink to the centralized config
+                os.symlink(str(chainlit_config_dir), str(local_chainlit_dir))
+                logger.info(
+                    f"Created symlink from {local_chainlit_dir} to {chainlit_config_dir}"
+                )
+
+            # Handle chainlit.md file - CRITICAL: Create this BEFORE Chainlit starts
+            # Create an empty chainlit.md in the current directory to prevent Chainlit from creating one
+            if not local_md.exists():
+                # Just create an empty file (not a symlink) to prevent Chainlit's default content
+                local_md.touch()
+                logger.info(
+                    f"Created empty chainlit.md at {local_md} to prevent default content"
+                )
+        except Exception as e:
+            logger.warning(
+                f"Could not create symlinks or empty files: {e}. Using local files instead."
+            )
+            # If symlink creation fails, ensure the local directory exists
+            local_chainlit_dir.mkdir(exist_ok=True)
+
+            # Create an empty chainlit.md file if it doesn't exist
+            if not local_md.exists():
+                try:
+                    local_md.touch()
+                    logger.info(f"Created empty chainlit.md at {local_md} as fallback")
+                except Exception as create_error:
+                    logger.warning(
+                        f"Failed to create empty chainlit.md: {create_error}"
+                    )
 
     return chainlit_config_dir
 
 
-# Track whether initialization has been performed
-_initialization_performed = False
-
-
-def _perform_initialization(args=None, remaining_args=None):
+def main():
     """
-    Perform one-time initialization tasks for the application.
-
-    Args:
-        args: Parsed command-line arguments
-        remaining_args: Remaining command-line arguments
-
-    Returns:
-        Tuple of (args, remaining_args)
+    Entry point for the VT.ai application when installed via pip.
+    This function is called when the 'vtai' command is executed.
     """
-    global _initialization_performed
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="VT.ai Application")
+    parser.add_argument(
+        "--model",
+        type=str,
+        help="Model to use (e.g., deepseek, sonnet, o3-mini)",
+    )
+    parser.add_argument(
+        "--api-key",
+        type=str,
+        help="API key in the format provider=key (e.g., openai=sk-..., anthropic=sk-...)",
+    )
 
-    if _initialization_performed:
-        return args, remaining_args
-
-    # Parse command-line arguments if not provided
-    if args is None or remaining_args is None:
-        parser = argparse.ArgumentParser(description="VT.ai Application")
-        parser.add_argument(
-            "--model",
-            type=str,
-            help="Model to use (e.g., deepseek, sonnet, o3-mini)",
-        )
-        parser.add_argument(
-            "--api-key",
-            type=str,
-            help="API key in the format provider=key (e.g., openai=sk-..., "
-            "anthropic=sk-...)",
-        )
-
-        # Parse known args to handle chainlit's own arguments
-        args, remaining_args = parser.parse_known_args()
+    # Parse known args to handle chainlit's own arguments
+    args, remaining_args = parser.parse_known_args()
 
     # Create user config directory
     config_dir = Path(os.path.expanduser("~/.config/vtai"))
@@ -720,7 +659,7 @@ def _perform_initialization(args=None, remaining_args=None):
     os.environ["CHAINLIT_HOME"] = str(config_dir)
 
     # Set up centralized Chainlit configuration
-    setup_chainlit_config()
+    chainlit_config_dir = setup_chainlit_config()
 
     env_path = config_dir / ".env"
 
@@ -753,19 +692,21 @@ def _perform_initialization(args=None, remaining_args=None):
                     print(f"API key for {provider} saved to {env_path}")
                 else:
                     print(
-                        f"Unknown provider: {provider}. Supported providers are: "
-                        f"{', '.join(provider_map.keys())}"
+                        f"Unknown provider: {provider}. Supported providers are: {', '.join(provider_map.keys())}"
                     )
-                    sys.exit(1)
+                    return
             else:
                 print("API key format should be provider=key (e.g., openai=sk-...)")
-                sys.exit(1)
-        except (OSError, ValueError, KeyError, TypeError) as e:
+                return
+        except Exception as e:
             print(f"Error saving API key: {e}")
-            sys.exit(1)
+            return
 
     # Directly load the .env file we just created/updated
     dotenv.load_dotenv(env_path)
+
+    # Initialize command to run
+    cmd_args = []
 
     # Add model selection if specified
     if args.model:
@@ -773,13 +714,11 @@ def _perform_initialization(args=None, remaining_args=None):
         model_map = {
             "deepseek": (
                 "DEEPSEEK_API_KEY",
-                "You need to provide a DeepSeek API key with "
-                "--api-key deepseek=<key>",
+                "You need to provide a DeepSeek API key with --api-key deepseek=<key>",
             ),
             "sonnet": (
                 "ANTHROPIC_API_KEY",
-                "You need to provide an Anthropic API key with "
-                "--api-key anthropic=<key>",
+                "You need to provide an Anthropic API key with --api-key anthropic=<key>",
             ),
             "o3-mini": (
                 "OPENAI_API_KEY",
@@ -792,49 +731,28 @@ def _perform_initialization(args=None, remaining_args=None):
             env_var, error_msg = model_map[args.model.lower()]
             if not os.getenv(env_var):
                 print(error_msg)
-                sys.exit(1)
+                return
 
             # Set model in environment for the chainlit process
             os.environ["VT_DEFAULT_MODEL"] = args.model
             print(f"Using model: {args.model}")
         else:
             print(
-                f"Unknown model: {args.model}. Supported models are: "
-                f"{', '.join(model_map.keys())}"
+                f"Unknown model: {args.model}. Supported models are: {', '.join(model_map.keys())}"
             )
-            sys.exit(1)
+            return
 
-    # Mark initialization as completed
-    _initialization_performed = True
-
-    return args, remaining_args
-
-
-def main():
-    """
-    Entry point for the VT.ai application when installed via pip.
-    This function is called when the 'vtai' command is executed.
-    """
-    # Perform initialization
-    _, remaining_args = _perform_initialization()
-
-    # When run directly as 'vtai', we need to modify sys.argv to make
-    # Chainlit run this file with the correct arguments
-    if "run" not in remaining_args and __name__ == "__main__":
-        # Insert 'run' and script path at the start of the remaining arguments
-        sys.argv = [sys.argv[0], "run", __file__] + remaining_args
-
-        # Import and run chainlit module
-        print(f"Starting VT.ai via direct module import")
-        import chainlit.cli
-
-        chainlit.cli.main()
+    # Check for the chainlit run command in remaining args
+    if not remaining_args or "run" not in remaining_args:
+        # No run command provided, directly run the app using chainlit
+        cmd = f"chainlit run {os.path.realpath(__file__)}"
     else:
-        # We're probably being run by Chainlit already, so just
-        # return to let Chainlit continue its initialization
-        return
+        # Pass any arguments to chainlit
+        cmd = f"chainlit {' '.join(remaining_args)} {os.path.realpath(__file__)}"
+
+    print(f"Starting VT.ai: {cmd}")
+    os.system(cmd)
 
 
 if __name__ == "__main__":
-    # Called directly from command line
     main()
