@@ -103,6 +103,27 @@ vtai --model gemini-2.5 --api-key google=<your-key>
 
 API keys are saved to `~/.config/vtai/.env` and will be loaded automatically for future runs.
 
+### First Run Experience
+
+When you run VT.ai for the first time:
+
+1. The application will create a configuration directory at `~/.config/vtai/`
+2. It will download necessary model files (tokenizers, embeddings, etc.)
+3. The web interface will open at http://localhost:8000
+4. If no API keys are configured, you'll be prompted to add them
+
+To ensure the best first-run experience:
+
+```bash
+# Set at least one API key before running (OpenAI recommended for beginners)
+export OPENAI_API_KEY='sk-your-key-here'
+
+# Run the application
+vtai
+```
+
+VT.ai uses semantic routing to determine the most appropriate model for each query, so having at least one working API key ensures functionality from the start.
+
 # Run the application
 ```bash
 vtai
@@ -306,6 +327,77 @@ The `-w` flag enables auto-reloading during development.
 | **Image Gen**  | DALL-E 3                                                   |
 | **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                          |
 | **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B)                |
+
+## Architecture
+
+VT.ai is built with a modular architecture designed for flexibility and extensibility:
+
+### Core Components
+
+```
+┌─────────────────┐     ┌───────────────┐     ┌────────────────┐
+│ Web Interface   │     │ Semantic      │     │ Model          │
+│ (Chainlit)      │────▶│ Router        │────▶│ Providers      │
+└─────────────────┘     └───────────────┘     └────────────────┘
+        │                       │                     │
+        ▼                       ▼                     ▼
+┌─────────────────┐     ┌───────────────┐     ┌────────────────┐
+│ File/Media      │     │ Assistant     │     │ API Key        │
+│ Processing      │     │ Tools         │     │ Management     │
+└─────────────────┘     └───────────────┘     └────────────────┘
+```
+
+1. **Entry Point**: `vtai/app.py` - Main application logic and request handling
+2. **Routing Layer**: `vtai/router/` - Semantic classification for query routing
+3. **Model Management**: Uses LiteLLM for unified model interface
+4. **Configuration**: `vtai/utils/config.py` - Application configuration and initialization
+5. **User Interface**: Chainlit web components and chat interface
+
+### Data Flow
+
+1. User input is received through the Chainlit interface
+2. Input is processed (text extraction, image analysis, etc.)
+3. Semantic router classifies the query intent
+4. Query is routed to the appropriate model provider
+5. Response is processed and rendered in the UI
+
+## Key Components
+
+### Semantic Router
+
+The semantic routing system uses FastEmbed to encode queries and match them to the most appropriate handler:
+
+- **Encoder**: BAAI/bge-small-en-v1.5 embedding model
+- **Classification**: Vector similarity matching against predefined intents
+- **Dynamic Dispatch**: Routes queries to specialized handlers based on classification
+
+### API Key Management
+
+VT.ai securely manages API keys through:
+
+- Command-line arguments (`--api-key provider=key`)
+- Environment variables (`OPENAI_API_KEY`, etc.)
+- Configuration file (`~/.config/vtai/.env`)
+
+Keys are securely stored and automatically loaded for future sessions.
+
+### Assistant Tools
+
+The Assistant mode provides access to various tools:
+
+- **Code Interpreter**: Execute Python code for data analysis and computations
+- **File Processing**: Handle PDF documents, CSV data, and images
+- **Function Calling**: Integrate with external services and APIs
+- **Thread Management**: Persistent conversation contexts
+
+### Media Processing
+
+VT.ai supports multimodal interactions through:
+
+- **Image Analysis**: Vision capabilities for image interpretation
+- **Text-to-Speech**: Voice synthesis for audio responses
+- **Speech Recognition**: Voice input processing
+- **Image Generation**: DALL-E integration for creating images from text descriptions
 
 ## Development
 
