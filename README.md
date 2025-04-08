@@ -29,7 +29,7 @@ Support for text, image, and audio inputs with vision analysis for images and UR
 
 ### Voice Interaction
 
-Use speech recognition for input and text-to-speech for responses with multiple voice models.
+WIP with speech-to-text and real-time conversation features. Currently, model response text-to-speech is implemented - please try it! Supports multiple voice models.
 
 ### Thinking Mode
 
@@ -288,14 +288,6 @@ The `-w` flag enables auto-reloading during development.
 
 ## Usage Guide
 
-### Interface Controls
-
-| Shortcut | Action                      |
-|----------|----------------------------- |
-| Ctrl+/   | Switch model provider       |
-| Ctrl+,   | Open settings panel         |
-| Ctrl+L   | Clear conversation history  |
-
 ### Chat Modes
 
 1. **Standard Chat**
@@ -315,7 +307,7 @@ The `-w` flag enables auto-reloading during development.
 - **Image Generation**: Generate images through prompts ("Generate an image of...")
 - **Image Analysis**: Upload or provide URL for image interpretation
 - **Text Processing**: Request summaries, translations, or content transformation
-- **Voice Interaction**: Use speech recognition for input and TTS for responses
+- **Voice Interaction**: WIP with speech-to-text and real-time conversation. Currently, model response text-to-speech is implemented - please try it!
 - **Thinking Mode**: Access step-by-step reasoning from the models
 
 ## Supported Models
