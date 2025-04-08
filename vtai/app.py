@@ -9,6 +9,7 @@ import asyncio
 import json
 import os
 import shutil
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -633,9 +634,7 @@ def _create_symlinks(pkg_dir, current_dir, chainlit_config_dir):
                 local_md.touch()
                 logger.info("Created empty chainlit.md at %s as fallback", local_md)
             except (OSError, PermissionError) as create_error:
-                logger.warning(
-                    "Failed to create empty chainlit.md: %s", create_error
-                )
+                logger.warning("Failed to create empty chainlit.md: %s", create_error)
 
 
 def setup_chainlit_config():
@@ -673,27 +672,43 @@ def setup_chainlit_config():
     return chainlit_config_dir
 
 
-def main():
-    """
-    Entry point for the VT.ai application when installed via pip.
-    This function is called when the 'vtai' command is executed.
-    """
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="VT.ai Application")
-    parser.add_argument(
-        "--model",
-        type=str,
-        help="Model to use (e.g., deepseek, sonnet, o3-mini)",
-    )
-    parser.add_argument(
-        "--api-key",
-        type=str,
-        help="API key in the format provider=key (e.g., openai=sk-..., "
-             "anthropic=sk-...)",
-    )
+# Track whether initialization has been performed
+_initialization_performed = False
 
-    # Parse known args to handle chainlit's own arguments
-    args, remaining_args = parser.parse_known_args()
+
+def _perform_initialization(args=None, remaining_args=None):
+    """
+    Perform one-time initialization tasks for the application.
+
+    Args:
+        args: Parsed command-line arguments
+        remaining_args: Remaining command-line arguments
+
+    Returns:
+        Tuple of (args, remaining_args)
+    """
+    global _initialization_performed
+
+    if _initialization_performed:
+        return args, remaining_args
+
+    # Parse command-line arguments if not provided
+    if args is None or remaining_args is None:
+        parser = argparse.ArgumentParser(description="VT.ai Application")
+        parser.add_argument(
+            "--model",
+            type=str,
+            help="Model to use (e.g., deepseek, sonnet, o3-mini)",
+        )
+        parser.add_argument(
+            "--api-key",
+            type=str,
+            help="API key in the format provider=key (e.g., openai=sk-..., "
+            "anthropic=sk-...)",
+        )
+
+        # Parse known args to handle chainlit's own arguments
+        args, remaining_args = parser.parse_known_args()
 
     # Create user config directory
     config_dir = Path(os.path.expanduser("~/.config/vtai"))
@@ -741,13 +756,13 @@ def main():
                         f"Unknown provider: {provider}. Supported providers are: "
                         f"{', '.join(provider_map.keys())}"
                     )
-                    return
+                    sys.exit(1)
             else:
                 print("API key format should be provider=key (e.g., openai=sk-...)")
-                return
+                sys.exit(1)
         except (OSError, ValueError, KeyError, TypeError) as e:
             print(f"Error saving API key: {e}")
-            return
+            sys.exit(1)
 
     # Directly load the .env file we just created/updated
     dotenv.load_dotenv(env_path)
@@ -777,7 +792,7 @@ def main():
             env_var, error_msg = model_map[args.model.lower()]
             if not os.getenv(env_var):
                 print(error_msg)
-                return
+                sys.exit(1)
 
             # Set model in environment for the chainlit process
             os.environ["VT_DEFAULT_MODEL"] = args.model
@@ -787,19 +802,39 @@ def main():
                 f"Unknown model: {args.model}. Supported models are: "
                 f"{', '.join(model_map.keys())}"
             )
-            return
+            sys.exit(1)
 
-    # Check for the chainlit run command in remaining args
-    if not remaining_args or "run" not in remaining_args:
-        # No run command provided, directly run the app using chainlit
-        cmd = f"chainlit run {os.path.realpath(__file__)}"
+    # Mark initialization as completed
+    _initialization_performed = True
+
+    return args, remaining_args
+
+
+def main():
+    """
+    Entry point for the VT.ai application when installed via pip.
+    This function is called when the 'vtai' command is executed.
+    """
+    # Perform initialization
+    _, remaining_args = _perform_initialization()
+
+    # When run directly as 'vtai', we need to modify sys.argv to make
+    # Chainlit run this file with the correct arguments
+    if "run" not in remaining_args and __name__ == "__main__":
+        # Insert 'run' and script path at the start of the remaining arguments
+        sys.argv = [sys.argv[0], "run", __file__] + remaining_args
+
+        # Import and run chainlit module
+        print(f"Starting VT.ai via direct module import")
+        import chainlit.cli
+
+        chainlit.cli.main()
     else:
-        # Pass any arguments to chainlit
-        cmd = f"chainlit {' '.join(remaining_args)} {os.path.realpath(__file__)}"
-
-    print(f"Starting VT.ai: {cmd}")
-    os.system(cmd)
+        # We're probably being run by Chainlit already, so just
+        # return to let Chainlit continue its initialization
+        return
 
 
 if __name__ == "__main__":
+    # Called directly from command line
     main()
