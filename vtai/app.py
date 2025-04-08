@@ -745,7 +745,7 @@ def main():
             else:
                 print("API key format should be provider=key (e.g., openai=sk-...)")
                 return
-        except Exception as e:
+        except (OSError, ValueError, KeyError, TypeError) as e:
             print(f"Error saving API key: {e}")
             return
 

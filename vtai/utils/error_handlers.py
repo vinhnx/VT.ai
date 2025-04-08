@@ -37,6 +37,6 @@ async def handle_exception(e: Exception) -> None:
     else:
         error_message += f"Unexpected error: {str(e)}"
 
-    logger.error(f"Error details: {type(e).__name__}: {str(e)}")
+    logger.error("Error details: %s: %s", type(e).__name__, str(e))
 
     await cl.Message(content=error_message).send()
