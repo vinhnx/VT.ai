@@ -12,7 +12,7 @@ import litellm
 from openai import OpenAI
 
 # Update imports to use vtai namespace
-from vtai.utils import llm_provider_settings as conf
+from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import logger
 from vtai.utils.user_session_helper import (
     get_setting,

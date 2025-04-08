@@ -3,7 +3,7 @@ from typing import Any, Dict
 import chainlit as cl
 from chainlit.input_widget import Select, Slider, Switch
 
-from vtai.utils import llm_provider_settings as conf
+from vtai.utils import llm_providers_config as conf
 
 
 async def build_settings() -> Dict[str, Any]:
