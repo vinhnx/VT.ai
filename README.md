@@ -46,6 +46,20 @@ VT.ai can be installed and run in multiple ways depending on your needs:
 pip install vtai
 ```
 
+### Quick Start with uvx (No Installation)
+
+If you have [uv](https://github.com/astral-sh/uv) installed, you can try VT.ai without installing it permanently:
+
+```bash
+# Set your API key in the environment
+export OPENAI_API_KEY='sk-your-key-here'
+
+# Run VT.ai directly using uvx
+uvx vtai
+```
+
+This creates a temporary virtual environment just for this session. When you're done, nothing is left installed on your system.
+
 ### API Key Configuration
 
 You can set your API keys directly when using the `vtai` command:
@@ -55,22 +69,34 @@ You can set your API keys directly when using the `vtai` command:
 vtai --api-key openai=<your-key>
 ```
 
+You can also set environment variables before running VT.ai for the first time:
+
+```bash
+# For OpenAI (recommended for first-time users)
+export OPENAI_API_KEY='sk-your-key-here'
+vtai
+
+# For Anthropic Claude models
+export ANTHROPIC_API_KEY='sk-ant-your-key-here'
+vtai --model sonnet
+
+# For Google Gemini models
+export GEMINI_API_KEY='your-key-here'
+vtai --model gemini-2.5
+```
+
+You can combine model selection and API key setting in one command:
+
 ```bash
 # Set API key and specify model in one command
 vtai --model o3-mini --api-key openai=<your-key>
-```
 
-```bash
 # Use Claude 3.7 Sonnet
 vtai --model sonnet --api-key anthropic=<your-key>
-```
 
-```bash
 # Use DeepSeek
 vtai --model deepseek --api-key deepseek=<your-key>
-```
 
-```bash
 # Use Gemini 2.5
 vtai --model gemini-2.5 --api-key google=<your-key>
 ```
@@ -83,9 +109,29 @@ vtai
 ```
 
 # Upgrade VT.ai
+
+There are several ways to upgrade VT.ai depending on how you installed it:
+
 ```bash
-# Upgrade VT.ai to the latest version
+# If installed with pip
 pip install --upgrade vtai
+
+# If installed with pipx
+pipx upgrade vtai
+
+# If installed with uv
+uv tool upgrade vtai
+
+# If you want to try the latest version without upgrading
+export OPENAI_API_KEY='sk-your-key-here'
+uvx vtai
+```
+
+For development installs, pull the latest changes and reinstall:
+
+```bash
+git pull
+uv pip install -e .
 ```
 
 ### Install with uv
