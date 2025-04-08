@@ -131,13 +131,13 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "DeepSeek V3": "deepseek/deepseek-chat",
     "DeepSeek Coder": "deepseek/deepseek-coder",
     # OpenAI models
+    "OpenAI - GPT-4o Mini": "gpt-4o-mini",
+    "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT-o1": "o1",
+    "OpenAI - GPT-4.5 Preview": "gpt-4.5-preview",
+    "OpenAI - GPT-o3 Mini": "o3-mini",
     "OpenAI - GPT-o1 Mini": "o1-mini",
     "OpenAI - GPT-o1 Pro": "o1-pro",
-    "OpenAI - GPT-o3 Mini": "o3-mini",
-    "OpenAI - GPT-4.5 Preview": "gpt-4.5-preview",
-    "OpenAI - GPT-4o": "gpt-4o",
-    "OpenAI - GPT-4o Mini": "gpt-4o-mini",
     # Anthropic models
     "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",

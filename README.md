@@ -124,14 +124,7 @@ vtai
 
 VT.ai uses semantic routing to determine the most appropriate model for each query, so having at least one working API key ensures functionality from the start.
 
-# Run the application
-```bash
-vtai
-```
-
-# Upgrade VT.ai
-
-There are several ways to upgrade VT.ai depending on how you installed it:
+### Upgrading VT.ai
 
 ```bash
 # If installed with pip
@@ -155,7 +148,9 @@ git pull
 uv pip install -e .
 ```
 
-### Install with uv
+### Additional Installation Methods
+
+#### Install with uv
 
 ```bash
 # If you need to install uv first
@@ -167,7 +162,7 @@ uv tool install --force --python python3.11 vtai@latest
 
 This will install uv using your existing Python version and use it to install VT.ai. If needed, uv will automatically install a separate Python 3.11 to use with VT.ai.
 
-### Install with pipx
+#### Install with pipx
 
 ```bash
 # If you need to install pipx first
@@ -179,7 +174,7 @@ pipx install vtai
 
 You can use pipx to install VT.ai with Python versions 3.9-3.12.
 
-### Development Install (from source)
+#### Development Install (from source)
 
 ```bash
 # Clone repository
@@ -307,7 +302,7 @@ The `-w` flag enables auto-reloading during development.
 - **Image Generation**: Generate images through prompts ("Generate an image of...")
 - **Image Analysis**: Upload or provide URL for image interpretation
 - **Text Processing**: Request summaries, translations, or content transformation
-- **Voice Interaction**: WIP with speech-to-text and real-time conversation. Currently, model response text-to-speech is implemented - please try it!
+- **Voice Interaction**: Text-to-speech for model responses with multiple voice options
 - **Thinking Mode**: Access step-by-step reasoning from the models
 
 ## Supported Models
@@ -319,6 +314,109 @@ The `-w` flag enables auto-reloading during development.
 | **Image Gen**  | DALL-E 3                                                   |
 | **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                          |
 | **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B)                |
+
+## Running Models Locally
+
+VT.ai supports running models locally for privacy, cost savings, and offline use through three main options:
+
+### Local Model Options
+
+| Option | Setup Difficulty | UI | Best For |
+|--------|-----------------|-------|----------|
+| **LM Studio** | Easy | Full GUI | Beginners |
+| **Ollama** | Medium | CLI + Web UI | CLI users |
+| **llama.cpp** | Advanced | CLI only | Maximum control |
+
+### Quick Setup Instructions
+
+#### 1. LM Studio (Recommended for Beginners)
+
+```bash
+# 1. Download and install LM Studio from https://lmstudio.ai/
+# 2. Open LM Studio and download a model (Browse tab)
+# 3. Start server in Developer tab
+# 4. Configure VT.ai
+export OPENAI_API_BASE=http://localhost:1234/v1
+export OPENAI_API_KEY=lm-studio
+vtai
+```
+
+#### 2. Ollama
+
+```bash
+# Install Ollama
+brew install ollama  # macOS
+curl -fsSL https://ollama.ai/install.sh | sh  # Linux
+
+# Pull a model
+ollama pull llama3
+
+# Configure VT.ai
+export OLLAMA_HOST=http://localhost:11434
+vtai --model ollama/llama3
+```
+
+#### 3. llama.cpp
+
+```bash
+# Build and run server
+git clone https://github.com/ggml-org/llama.cpp
+cd llama.cpp && make
+./build/bin/llama-server -m /path/to/model.gguf --port 8080
+
+# Configure VT.ai
+export OPENAI_API_BASE=http://localhost:8080
+export OPENAI_API_KEY=sk-no-key-required
+vtai
+```
+
+### Using VT.ai's HuggingFace Models Locally
+
+VT.ai offers several optimized models on [HuggingFace](https://huggingface.co/vinhnx90) that work well with local setups:
+
+#### Recommended Models
+
+| Model | Size | Specialization | Download |
+|-------|------|---------------|----------|
+| [VT-Orpheus-3B-TTS-Ceylia-Q4KM-GGUFF](https://huggingface.co/vinhnx90/VT-Orpheus-3B-TTS-Ceylia-Q4KM-GGUFF) | 3B | Text-to-Speech | [Link](https://huggingface.co/vinhnx90/VT-Orpheus-3B-TTS-Ceylia-Q4KM-GGUFF) |
+| [vt-qwen-3b-GRPO-merged-16bit-Q4_K_M-GGUF](https://huggingface.co/vinhnx90/vt-qwen-3b-GRPO-merged-16bit-Q4_K_M-GGUF) | 3B | Text Generation | [Link](https://huggingface.co/vinhnx90/vt-qwen-3b-GRPO-merged-16bit-Q4_K_M-GGUF) |
+| [vt-phi-4-14B-GRPO-lora-adapter-Q8_0-GGUF](https://huggingface.co/vinhnx90/vt-phi-4-14B-GRPO-lora-adapter-Q8_0-GGUF) | 14B | Text Generation | [Link](https://huggingface.co/vinhnx90/vt-phi-4-14B-GRPO-lora-adapter-Q8_0-GGUF) |
+
+#### Using VT.ai Models with LM Studio
+
+1. In LM Studio, click "Import Model"
+2. Enter the HuggingFace repo: `vinhnx90/VT-Orpheus-3B-TTS-Ceylia-Q4KM-GGUFF`
+3. Start the server and configure VT.ai as shown above
+
+#### Using VT.ai Models with Ollama
+
+```bash
+# Create a Modelfile
+echo "FROM vinhnx90/vt-qwen-3b-GRPO-merged-16bit-Q4_K_M-GGUF" > Modelfile
+
+# Import into Ollama
+ollama create vt-qwen -f Modelfile
+
+# Run with VT.ai
+vtai --model ollama/vt-qwen
+```
+
+#### Using VT.ai Models with llama.cpp
+
+```bash
+# Download model from HuggingFace
+curl -L "https://huggingface.co/vinhnx90/VT-Orpheus-3B-TTS-Ceylia-Q4KM-GGUFF/resolve/main/model.gguf" -o model.gguf
+
+# Run server with the model
+./build/bin/llama-server -m model.gguf --port 8080
+
+# Configure VT.ai
+export OPENAI_API_BASE=http://localhost:8080
+export OPENAI_API_KEY=sk-no-key-required
+vtai
+```
+
+For advanced options, GPU acceleration, or troubleshooting, see the [LM Studio docs](https://lmstudio.ai/docs), [Ollama docs](https://ollama.ai/docs), or [llama.cpp repo](https://github.com/ggml-org/llama.cpp).
 
 ## Architecture
 
@@ -437,56 +535,30 @@ uv pip install -e ".[dev]"
 4. Update documentation to reflect changes
 5. Submit a Pull Request with comprehensive description
 
-## More Information
-
-### Documentation
-- [Setup Guide](#setup-guide)
-- [Usage Guide](#usage-guide)
-- [Supported Models](#supported-models)
-- [Architecture](#architecture)
-- [Key Components](#key-components)
-
 ## Troubleshooting
 
-### ModuleNotFoundError: No module named 'vtai'
+### Common Issues
 
-If you encounter this error when running `vtai -w`:
+#### ModuleNotFoundError: No module named 'vtai'
 
-```
-ModuleNotFoundError: No module named 'vtai'
-```
+If you encounter this error when running `vtai -w`, try one of these solutions:
 
-This usually happens when you've installed VT.ai using `uv tool install` or a similar method that puts the package in an isolated environment, but you're trying to run it from within the source directory.
-
-#### Solutions:
-
-1. **Use the development install method instead:**
-
+1. **Use the development install method**:
    ```bash
    # In the VT.ai repository root
    uv venv
-   source .venv/bin/activate  # Linux/Mac
-   .venv\Scripts\activate     # Windows
-
-   # Install in development mode
+   source .venv/bin/activate
    uv pip install -e .
-
-   # Run directly with chainlit
    chainlit run vtai/app.py -w
    ```
 
-2. **Run the installed vtai command outside of the source directory:**
-
+2. **Run the installed vtai command outside the source directory**:
    ```bash
-   # Move to a different directory
    cd ..
-
-   # Then run vtai
    vtai -w
    ```
 
-3. **Update your PYTHONPATH:**
-
+3. **Update your PYTHONPATH**:
    ```bash
    # Linux/Mac
    export PYTHONPATH=/path/to/VT.ai:$PYTHONPATH
@@ -495,7 +567,7 @@ This usually happens when you've installed VT.ai using `uv tool install` or a si
    set PYTHONPATH=C:\path\to\VT.ai;%PYTHONPATH%
    ```
 
-### For other issues
+### General Troubleshooting
 
 If you're experiencing other problems, please check:
 
