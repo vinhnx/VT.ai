@@ -448,8 +448,7 @@ def build_starters_from_routes(max_count=5):
     return [cl.Starter(label=item["label"], message=item["message"]) for item in all_starters]
 
 
-def get_shuffled_starters(use_random=False, m
-    ax_count=5):
+def get_shuffled_starters(use_random=False, max_count=5):
     """
     Get shuffled starters for chat profiles
 

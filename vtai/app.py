@@ -416,49 +416,12 @@ async def on_message(message: cl.Message) -> None:
             current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
             is_reasoning = conf.is_reasoning_model(current_model)
 
-            # Enhanced query analysis and routing
-            original_content = message.content
-
-            # Handle routing tag in user message if present
-            if "#" in original_content and not original_content.startswith("```"):
-                route_tag = None
-                for word in original_content.split():
-                    if word.startswith("#") and len(word) > 1:
-                        route_tag = word[1:].lower().strip()
-                        break
-
-                if route_tag:
-                    # Map hashtag to route name
-                    route_map = {
-                        "code": "code-assistance",
-                        "data": "data-analysis",
-                        "creative": "creative-writing",
-                        "planning": "planning-organization",
-                        "troubleshoot": "troubleshooting",
-                        "image": "image-generation",
-                        "vision": "vision-image-processing",
-                        "casual": "casual-conversation",
-                        "curious": "curious",
-                    }
-
-                    target_route = route_map.get(route_tag)
-                    if target_route:
-                        logger.info(
-                            f"Manually routing to #{route_tag} -> {target_route}"
-                        )
-                        # Remove the hashtag from the content
-                        message.content = original_content.replace(
-                            f"#{route_tag}", ""
-                        ).strip()
-                        # Set a session flag to override automatic routing
-                        cl.user_session.set("override_route", target_route)
-                    else:
-                        logger.info(f"Unknown route tag: #{route_tag}")
-                        message.content = original_content
-
             # If this is a reasoning model and <think> is not already in content, add it
             if is_reasoning and "<think>" not in message.content:
-                message.content = f"<think>{message.content}"
+                # Clone the original message content
+                original_content = message.content
+                # Modify the message content to include <think> tag
+                message.content = f"<think>{original_content}"
                 logger.info(
                     "Automatically added <think> tag for reasoning model: %s",
                     current_model,
@@ -476,11 +439,6 @@ async def on_message(message: cl.Message) -> None:
                     await handle_thinking_conversation(message, messages, route_layer)
                 else:
                     await handle_conversation(message, messages, route_layer)
-
-                # Clear any override route after use
-                if cl.user_session.get("override_route"):
-                    cl.user_session.set("override_route", None)
-
     except asyncio.CancelledError:
         logger.warning("Message processing was cancelled")
         await cl.Message(
