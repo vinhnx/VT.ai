@@ -21,7 +21,20 @@ Supports OpenAI (o1, o3, 4o), Anthropic (Claude 3.5, 3.7), Google (Gemini series
 
 ### Semantic-Based Routing
 
-Smart routing system that automatically directs queries to specialized handlers based on vector-based classification.
+Smart routing system that automatically directs queries to specialized handlers based on vector-based classification. VT.ai currently supports 10 specialized conversation routes:
+
+1. Text processing - for summarization, translation, and text analysis
+2. Vision/image processing - for image description and analysis
+3. Casual conversation - for general chat and small talk
+4. Image generation - for creating images from text descriptions
+5. Curious queries - for educational and informational requests
+6. Code assistance - for programming help and debugging
+7. Data analysis - for analyzing data and statistics
+8. Creative writing - for content creation and storytelling
+9. Planning/organization - for scheduling and productivity
+10. Troubleshooting - for technical problem solving
+
+Each route is optimized with specialized system prompts and processing.
 
 ### Multimodal Capabilities
 
@@ -109,7 +122,7 @@ When you run VT.ai for the first time:
 
 1. The application will create a configuration directory at `~/.config/vtai/`
 2. It will download necessary model files (tokenizers, embeddings, etc.)
-3. The web interface will open at http://localhost:8000
+3. The web interface will open at <http://localhost:8000>
 4. If no API keys are configured, you'll be prompted to add them
 
 To ensure the best first-run experience:
@@ -125,6 +138,7 @@ vtai
 VT.ai uses semantic routing to determine the most appropriate model for each query, so having at least one working API key ensures functionality from the start.
 
 # Run the application
+
 ```bash
 vtai
 ```
@@ -262,6 +276,7 @@ vtai -w
 ## Setup Guide
 
 ### Prerequisites
+
 - Python 3.11+ (specified in `.python-version`)
 - [uv](https://github.com/astral-sh/uv) for dependency management (recommended)
 - [Ollama](https://github.com/ollama/ollama) (optional, for local models)
@@ -377,6 +392,52 @@ The semantic routing system uses FastEmbed to encode queries and match them to t
 - **Classification**: Vector similarity matching against predefined intents
 - **Dynamic Dispatch**: Routes queries to specialized handlers based on classification
 
+#### Training the Semantic Router
+
+VT.ai uses a trainable semantic router to classify and route user queries to the appropriate handlers. The router is trained on a set of example utterances for each route type, which creates embeddings to match new queries against.
+
+To update or enhance the semantic router:
+
+1. **Edit the example utterances** in `vtai/router/trainer.py`:
+   - Each route has a set of example utterances that define its semantic space
+   - Add diverse examples that cover different phrasings and intents for each route
+
+2. **Train the router** by running:
+
+   ```bash
+   python vtai/router/trainer.py --verbose
+   ```
+
+3. **Review the training output**:
+
+   ```
+   Training semantic router using FastEmbedEncoder...
+   Created layer with 10 routes:
+     1. 'text-processing' - 32 utterances
+     2. 'vision-image-processing' - 26 utterances
+     3. 'casual-conversation' - 30 utterances
+     4. 'image-generation' - 55 utterances
+     5. 'curious' - 30 utterances
+     6. 'code-assistance' - 20 utterances
+     7. 'data-analysis' - 20 utterances
+     8. 'creative-writing' - 20 utterances
+     9. 'planning-organization' - 20 utterances
+     10. 'troubleshooting' - 20 utterances
+   Encoder: BAAI/bge-small-en-v1.5
+   Successfully saved semantic router layer to ./vtai/router/layers.json
+   ```
+
+4. **Restart VT.ai** to apply the updated routing model
+
+For best results:
+
+- Include at least 15-20 diverse examples for each route
+- Use natural language variations to improve matching accuracy
+- Include domain-specific terminology for specialized routes
+- Test with different phrasings to ensure robust classification
+
+Adding new route types requires updating both `vtai/router/trainer.py` and `vtai/router/constants.py`.
+
 ### API Key Management
 
 VT.ai securely manages API keys through:
@@ -445,6 +506,7 @@ uv pip install -e ".[dev]"
 ```
 
 ### Contribution Process
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/new-capability`)
 3. Add type hints for new functions
@@ -454,6 +516,7 @@ uv pip install -e ".[dev]"
 ## More Information
 
 ### Documentation
+
 - [Setup Guide](#setup-guide)
 - [Usage Guide](#usage-guide)
 - [Supported Models](#supported-models)
@@ -472,7 +535,7 @@ ModuleNotFoundError: No module named 'vtai'
 
 This usually happens when you've installed VT.ai using `uv tool install` or a similar method that puts the package in an isolated environment, but you're trying to run it from within the source directory.
 
-#### Solutions:
+#### Solutions
 
 1. **Use the development install method instead:**
 

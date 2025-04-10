@@ -39,6 +39,11 @@ class SemanticRouterType(str, Enum):
     CASUAL_CONVERSATION: Final[str] = "casual-conversation"
     CURIOUS: Final[str] = "curious"
     VISION_IMAGE_PROCESSING: Final[str] = "vision-image-processing"
+    CODE_ASSISTANCE: Final[str] = "code-assistance"
+    DATA_ANALYSIS: Final[str] = "data-analysis"
+    CREATIVE_WRITING: Final[str] = "creative-writing"
+    PLANNING_ORGANIZATION: Final[str] = "planning-organization"
+    TROUBLESHOOTING: Final[str] = "troubleshooting"
 
     @classmethod
     def values(cls) -> List[str]:
@@ -54,3 +59,19 @@ class SemanticRouterType(str, Enum):
     def requires_image_generation(cls) -> Set[str]:
         """Get the set of routes that require image generation capabilities."""
         return {cls.IMAGE_GENERATION.value}
+
+    @classmethod
+    def requires_specialized_prompt(cls) -> Set[str]:
+        """Get the set of routes that benefit from specialized system prompts."""
+        return {
+            cls.CODE_ASSISTANCE.value,
+            cls.DATA_ANALYSIS.value,
+            cls.CREATIVE_WRITING.value,
+            cls.PLANNING_ORGANIZATION.value,
+            cls.TROUBLESHOOTING.value,
+        }
+
+    @classmethod
+    def creative_routes(cls) -> Set[str]:
+        """Get the set of routes that benefit from higher temperature."""
+        return {cls.CREATIVE_WRITING.value}

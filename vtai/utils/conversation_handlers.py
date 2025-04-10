@@ -7,7 +7,7 @@ Handles chat interactions, semantic routing, and message processing.
 import asyncio
 import pathlib
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import chainlit as cl
 import litellm
@@ -30,9 +30,26 @@ from vtai.utils.user_session_helper import (
     update_message_history_from_user,
 )
 
+# Constants for route confidence thresholds
+DEFAULT_ROUTE_THRESHOLD = 0.5
+HIGH_CONFIDENCE_THRESHOLD = 0.75
+LOW_CONFIDENCE_THRESHOLD = 0.4
+
+# Route-specific system prompts
+ROUTE_SYSTEM_PROMPTS = {
+    "code-assistance": "You are an expert programming assistant. Focus on providing clear, efficient, and well-documented code solutions. Explain your reasoning and include best practices in your answers.",
+    "data-analysis": "You are a data analysis expert. Focus on statistical methods, data visualization techniques, and extracting meaningful insights from data. Provide clear explanations of analytical concepts.",
+    "creative-writing": "You are a creative writing assistant. Focus on helping with compelling narratives, engaging content, and stylistic improvements. Be imaginative and offer constructive suggestions.",
+    "planning-organization": "You are a planning and organization expert. Focus on efficiency, structured approaches, and practical solutions. Provide clear steps and actionable advice.",
+    "troubleshooting": "You are a technical troubleshooting expert. Focus on identifying root causes and providing step-by-step solutions. Be thorough and methodical in your problem-solving approach.",
+}
+
 
 async def handle_trigger_async_chat(
-    llm_model: str, messages: List[Dict[str, str]], current_message: cl.Message
+    llm_model: str,
+    messages: List[Dict[str, str]],
+    current_message: cl.Message,
+    system_prompt: Optional[str] = None,
 ) -> None:
     """
     Triggers an asynchronous chat completion using the specified LLM model.
@@ -42,9 +59,17 @@ async def handle_trigger_async_chat(
         llm_model: The LLM model to use
         messages: The conversation history messages
         current_message: The chainlit message object to stream response to
+        system_prompt: Optional system prompt to override the default
     """
     temperature = get_setting(conf.SETTINGS_TEMPERATURE)
     top_p = get_setting(conf.SETTINGS_TOP_P)
+
+    # If system prompt provided, update the system message
+    if system_prompt and messages and messages[0]["role"] == "system":
+        messages_copy = messages.copy()
+        messages_copy[0]["content"] = system_prompt
+    else:
+        messages_copy = messages
 
     try:
         # Set a reasonable timeout for completion
@@ -54,7 +79,7 @@ async def handle_trigger_async_chat(
         stream = await asyncio.wait_for(
             litellm.acompletion(
                 model=llm_model,
-                messages=messages,
+                messages=messages_copy,
                 stream=True,
                 num_retries=3,
                 temperature=temperature,
@@ -151,6 +176,38 @@ async def handle_conversation(
         await handle_exception(e)
 
 
+async def get_route_info(query: str, route_layer: Any) -> Dict[str, Any]:
+    """
+    Gets detailed routing information for a query.
+
+    Args:
+        query: The user's query
+        route_layer: The semantic router layer
+
+    Returns:
+        Dictionary with route name, confidence score, and system prompt
+    """
+    route_choice = route_layer(query)
+    route_name = route_choice.name
+
+    # Get the confidence score
+    confidence = 0.0
+    try:
+        # Try to access route score if available
+        confidence = getattr(route_choice, "score", 0.0) or 0.0
+    except (AttributeError, TypeError):
+        confidence = 0.0
+
+    # Get specialized system prompt if available
+    system_prompt = ROUTE_SYSTEM_PROMPTS.get(route_name, None)
+
+    return {
+        "name": route_name,
+        "confidence": confidence,
+        "system_prompt": system_prompt,
+    }
+
+
 async def handle_dynamic_conversation_routing(
     messages: List[Dict[str, str]],
     model: str,
@@ -169,37 +226,81 @@ async def handle_dynamic_conversation_routing(
         route_layer: The semantic router layer
     """
     try:
-        route_choice = route_layer(query)
-        route_choice_name = route_choice.name
+        # Get route information with confidence score
+        route_info = await get_route_info(query, route_layer)
+        route_name = route_info["name"]
+        confidence = route_info["confidence"]
+        system_prompt = route_info["system_prompt"]
+
+        # Preserve the original model for potential model switching
+        original_model = model
 
         should_trimmed_messages = get_setting(conf.SETTINGS_TRIMMED_MESSAGES)
         if should_trimmed_messages:
             messages = trim_messages(messages, model)
 
-        logger.info(f"Query: {query} classified as route: {route_choice_name}")
+        logger.info(
+            f"Query: '{query}' classified as route: {route_name} (confidence: {confidence:.2f})"
+        )
 
-        if route_choice_name == SemanticRouterType.IMAGE_GENERATION:
-            logger.info(f"Processing {route_choice_name} - Image generation")
+        # Inform user about routing decision for better transparency
+        if confidence > HIGH_CONFIDENCE_THRESHOLD:
+            logger.info(f"High confidence routing to {route_name}")
+            # Only add a metadata tag to the message for high-confidence routes
+            await msg.stream_token(f"<small><i>Routing to {route_name}</i></small>\n\n")
+
+        # Specialized handling for different route types
+        if route_name in SemanticRouterType.requires_image_generation():
+            logger.info(f"Processing {route_name} - Image generation")
             await handle_trigger_async_image_gen(query)
 
-        elif route_choice_name == SemanticRouterType.VISION_IMAGE_PROCESSING:
+        elif route_name in SemanticRouterType.requires_image_processing():
             urls = extract_url(query)
             if len(urls) > 0:
-                logger.info(f"Processing {route_choice_name} - Vision with URL")
+                logger.info(f"Processing {route_name} - Vision with URL")
                 url = urls[0]
                 await handle_vision(input_image=url, prompt=query, is_local=False)
             else:
-                logger.info(
-                    f"Processing {route_choice_name} - No image URL, using chat"
-                )
+                logger.info(f"Processing {route_name} - No image URL, using chat")
                 await handle_trigger_async_chat(
                     llm_model=model, messages=messages, current_message=msg
                 )
+
+        elif route_name in SemanticRouterType.requires_specialized_prompt():
+            logger.info(f"Processing {route_name} - Using specialized system prompt")
+
+            # Adjust temperature for creative routes
+            temp_adjustment = 0.0
+            if route_name in SemanticRouterType.creative_routes():
+                temp = get_setting(conf.SETTINGS_TEMPERATURE)
+                temp_adjustment = min(0.1, 1.0 - temp)
+                if temp_adjustment > 0:
+                    logger.info(
+                        f"Increasing temperature by {temp_adjustment} for creative writing"
+                    )
+                    cl.user_session.set(
+                        conf.SETTINGS_TEMPERATURE, temp + temp_adjustment
+                    )
+
+            # Handle the specialized route
+            await handle_trigger_async_chat(
+                llm_model=model,
+                messages=messages,
+                current_message=msg,
+                system_prompt=system_prompt,
+            )
+
+            # Restore temperature if it was adjusted
+            if temp_adjustment > 0:
+                temp = get_setting(conf.SETTINGS_TEMPERATURE)
+                cl.user_session.set(conf.SETTINGS_TEMPERATURE, temp - temp_adjustment)
+
         else:
-            logger.info(f"Processing {route_choice_name} - Default chat")
+            logger.info(f"Processing {route_name} - Default chat")
             await handle_trigger_async_chat(
                 llm_model=model, messages=messages, current_message=msg
             )
+
     except asyncio.CancelledError:
         logger.warning("Dynamic conversation routing was cancelled")
         raise
