@@ -92,7 +92,7 @@ line-length = 100
 indent-width = 4
 
 # Assume Python 3.9
-target-version = "0.1.13"
+target-version = "py312"
 
 [tool.ruff.lint]
 # 1. Enable flake8-bugbear (`B`) rules, in addition to the defaults.
