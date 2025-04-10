@@ -472,7 +472,7 @@ def get_shuffled_starters(use_random=False, max_count=5):
         # Limit to max_count
         starters_data = starters_data[:max_count]
 
-        # Convert to cl.Starter obj
+        # Convert to cl.Starter objects
         return [
             cl.Starter(label=item["label"], message=item["message"])
             for item in starters_data
