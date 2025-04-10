@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 
 import chainlit as cl
 import dotenv
+from chainlit.types import ChatProfile
 
 # Import modules
 from vtai.utils import constants as const
@@ -45,7 +46,16 @@ APP_NAME = const.APP_NAME
 @cl.set_chat_profiles
 async def build_chat_profile(_=None):
     """Define and set available chat profiles."""
-    return conf.CHAT_PROFILES
+    # Force shuffling of starters on each app startup
+    # This ensures starter prompts are in a different order each time
+    return [
+        ChatProfile(
+            name=profile.title,
+            markdown_description=profile.description,
+            starters=conf.get_shuffled_starters(use_random=True),
+        )
+        for profile in conf.APP_CHAT_PROFILES
+    ]
 
 
 @cl.on_chat_start

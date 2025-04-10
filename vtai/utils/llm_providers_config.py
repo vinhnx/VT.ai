@@ -2,10 +2,14 @@
 Settings configuration for LLM models and chat profiles.
 """
 
+import random
+from random import choice, shuffle
 from typing import Dict, List
 
 import chainlit as cl
 from pydantic import BaseModel
+
+from vtai.router.trainer import create_routes
 
 # Update imports to use vtai namespace
 from vtai.utils.chat_profile import AppChatProfileType
@@ -273,29 +277,215 @@ APP_CHAT_PROFILES: List[AppChatProfileModel] = [
     APP_CHAT_PROFILE_ASSISTANT,
 ]
 
+# Starter prompt data and functions
+STARTER_PROMPTS = [
+    {
+        "label": "Generating an image",
+        "message": "Generate an image of a futuristic city skyline at sunset with flying cars.",
+    },
+    {
+        "label": "Brainstorm Blog Post Ideas",
+        "message": "I want to write a blog post about sustainable living. Can you help me brainstorm 5 potential article titles and a brief outline for one of them?",
+    },
+    {
+        "label": "Plan a Healthy Meal",
+        "message": "Suggest a healthy and balanced dinner recipe that includes chicken and vegetables, and takes less than 45 minutes to prepare. Please list the ingredients and step-by-step instructions.",
+    },
+    {
+        "label": "Creative Story Prompt",
+        "message": "Give me a creative writing prompt involving a hidden world discovered through an old bookstore.",
+    },
+    {
+        "label": "Code Review Help",
+        "message": "I've written a Python function to find prime numbers. Can you review it for efficiency and suggest improvements?\n\n```python\ndef is_prime(n):\n    if n <= 1:\n        return False\n    if n <= 3:\n        return True\n    if n % 2 == 0 or n % 3 == 0:\n        return False\n    i = 5\n    while i * i <= n:\n        if n % i == 0 or n % (i + 2) == 0:\n            return False\n        i += 6\n    return True\n```",
+    },
+]
+
+# Random label and message generators
+CREATIVE_LABELS = [
+    "Exploring {topic}",
+    "Help with {topic}",
+    "Let's discuss {topic}",
+    "Ideas for {topic}",
+    "Understanding {topic}",
+]
+
+TOPICS = [
+    "AI ethics",
+    "sustainable technology",
+    "data visualization",
+    "machine learning",
+    "creative writing",
+    "productivity hacks",
+    "coding challenges",
+    "future trends",
+    "design thinking",
+]
+
+
+def generate_random_prompt():
+    """Generate a random prompt with creative label and message"""
+    topic = choice(TOPICS)
+    label_template = choice(CREATIVE_LABELS)
+    label = label_template.format(topic=topic)
+
+    message_templates = [
+        f"I'm interested in learning more about {topic}. Can you provide an overview?",
+        f"What are the latest developments in {topic}?",
+        f"How can I apply {topic} principles in my daily work?",
+        f"What are some beginner-friendly resources to learn about {topic}?",
+        f"Can you compare different approaches to {topic}?",
+    ]
+
+    message = choice(message_templates)
+    return {"label": label, "message": message}
+
+
+# Route-based starter prompts
+def build_starters_from_routes(max_count=5):
+    """
+    Build starter prompts from the router routes.
+    Each route category will be converted into a starter prompt with a short label and verbose message.
+
+    Args:
+        max_count (int): Maximum number of starters to return
+
+    Returns:
+        list: List of cl.Starter objects
+    """
+    # Get all routes from the router
+    routes = create_routes()
+
+    # Create mapping of short labels for each route
+    route_labels = {
+        "text-processing": "Text Analysis",
+        "vision-image-processing": "Analyze Image",
+        "casual-conversation": "Chat",
+        "image-generation": "Create Image",
+        "curious": "Tell Me About",
+        "code-assistance": "Code Help",
+        "data-analysis": "Analyze Data",
+        "creative-writing": "Write Something",
+        "planning-organization": "Plan This",
+        "troubleshooting": "Fix My Issue",
+    }
+
+    # Create expanded messages for each route
+    route_messages = {}
+    for route in routes:
+        if route.name in route_labels:
+            # Select a random utterance from the route
+            utterance = random.choice(route.utterances)
+
+            # Expand the utterance into a more verbose message
+            if route.name == "image-generation":
+                route_messages[route.name] = (
+                    f"I'd like you to {utterance}. Please make it highly detailed with vibrant colors and an interesting composition."
+                )
+
+            elif route.name == "code-assistance":
+                route_messages[route.name] = (
+                    f"{utterance}. I'm looking for clean, efficient code with good documentation. Please explain your reasoning and any best practices you're applying."
+                )
+
+            elif route.name == "data-analysis":
+                route_messages[route.name] = (
+                    f"{utterance}. I'm interested in both the statistical significance and practical implications of the findings. Please include visual representation suggestions if appropriate."
+                )
+
+            elif route.name == "creative-writing":
+                route_messages[route.name] = (
+                    f"{utterance}. I'd like something unique with vivid imagery and compelling character development. Feel free to explore unexpected directions."
+                )
+
+            elif route.name == "planning-organization":
+                route_messages[route.name] = (
+                    f"{utterance}. I'm looking for a comprehensive approach that considers potential obstacles and includes contingency plans. Please make it practical and implementable."
+                )
+
+            elif route.name == "troubleshooting":
+                route_messages[route.name] = (
+                    f"{utterance}. I've already tried restarting and checking basic connectivity. Please provide a step-by-step diagnostic process and potential solutions ranked by likelihood."
+                )
+
+            elif route.name == "vision-image-processing":
+                route_messages[route.name] = (
+                    f"{utterance}. Please provide details about the key elements, composition, color scheme, and any text or symbols present. Also share any insights about the context or purpose of the image."
+                )
+
+            elif route.name == "text-processing":
+                route_messages[route.name] = (
+                    f"{utterance}. I'd like a thorough analysis that covers tone, key arguments, implicit assumptions, and overall effectiveness. Please suggest improvements where appropriate."
+                )
+
+            elif route.name == "casual-conversation":
+                route_messages[route.name] = (
+                    f"{utterance} I'd love to hear your thoughts on this in a conversational way, as if we're just chatting casually."
+                )
+
+            elif route.name == "curious":
+                route_messages[route.name] = (
+                    f"{utterance} Please provide a comprehensive explanation with interesting facts, historical context, and current developments. I'm particularly interested in aspects that might surprise someone new to the topic."
+                )
+
+    # Create starters from routes
+    all_starters = []
+    route_names = list(route_labels.keys())
+    # Shuffle to get random selection each time
+    random.shuffle(route_names)
+
+    # Select up to max_count routes
+    selected_routes = route_names[:max_count]
+
+    for route_name in selected_routes:
+        label = route_labels.get(route_name)
+        message = route_messages.get(route_name)
+
+        if label and message:
+            all_starters.append({"label": label, "message": message})
+
+    # Convert to Chainlit Starter objects
+    return [
+        cl.Starter(label=item["label"], message=item["message"])
+        for item in all_starters
+    ]
+
+
+def get_shuffled_starters(use_random=False, max_count=5):
+    """
+    Get shuffled starters for chat profiles
+
+    Args:
+        use_random (bool): Whether to use route-based starters (True) or static starters (False)
+        max_count (int): Maximum number of starters to return
+
+    Returns:
+        list: List of cl.Starter objects
+    """
+    if use_random:
+        # Use dynamic route-based starters
+        return build_starters_from_routes(max_count=max_count)
+    else:
+        # Use static starters
+        starters_data = STARTER_PROMPTS.copy()
+        shuffle(starters_data)
+
+        # Limit to max_count
+        starters_data = starters_data[:max_count]
+
+        # Convert to cl.Starter objects
+        return [
+            cl.Starter(label=item["label"], message=item["message"])
+            for item in starters_data
+        ]
+
+
 # Update to use markdown_description instead of description for Chainlit v2.0.0
 CHAT_PROFILES: List[ChatProfile] = [
     ChatProfile(
         name=profile.title,
         markdown_description=profile.description,
-        starters=[
-            cl.Starter(
-                label="Generating an image",
-                message="Generate an image of a futuristic city skyline at sunset with flying cars.",
-            ),
-            cl.Starter(
-                label="Brainstorm Blog Post Ideas",
-                message="I want to write a blog post about sustainable living. Can you help me brainstorm 5 potential article titles and a brief outline for one of them?",
-            ),
-            cl.Starter(
-                label="Plan a Healthy Meal",
-                message="Suggest a healthy and balanced dinner recipe that includes chicken and vegetables, and takes less than 45 minutes to prepare. Please list the ingredients and step-by-step instructions.",
-            ),
-            cl.Starter(
-                label="Creative Story Prompt",
-                message="Give me a creative writing prompt involving a hidden world discovered through an old bookstore.",
-            ),
-        ],
+        starters=get_shuffled_starters(use_random=True),
     )
     for profile in APP_CHAT_PROFILES
 ]
