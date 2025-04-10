@@ -2,6 +2,12 @@
 
 ### Other Changes
 
+- afdd172 Enhance release automation: add changelog generation and GitHub release creation; refactor version update process (Vinh Nguyen)
+
+## v0.1.14 (2025-04-10)
+
+### Other Changes
+
 - d4c84ad Refactor chat profile starters to shuffle on app startup; add random prompt generation functions for enhanced user experience (Vinh Nguyen)
 - ae61d6c Enhance routing capabilities and add specialized prompts for conversation types; update README for clarity on supported routes and training instructions (Vinh Nguyen)
 - 12c050f Fix typos in image generation starter message for clarity (Vinh Nguyen)
