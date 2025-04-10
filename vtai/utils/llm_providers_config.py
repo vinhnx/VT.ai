@@ -280,8 +280,8 @@ CHAT_PROFILES: List[ChatProfile] = [
         markdown_description=profile.description,
         starters=[
             cl.Starter(
-                label="Generating a image",
-                message="Generate an image from the text: 'A futuristic city skyline at sunset, with flying cars and neon lights",
+                label="Generating an image",
+                message="Generate an image of a futuristic city skyline at sunset with flying cars.",
             ),
             cl.Starter(
                 label="Brainstorm Blog Post Ideas",
