@@ -219,7 +219,6 @@ ICONS_PROVIDER_MAP: Dict[str, str] = {
     "gpt-4": "./vtai/resources/chatgpt-icon.png",
     "gpt-4o": "./vtai/resources/chatgpt-icon.png",
     "gpt-4-turbo": "./vtai/resources/chatgpt-icon.png",
-    "gpt-3.5-turbo": "./vtai/resources/chatgpt-icon.png",
     # Other provider icons
     "Ollama": "./vtai/resources/ollama.png",
     "Anthropic": "./vtai/resources/claude-ai-icon.png",
@@ -445,7 +444,10 @@ def build_starters_from_routes(max_count=5):
             all_starters.append({"label": label, "message": message})
 
     # Convert to Chainlit Starter objects
-    return [cl.Starter(label=item["label"], message=item["message"]) for item in all_starters]
+    return [
+        cl.Starter(label=item["label"], message=item["message"])
+        for item in all_starters
+    ]
 
 
 def get_shuffled_starters(use_random=False, max_count=5):
@@ -471,8 +473,7 @@ def get_shuffled_starters(use_random=False, max_count=5):
         starters_data = starters_data[:max_count]
 
         # Convert to cl.Starter obj
-        eccts
-   l     return [
+        return [
             cl.Starter(label=item["label"], message=item["message"])
             for item in starters_data
         ]
