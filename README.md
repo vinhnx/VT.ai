@@ -195,6 +195,20 @@ source .venv/bin/activate  # Linux/Mac
 uv pip install -e .
 ```
 
+### Development Mode
+
+To run VT.ai in development mode:
+
+```bash
+# Install in development mode
+pip install -e .
+
+# Run the app with hot-reload
+chainlit run vtai/app.py -w
+```
+
+This will install the package in development mode and start the app with hot-reload enabled, allowing you to make changes to the code and see them reflected immediately.
+
 ### Platform-Specific Instructions
 
 #### macOS

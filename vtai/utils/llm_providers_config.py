@@ -280,8 +280,8 @@ CHAT_PROFILES: List[ChatProfile] = [
         markdown_description=profile.description,
         starters=[
             cl.Starter(
-                label="Learn a New Skill",
-                message="I want to start learning Python programming. Can you outline the basic concepts I should focus on first and suggest some beginner-friendly online resources?",
+                label="Generating a image",
+                message="Generate an image from the text: 'A futuristic city skyline at sunset, with flying cars and neon lights",
             ),
             cl.Starter(
                 label="Brainstorm Blog Post Ideas",
@@ -299,3 +299,34 @@ CHAT_PROFILES: List[ChatProfile] = [
     )
     for profile in APP_CHAT_PROFILES
 ]
+
+"""
+Configuration for the LLM providers.
+"""
+
+# Default configuration for different LLM providers
+DEFAULT_PROVIDERS_CONFIG = {
+    "openai": {
+        "model": "gpt-4o",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+    },
+    "anthropic": {
+        "model": "claude-3-opus-20240229",
+        "temperature": 0.7,
+        "max_tokens": 2000,
+    },
+}
+
+
+def get_provider_config(provider_name):
+    """
+    Get the configuration for a specific LLM provider.
+
+    Args:
+        provider_name (str): The name of the provider (e.g., "openai", "anthropic")
+
+    Returns:
+        dict: Configuration for the specified provider
+    """
+    return DEFAULT_PROVIDERS_CONFIG.get(provider_name, {})
