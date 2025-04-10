@@ -1,6 +1,6 @@
 [project]
 name = "vtai"
-version = "0.1.13"
+version = "0.1.14"
 description = " VT.ai - Minimal multimodal AI chat app with dynamic conversation routing "
 authors = [{ name = "Vinh Nguyen" }]
 dependencies = [
@@ -12,6 +12,7 @@ dependencies = [
     "semantic-router[fastembed]>=0.0.54",
     "pillow>=10.0.0",
     "google-generativeai>=0.3.0",
+    "twine>=6.1.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -92,7 +93,7 @@ line-length = 100
 indent-width = 4
 
 # Assume Python 3.9
-target-version = "py312"
+target-version = "0.1.14"
 
 [tool.ruff.lint]
 # 1. Enable flake8-bugbear (`B`) rules, in addition to the defaults.
