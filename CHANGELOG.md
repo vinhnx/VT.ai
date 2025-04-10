@@ -1,3 +1,12 @@
+## v0.1.15 (2025-04-10)
+
+### Other Changes
+
+- cff2e96 Remove unused icon mapping for gpt-3.5-turbo and format list comprehensions for better readability (Vinh Nguyen)
+- 420bb59 Refactor README and routing logic: streamline content, remove unused routes, and enhance message handling in conversation handlers (Vinh Nguyen)
+- cf02386 Update CHANGELOG.md to include recent enhancements in release automation and changelog generation (Vinh Nguyen)
+- afdd172 Enhance release automation: add changelog generation and GitHub release creation; refactor version update process (Vinh Nguyen)
+
 ## v0.1.14 (2025-04-10)
 
 ### Other Changes
