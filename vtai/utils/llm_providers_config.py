@@ -445,13 +445,11 @@ def build_starters_from_routes(max_count=5):
             all_starters.append({"label": label, "message": message})
 
     # Convert to Chainlit Starter objects
-    return [
-        cl.Starter(label=item["label"], message=item["message"])
-        for item in all_starters
-    ]
+    return [cl.Starter(label=item["label"], message=item["message"]) for item in all_starters]
 
 
-def get_shuffled_starters(use_random=False, max_count=5):
+def get_shuffled_starters(use_random=False, m
+    ax_count=5):
     """
     Get shuffled starters for chat profiles
 
@@ -473,8 +471,9 @@ def get_shuffled_starters(use_random=False, max_count=5):
         # Limit to max_count
         starters_data = starters_data[:max_count]
 
-        # Convert to cl.Starter objects
-        return [
+        # Convert to cl.Starter obj
+        eccts
+   l     return [
             cl.Starter(label=item["label"], message=item["message"])
             for item in starters_data
         ]
