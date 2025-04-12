@@ -3,10 +3,10 @@
 VT.ai - Release automation script
 This script handles:
 1. Version bumping in pyproject.toml
-2. Building distribution packages
-3. Uploading to PyPI
-4. Creating a git tag for the release
-5. Pushing changes to GitHub
+2. Optional git tagging
+3. Building distribution packages
+4. Uploading to PyPI
+5. Optional pushing of tags and changes to GitHub
 """
 
 import re
@@ -68,7 +68,17 @@ def main():
         # Update version in pyproject.toml
         update_version(new_version)
 
-    # 2. Build distribution packages
+    # 2. Create git tag (optional)
+    create_tag = input(f"Create git tag 'v{new_version}'? (y/n): ").lower()
+    if create_tag == "y":
+        run_command(
+            f'git tag -a v{new_version} -m "Version {new_version}"',
+            f"Creating git tag v{new_version}"
+        )
+        print(f"✅ Git tag 'v{new_version}' created successfully")
+        print("Note: You'll need to push tags manually with 'git push --tags'")
+
+    # 3. Build distribution packages
     run_command(
         "python -m pip install --upgrade build twine",
         "Installing/upgrading build and twine",
@@ -76,29 +86,43 @@ def main():
     run_command("rm -rf dist/*", "Cleaning dist directory")
     run_command("python -m build", "Building distribution packages")
 
-    # 3. Upload to PyPI
+    # 4. Upload to PyPI
     upload = input("Upload to PyPI? (y/n): ").lower()
     if upload == "y":
         run_command("python -m twine upload dist/*", "Uploading to PyPI")
-
-    # 4. Create git commit and tag
-    run_command("git add pyproject.toml", "Staging pyproject.toml changes")
-    run_command(
-        f'git commit -m "Bump version to {new_version}"', "Committing version change"
-    )
-    run_command(
-        f'git tag -a v{new_version} -m "Version {new_version}"', "Creating git tag"
-    )
-
-    # 5. Push changes and tags to GitHub
-    push = input("Push changes to GitHub? (y/n): ").lower()
-    if push == "y":
-        run_command("git push", "Pushing commits")
-        run_command("git push --tags", "Pushing tags")
+    
+    # 5. Push tags and changes to GitHub
+    push_to_github = input("Push tags and changes to GitHub? (y/n): ").lower()
+    if push_to_github == "y":
+        changes_to_push = False
+        tags_to_push = False
+        
+        # Check if there are any changes to push
+        status = run_command("git status --porcelain", "Checking git status")
+        if status:
+            commit_msg = input("Enter commit message (or press Enter to skip committing changes): ")
+            if commit_msg:
+                run_command("git add .", "Staging all changes")
+                run_command(f'git commit -m "{commit_msg}"', "Committing changes")
+                changes_to_push = True
+        
+        # Check if we have a tag to push
+        if create_tag == "y":
+            tags_to_push = True
+        
+        # Push changes if there are any
+        if changes_to_push:
+            run_command("git push", "Pushing commits to GitHub")
+        
+        # Push tags if there are any
+        if tags_to_push:
+            run_command("git push --tags", "Pushing tags to GitHub")
+            
+        if not changes_to_push and not tags_to_push:
+            print("No changes or tags to push.")
 
     print("\n✅ Release process completed successfully!")
 
 
 if __name__ == "__main__":
     main()
-    # Removed duplicate main() call
