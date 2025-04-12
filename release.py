@@ -100,13 +100,17 @@ def main():
         # Check if there are any changes to push
         status = run_command("git status --porcelain", "Checking git status")
         if status:
+            # Use the new version number as the default commit message
+            default_commit_msg = f"Version {new_version}"
             commit_msg = input(
-                "Enter commit message (or press Enter to skip committing changes): "
+                f"Enter commit message (press Enter to use '{default_commit_msg}'): "
             )
-            if commit_msg:
-                run_command("git add .", "Staging all changes")
-                run_command(f'git commit -m "{commit_msg}"', "Committing changes")
-                changes_to_push = True
+            if not commit_msg:
+                commit_msg = default_commit_msg
+
+            run_command("git add .", "Staging all changes")
+            run_command(f'git commit -m "{commit_msg}"', "Committing changes")
+            changes_to_push = True
 
         # Check if we have a tag to push
         if create_tag == "y":
