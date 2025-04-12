@@ -1,6 +1,6 @@
 [project]
 name = "vtai"
-version = "0.1.15"
+version = "0.2.0"
 description = " VT.ai - Minimal multimodal AI chat app with dynamic conversation routing "
 authors = [{ name = "Vinh Nguyen" }]
 dependencies = [
@@ -95,7 +95,7 @@ line-length = 100
 indent-width = 4
 
 # Assume Python 3.9
-target-version = "0.1.15"
+target-version = "0.2.0"
 
 [tool.ruff.lint]
 # 1. Enable flake8-bugbear (`B`) rules, in addition to the defaults.
