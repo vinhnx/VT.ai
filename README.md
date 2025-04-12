@@ -125,6 +125,7 @@ API keys are saved to `~/.config/vtai/.env` for future use.
 
 - **Image Generation**: Generate images through prompts
 - **Image Analysis**: Upload or provide URL for image interpretation
+- **Drag and Drop**: Easily share files by dragging and dropping them directly into the chat interface
 - **Text Processing**: Request summaries, translations, or content transformation
 - **Voice Interaction**: Text-to-speech for model responses
 
