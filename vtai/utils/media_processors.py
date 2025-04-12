@@ -3,13 +3,16 @@ Media processing utilities for the VT.ai application.
 """
 
 import asyncio
+import base64
 import os
 import tempfile
 from io import BytesIO
+from pathlib import Path
 
 import chainlit as cl
 import litellm
 from openai import OpenAI
+from PIL import Image
 
 # Update imports to use vtai namespace
 from vtai.utils import llm_providers_config as conf
@@ -123,6 +126,32 @@ async def handle_audio_transcribe(
         return ""
 
 
+def encode_image_to_base64(image_path):
+    """
+    Encodes an image file to base64 string.
+
+    Args:
+        image_path: Path to the image file
+
+    Returns:
+        Base64 encoded string with data URI prefix
+    """
+    try:
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+
+            # Get image format
+            img_format = Path(image_path).suffix.lstrip('.').lower()
+            if img_format == 'jpg':
+                img_format = 'jpeg'
+
+            # Return with proper data URI format
+            return f"data:image/{img_format};base64,{encoded_string}"
+    except Exception as e:
+        logger.error(f"Error encoding image to base64: {e}")
+        raise e
+
+
 async def handle_vision(
     input_image: str,
     prompt: str,
@@ -165,6 +194,19 @@ async def handle_vision(
 
     await message.send()
     try:
+        # For local images, convert to base64 if using Gemini
+        image_content = input_image
+        if is_local and "gemini" in vision_model.lower():
+            logger.info(f"Converting local image to base64 for Gemini model: {vision_model}")
+            try:
+                image_content = encode_image_to_base64(input_image)
+            except Exception as e:
+                logger.error(f"Failed to encode image to base64: {e}")
+                await cl.Message(
+                    content=f"Failed to process the image: {str(e)}"
+                ).send()
+                return
+
         # Using wait_for to enforce a timeout
         vresponse = await asyncio.wait_for(
             litellm.acompletion(
@@ -175,7 +217,7 @@ async def handle_vision(
                         "role": "user",
                         "content": [
                             {"type": "text", "text": prompt},
-                            {"type": "image_url", "image_url": {"url": input_image}},
+                            {"type": "image_url", "image_url": {"url": image_content}},
                         ],
                     }
                 ],
