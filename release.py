@@ -73,7 +73,7 @@ def main():
     if create_tag == "y":
         run_command(
             f'git tag -a v{new_version} -m "Version {new_version}"',
-            f"Creating git tag v{new_version}"
+            f"Creating git tag v{new_version}",
         )
         print(f"✅ Git tag 'v{new_version}' created successfully")
         print("Note: You'll need to push tags manually with 'git push --tags'")
@@ -90,34 +90,36 @@ def main():
     upload = input("Upload to PyPI? (y/n): ").lower()
     if upload == "y":
         run_command("python -m twine upload dist/*", "Uploading to PyPI")
-    
+
     # 5. Push tags and changes to GitHub
     push_to_github = input("Push tags and changes to GitHub? (y/n): ").lower()
     if push_to_github == "y":
         changes_to_push = False
         tags_to_push = False
-        
+
         # Check if there are any changes to push
         status = run_command("git status --porcelain", "Checking git status")
         if status:
-            commit_msg = input("Enter commit message (or press Enter to skip committing changes): ")
+            commit_msg = input(
+                "Enter commit message (or press Enter to skip committing changes): "
+            )
             if commit_msg:
                 run_command("git add .", "Staging all changes")
                 run_command(f'git commit -m "{commit_msg}"', "Committing changes")
                 changes_to_push = True
-        
+
         # Check if we have a tag to push
         if create_tag == "y":
             tags_to_push = True
-        
+
         # Push changes if there are any
         if changes_to_push:
             run_command("git push", "Pushing commits to GitHub")
-        
+
         # Push tags if there are any
         if tags_to_push:
             run_command("git push --tags", "Pushing tags to GitHub")
-            
+
         if not changes_to_push and not tags_to_push:
             print("No changes or tags to push.")
 
