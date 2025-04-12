@@ -5,6 +5,7 @@ Handles chat interactions, semantic routing, and message processing.
 """
 
 import asyncio
+import os
 import pathlib
 import time
 from typing import Any, Dict, List
@@ -12,6 +13,7 @@ from typing import Any, Dict, List
 import chainlit as cl
 import litellm
 from litellm.utils import trim_messages
+from openai import AsyncOpenAI
 
 from vtai.router.constants import SemanticRouterType
 from vtai.utils import llm_providers_config as conf
@@ -368,31 +370,33 @@ async def handle_thinking_conversation(
             # Process the stream
             async for chunk in stream:
                 delta = chunk.choices[0].delta
-                content = delta.content or ""
-
-                # Check for <think> tag
-                if "<think>" in content:
+                content = delta.content
+                
+                # Skip if content is None or empty
+                if not content:
+                    continue
+                    
+                # Check for exact <think> tag
+                if content == "<think>":
                     thinking = True
-                    # Remove the tag from content
-                    content = content.replace("<think>", "")
-
-                # Check for </think> tag
-                if "</think>" in content:
+                    continue
+                    
+                # Check for exact </think> tag
+                elif content == "</think>":
                     thinking = False
                     # Update the thinking step with duration
                     thought_for = round(time.time() - start)
                     thinking_step.name = f"Thought for {thought_for}s"
                     await thinking_step.update()
-                    # Remove the tag from content
-                    content = content.replace("</think>", "")
-
-                if content:
-                    if thinking:
-                        # Stream to thinking step
-                        await thinking_step.stream_token(content)
-                    else:
-                        # Stream to final answer
-                        await final_answer.stream_token(content)
+                    continue
+                    
+                # Stream content based on thinking flag
+                if thinking:
+                    # Stream to thinking step
+                    await thinking_step.stream_token(content)
+                else:
+                    # Stream to final answer
+                    await final_answer.stream_token(content)
 
         # Send the final answer after thinking is complete
         if not final_answer.content:
@@ -431,4 +435,128 @@ async def handle_thinking_conversation(
         raise
     except Exception as e:
         logger.error(f"Error in handle_thinking_conversation: {e}")
+        await handle_exception(e)
+
+
+async def handle_deepseek_reasoner_conversation(
+    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
+) -> None:
+    """
+    Handles conversations using DeepSeek Reasoner model with its native reasoning capability.
+    Shows the AI's reasoning process before presenting the final answer.
+    Uses DeepSeek's reasoning_content attribute for the thinking process.
+
+    Args:
+        message: The user message object
+        messages: The conversation history
+        route_layer: The semantic router layer
+    """
+    # Track start time for the thinking duration
+    start = time.time()
+
+    # Get settings
+    deepseek_api_key = os.getenv("DEEP_SEEK_API_KEY")
+    if not deepseek_api_key:
+        await cl.Message(
+            content="DeepSeek API key not found. Please set the DEEP_SEEK_API_KEY environment variable."
+        ).send()
+        return
+
+    model = "deepseek-reasoner"  # DeepSeek Reasoner model
+    query = message.content.strip()
+    update_message_history_from_user(query)
+
+    # Create DeepSeek client
+    client = AsyncOpenAI(
+        api_key=deepseek_api_key, base_url="https://api.deepseek.com"
+    )
+
+    try:
+        # Prepare messages for the API call
+        deepseek_messages = [
+            {"role": "system", "content": "You are a helpful assistant"},
+        ]
+        
+        # Add conversation history
+        for msg in messages:
+            if msg["role"] != "system":  # Skip system messages from history
+                deepseek_messages.append(msg)
+                
+        # Add the current user query
+        deepseek_messages.append({"role": "user", "content": query})
+
+        # Create the stream
+        stream = await client.chat.completions.create(
+            model=model,
+            messages=deepseek_messages,
+            stream=True,
+        )
+
+        # Flag to track if we've exited the thinking step
+        thinking_completed = False
+
+        # Start with a thinking step
+        async with cl.Step(name="Thinking") as thinking_step:
+            # Create a message for the final answer, but don't send it yet
+            final_answer = cl.Message(content="", author=model)
+
+            # Process the reasoning content first
+            async for chunk in stream:
+                delta = chunk.choices[0].delta
+                reasoning_content = getattr(delta, "reasoning_content", None)
+                
+                if reasoning_content is not None and not thinking_completed:
+                    # Stream the reasoning content to the thinking step
+                    await thinking_step.stream_token(reasoning_content)
+                elif not thinking_completed:
+                    # Exit the thinking step when reasoning is complete
+                    thought_for = round(time.time() - start)
+                    thinking_step.name = f"Thought for {thought_for}s"
+                    await thinking_step.update()
+                    thinking_completed = True
+                    break
+
+        # Stream the final answer content
+        async for chunk in stream:
+            delta = chunk.choices[0].delta
+            if delta.content:
+                await final_answer.stream_token(delta.content)
+
+        # Send the final answer after thinking is complete
+        if not final_answer.content:
+            # If no final answer was provided, create a fallback message
+            await cl.Message(
+                content="I've thought about this but don't have a specific answer to provide.",
+                author=model,
+            ).send()
+        else:
+            # Update message history and add TTS action
+            content = final_answer.content
+            update_message_history_from_assistant(content)
+
+            # Add TTS action if enabled
+            enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+            if enable_tts_response:
+                final_answer.actions = [
+                    cl.Action(
+                        icon="speech",
+                        name="speak_chat_response_action",
+                        payload={"value": content},
+                        tooltip="Speak response",
+                        label="Speak response",
+                    )
+                ]
+
+            await final_answer.send()
+
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout while processing chat completion with model {model}")
+        await cl.Message(
+            content="\n\nI apologize, but the response timed out. Please try again with a shorter query."
+        ).send()
+    except asyncio.CancelledError:
+        logger.warning("DeepSeek reasoner chat was cancelled")
+        raise
+    except Exception as e:
+        logger.error(f"Error in handle_deepseek_reasoner_conversation: {e}")
         await handle_exception(e)
