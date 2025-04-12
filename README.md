@@ -109,7 +109,7 @@ When you run VT.ai for the first time:
 
 1. The application will create a configuration directory at `~/.config/vtai/`
 2. It will download necessary model files (tokenizers, embeddings, etc.)
-3. The web interface will open at http://localhost:8000
+3. The web interface will open at <http://localhost:8000>
 4. If no API keys are configured, you'll be prompted to add them
 
 To ensure the best first-run experience:
@@ -125,6 +125,7 @@ vtai
 VT.ai uses semantic routing to determine the most appropriate model for each query, so having at least one working API key ensures functionality from the start.
 
 # Run the application
+
 ```bash
 vtai
 ```
@@ -262,6 +263,7 @@ vtai -w
 ## Setup Guide
 
 ### Prerequisites
+
 - Python 3.11+ (specified in `.python-version`)
 - [uv](https://github.com/astral-sh/uv) for dependency management (recommended)
 - [Ollama](https://github.com/ollama/ollama) (optional, for local models)
@@ -428,6 +430,87 @@ isort vtai/
 pytest
 ```
 
+### Testing
+
+VT.ai comes with a comprehensive test suite organized into unit and integration tests. The test structure is designed to ensure code quality and functionality as the project evolves.
+
+#### Test Structure
+
+- `tests/unit/`: Tests for individual components in isolation
+- `tests/integration/`: Tests for how components work together
+- `tests/conftest.py`: Shared pytest fixtures and configurations
+
+#### Setting Up the Test Environment
+
+To set up your environment for testing:
+
+```bash
+# Activate your virtual environment if not already active
+source .venv/bin/activate  # Linux/Mac
+.venv\Scripts\activate     # Windows
+
+# Install development dependencies including test requirements
+uv pip install -e ".[dev]"
+
+# Or using pip:
+pip install -e ".[dev]"
+```
+
+#### Running Tests
+
+You can run tests using pytest with various options:
+
+```bash
+# Run all tests
+python -m pytest
+
+# Run only unit tests
+python -m pytest tests/unit
+
+# Run only integration tests
+python -m pytest tests/integration
+
+# Run a specific test file
+python -m pytest tests/unit/test_config.py
+
+# Run with verbose output
+python -m pytest -v
+
+# Run with test coverage
+python -m pytest --cov=vtai
+
+# Generate an HTML coverage report
+python -m pytest --cov=vtai --cov-report=html
+```
+
+After generating an HTML coverage report, open `htmlcov/index.html` in your browser to see detailed coverage information.
+
+#### Adding New Tests
+
+When adding new tests:
+
+1. Place unit tests in the `tests/unit/` directory
+2. Place integration tests in the `tests/integration/` directory
+3. Use descriptive names for test files (e.g., `test_feature_name.py`)
+4. Add common fixtures to `conftest.py`
+5. Follow the naming convention `test_*` for test functions
+6. Run tests after making changes to ensure nothing breaks
+
+#### Test Debugging
+
+If you encounter failing tests:
+
+```bash
+# Run with more detailed output
+python -m pytest -v
+
+# Run with print statement output
+python -m pytest -v --capture=no
+
+# Debug specific test
+python -m pytest tests/path/to/test.py::test_function_name -v
+```
+
 ### Dependency Management
 
 ```bash
@@ -445,6 +528,7 @@ uv pip install -e ".[dev]"
 ```
 
 ### Contribution Process
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/new-capability`)
 3. Add type hints for new functions
@@ -454,6 +538,7 @@ uv pip install -e ".[dev]"
 ## More Information
 
 ### Documentation
+
 - [Setup Guide](#setup-guide)
 - [Usage Guide](#usage-guide)
 - [Supported Models](#supported-models)
@@ -472,7 +557,7 @@ ModuleNotFoundError: No module named 'vtai'
 
 This usually happens when you've installed VT.ai using `uv tool install` or a similar method that puts the package in an isolated environment, but you're trying to run it from within the source directory.
 
-#### Solutions:
+#### Solutions
 
 1. **Use the development install method instead:**
 
