@@ -1,8 +1,13 @@
 site_name: VT.ai Documentation
 site_description: Documentation for VT.ai - Minimal Multimodal AI Chat App with Dynamic Routing
 site_author: vinhnx
+site_url: https://vinhnx.github.io/VT.ai/
 repo_url: https://github.com/vinhnx/VT.ai
 edit_uri: edit/main/docs/
+
+# Files to include in the gh-deploy that are not in the docs directory
+extra_files:
+  - llms.txt
 
 theme:
   name: material
