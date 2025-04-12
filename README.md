@@ -416,6 +416,51 @@ VT.ai supports multimodal interactions through:
 - **Speech Recognition**: Voice input processing
 - **Image Generation**: DALL-E integration for creating images from text descriptions
 
+## Documentation
+
+VT.ai comes with comprehensive documentation built using MkDocs with the Material theme.
+
+### Documentation Structure
+
+The documentation is organized into several sections:
+
+- **User Guide**: Information for end users, including setup and usage instructions
+- **Developer Guide**: Information for developers who want to extend or modify VT.ai
+- **API Reference**: Detailed API documentation for VT.ai's components
+
+### Building the Documentation
+
+To build the documentation:
+
+```bash
+# Install MkDocs and required plugins if you haven't already
+pip install mkdocs mkdocs-material mkdocstrings mkdocstrings-python
+
+# Build the documentation
+mkdocs build
+```
+
+This will generate a `site` directory containing the static documentation site.
+
+### Serving the Documentation
+
+To preview the documentation locally:
+
+```bash
+# Serve the documentation with live reloading
+mkdocs serve
+```
+
+This will start a local web server at <http://127.0.0.1:8000/> where you can browse the documentation.
+
+### Contributing to Documentation
+
+We welcome contributions to improve the documentation:
+
+1. Make your changes to the markdown files in the `docs/` directory
+2. Preview your changes locally using `mkdocs serve`
+3. Submit a pull request with your improvements
+
 ## Development
 
 ### Environment Setup
