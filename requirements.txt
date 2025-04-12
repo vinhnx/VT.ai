@@ -14,6 +14,9 @@ pillow>=10.0.0
 # AI models
 google-generativeai>=0.3.0
 
+# Documentation
+mkdocs-llmstxt>=0.2.0
+
 # Development dependencies (uncomment as needed)
 # pytest>=7.4.0
 # black>=23.7.0

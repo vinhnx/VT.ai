@@ -75,6 +75,16 @@ plugins:
           rendering:
             show_source: true
             show_if_no_docstring: false
+  - llmstxt:
+      files:
+        - output: llms.txt
+          title: "VT.ai - Minimal Multimodal AI Chat App"
+          summary: "Documentation for VT.ai, a minimal multimodal AI chat application with dynamic routing capabilities."
+          description: |
+            This is the official documentation for VT.ai, a Python-based AI chat application that supports multiple
+            AI providers including OpenAI, Anthropic Claude, Google Gemini, and local models via Ollama. The app
+            features semantic-based routing, multimodal capabilities (text, image, audio), vision analysis, and
+            dynamic response generation.
 
 extra:
   social:

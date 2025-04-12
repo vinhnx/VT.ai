@@ -1,0 +1,35 @@
+# VT.ai - Minimal Multimodal AI Chat App
+
+> Documentation for VT.ai, a minimal multimodal AI chat application with dynamic routing capabilities.
+
+This is the official documentation for VT.ai, a Python-based AI chat application that supports multiple
+AI providers including OpenAI, Anthropic Claude, Google Gemini, and local models via Ollama. The app
+features semantic-based routing, multimodal capabilities (text, image, audio), vision analysis, and
+dynamic response generation.
+
+## Key Links
+
+- [Getting Started](https://vinhnx.github.io/VT.ai/user/getting-started/)
+- [Features](https://vinhnx.github.io/VT.ai/user/features/)
+- [Models](https://vinhnx.github.io/VT.ai/user/models/)
+- [Configuration](https://vinhnx.github.io/VT.ai/user/configuration/)
+- [Developer Guide](https://vinhnx.github.io/VT.ai/developer/architecture/)
+- [API Reference](https://vinhnx.github.io/VT.ai/api/)
+
+## Site Structure
+
+The documentation is organized into:
+
+- **User Guide**: Getting Started, Features, Configuration, Models, Troubleshooting
+- **Developer Guide**: Architecture, Extending VT.ai, Semantic Routing, Models Integration, Assistant Tools
+- **API Reference**: App, Router, Utils, Assistants
+
+## About VT.ai
+
+VT.ai integrates with multiple AI providers and supports a wide range of models with features including:
+- Multi-Provider AI Integration (OpenAI, Anthropic, Google, etc.)
+- Semantic-Based Routing
+- Multimodal Capabilities
+- Thinking Mode for step-by-step reasoning
+- Image Analysis and Generation
+- Voice Interaction
