@@ -97,17 +97,19 @@ def main():
     if update_docs == "y":
         # Determine if we're in the scripts directory or project root
         script_dir = Path(__file__).parent
-        
+
         # Build docs first
         build_docs_script = script_dir / "build_docs.sh"
         print("\nBuilding documentation...")
         run_command(f"bash {build_docs_script}", "Building documentation with MkDocs")
-        
+
         # Ask if user wants to deploy docs
         deploy_docs = input("Deploy documentation to GitHub Pages? (y/n): ").lower()
         if deploy_docs == "y":
             deploy_docs_script = script_dir / "deploy_docs.sh"
-            run_command(f"bash {deploy_docs_script}", "Deploying documentation to GitHub Pages")
+            run_command(
+                f"bash {deploy_docs_script}", "Deploying documentation to GitHub Pages"
+            )
             print("✅ Documentation successfully deployed to GitHub Pages")
         else:
             print("Documentation built but not deployed.")
