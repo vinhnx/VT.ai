@@ -61,6 +61,34 @@ The documentation is organized into several sections:
 
 You can access the full documentation at <a href="https://vinhnx.github.io/VT.ai/"><img alt="MkDocs" src="https://img.shields.io/badge/MkDocs-526CFE?logo=materialformkdocs&logoColor=fff"></a>.
 
+### Documentation Build
+
+Documentation is built using MkDocs with helper scripts:
+
+```bash
+# Build documentation locally
+./scripts/build_docs.sh
+
+# Deploy documentation to GitHub Pages
+./scripts/deploy_docs.sh
+```
+
+## Scripts
+
+VT.ai includes several utility scripts in the `scripts/` directory to help with common development and deployment tasks:
+
+```bash
+# Documentation scripts
+./scripts/build_docs.sh    # Build documentation locally
+./scripts/deploy_docs.sh   # Deploy documentation to GitHub Pages
+
+# Release management
+./scripts/release.py       # Automate version bumping, tagging, and PyPI releases
+
+# Application runner
+./scripts/vtai_runner.py   # Simple script to run the VT.ai application
+```
+
 ## Installation
 
 VT.ai can be installed in multiple ways:

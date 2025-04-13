@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # First, run the build script to generate the site and copy llms.txt
-./build_docs.sh
+./scripts/build_docs.sh
 
 # If the build was successful, deploy to GitHub Pages
 if [ $? -eq 0 ]; then

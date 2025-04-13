@@ -6,7 +6,8 @@ This script handles:
 2. Optional git tagging
 3. Building distribution packages
 4. Uploading to PyPI
-5. Optional pushing of tags and changes to GitHub
+5. Optional documentation building and deployment
+6. Optional pushing of tags and changes to GitHub
 """
 
 import re
@@ -91,7 +92,27 @@ def main():
     if upload == "y":
         run_command("python -m twine upload dist/*", "Uploading to PyPI")
 
-    # 5. Push tags and changes to GitHub
+    # 5. Build and deploy documentation (optional)
+    update_docs = input("Build and deploy documentation? (y/n): ").lower()
+    if update_docs == "y":
+        # Determine if we're in the scripts directory or project root
+        script_dir = Path(__file__).parent
+        
+        # Build docs first
+        build_docs_script = script_dir / "build_docs.sh"
+        print("\nBuilding documentation...")
+        run_command(f"bash {build_docs_script}", "Building documentation with MkDocs")
+        
+        # Ask if user wants to deploy docs
+        deploy_docs = input("Deploy documentation to GitHub Pages? (y/n): ").lower()
+        if deploy_docs == "y":
+            deploy_docs_script = script_dir / "deploy_docs.sh"
+            run_command(f"bash {deploy_docs_script}", "Deploying documentation to GitHub Pages")
+            print("✅ Documentation successfully deployed to GitHub Pages")
+        else:
+            print("Documentation built but not deployed.")
+
+    # 6. Push tags and changes to GitHub
     push_to_github = input("Push tags and changes to GitHub? (y/n): ").lower()
     if push_to_github == "y":
         changes_to_push = False
