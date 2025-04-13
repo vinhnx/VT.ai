@@ -1,5 +1,5 @@
 """
-Assistant tools handling utilities for VT.ai application.
+Assistant tools handling utilities for VT application.
 
 Processes OpenAI Assistant tool calls and manages thread messages.
 """
@@ -14,6 +14,26 @@ from openai.types.beta.threads.runs import RunStep
 from vtai.utils import constants as const
 from vtai.utils.config import logger
 from vtai.utils.user_session_helper import get_setting
+
+
+# Action callback for changing the model
+@cl.action_callback("change_model_action")
+async def on_change_model(action: cl.Action):
+    """
+    Handle the change model action click.
+    Shows an inline text notification instructing the user how to change the model.
+
+    Args:
+        action: The action that was triggered
+    """
+    await action.remove()
+
+    text_content = "To change the model, please click on the settings gear icon in the input bar at the bottom of the screen and select a different model from the 'Chat Model' dropdown."
+    elements = [
+        cl.Text(name="Change Language Model", content=text_content, display="inline")
+    ]
+
+    await cl.Message(content="", author=const.APP_NAME, elements=elements).send()
 
 
 async def process_thread_message(
@@ -44,15 +64,36 @@ async def process_thread_message(
                 )
 
                 res_message = message_references[id].content
+
+                # Get current model name for the action label
+                current_model = get_setting("settings_chat_model") or "Chat Model"
+
+                # Create actions list
+                actions = []
+
+                # Add TTS action if enabled
                 enable_tts_response = get_setting("settings_enable_tts_response")
                 if enable_tts_response:
-                    message_references[id].actions = [
+                    actions.append(
                         cl.Action(
                             name="speak_chat_response_action",
                             payload={"value": res_message},
                             label="Speak response",
                         )
-                    ]
+                    )
+
+                # Add model change action
+                actions.append(
+                    cl.Action(
+                        name="change_model_action",
+                        payload={"value": res_message},
+                        label=f"Using: {current_model}",
+                        description="Click to change model in settings",
+                    )
+                )
+
+                # Set the actions on the message
+                message_references[id].actions = actions
 
                 await message_references[id].send()
 
@@ -81,15 +122,35 @@ async def process_thread_message(
 
                     res_message = message_references[id].content
 
+                    # Get current model name for the action label
+                    current_model = get_setting("settings_chat_model") or "Chat Model"
+
+                    # Create actions list
+                    actions = []
+
+                    # Add TTS action if enabled
                     enable_tts_response = get_setting("settings_enable_tts_response")
                     if enable_tts_response:
-                        message_references[id].actions = [
+                        actions.append(
                             cl.Action(
                                 name="speak_chat_response_action",
                                 payload={"value": res_message},
                                 label="Speak response",
                             )
-                        ]
+                        )
+
+                    # Add model change action
+                    actions.append(
+                        cl.Action(
+                            name="change_model_action",
+                            payload={"value": res_message},
+                            label=f"Using: {current_model}",
+                            description="Click to change model in settings",
+                        )
+                    )
+
+                    # Set the actions on the message
+                    message_references[id].actions = actions
 
                     await message_references[id].send()
             except Exception as e:
@@ -151,4 +212,5 @@ async def process_tool_call(
     if update:
         await cl_step.update()
     else:
+        await cl_step.send()
         await cl_step.send()

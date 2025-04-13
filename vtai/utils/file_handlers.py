@@ -1,7 +1,7 @@
 """
-File handling utilities for VT.ai application.
+File handling utilities for VT application.
 
-Handles file validation, processing, and uploading to various services.
+Processes file uploads and conversions for various media types.
 """
 
 import os

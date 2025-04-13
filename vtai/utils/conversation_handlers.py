@@ -1,5 +1,5 @@
 """
-Conversation handling utilities for VT.ai application.
+Conversation handling utilities for VT application.
 
 Handles chat interactions, semantic routing, and message processing.
 """
@@ -84,10 +84,13 @@ async def handle_trigger_async_chat(
         content = current_message.content
         update_message_history_from_assistant(content)
 
+        # Create actions list
+        actions = []
+
         # Add TTS action if enabled
         enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
         if enable_tts_response:
-            current_message.actions = [
+            actions.append(
                 cl.Action(
                     icon="speech",
                     name="speak_chat_response_action",
@@ -95,7 +98,20 @@ async def handle_trigger_async_chat(
                     tooltip="Speak response",
                     label="Speak response",
                 )
-            ]
+            )
+
+        # Add model change action
+        actions.append(
+            cl.Action(
+                name="change_model_action",
+                payload={"value": content},
+                label=f"Using: {llm_model}",
+                description="Click to change model in settings",
+            )
+        )
+
+        # Set the actions on the message
+        current_message.actions = actions
 
         await current_message.update()
 
@@ -410,10 +426,13 @@ async def handle_thinking_conversation(
             content = final_answer.content
             update_message_history_from_assistant(content)
 
+            # Create actions list
+            actions = []
+
             # Add TTS action if enabled
             enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
             if enable_tts_response:
-                final_answer.actions = [
+                actions.append(
                     cl.Action(
                         icon="speech",
                         name="speak_chat_response_action",
@@ -421,7 +440,20 @@ async def handle_thinking_conversation(
                         tooltip="Speak response",
                         label="Speak response",
                     )
-                ]
+                )
+
+            # Add model change action
+            actions.append(
+                cl.Action(
+                    name="change_model_action",
+                    payload={"value": content},
+                    label=f"Using: {model}",
+                    description="Click to change model in settings",
+                )
+            )
+
+            # Set the actions on the message
+            final_answer.actions = actions
 
             await final_answer.send()
 
@@ -531,10 +563,13 @@ async def handle_deepseek_reasoner_conversation(
             content = final_answer.content
             update_message_history_from_assistant(content)
 
+            # Create actions list
+            actions = []
+
             # Add TTS action if enabled
             enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
             if enable_tts_response:
-                final_answer.actions = [
+                actions.append(
                     cl.Action(
                         icon="speech",
                         name="speak_chat_response_action",
@@ -542,7 +577,20 @@ async def handle_deepseek_reasoner_conversation(
                         tooltip="Speak response",
                         label="Speak response",
                     )
-                ]
+                )
+
+            # Add model change action
+            actions.append(
+                cl.Action(
+                    name="change_model_action",
+                    payload={"value": content},
+                    label=f"Using: {model}",
+                    description="Click to change model in settings",
+                )
+            )
+
+            # Set the actions on the message
+            final_answer.actions = actions
 
             await final_answer.send()
 

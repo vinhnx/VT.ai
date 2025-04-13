@@ -1,5 +1,7 @@
 """
-Configuration utilities for the VT.ai application.
+Configuration utilities for the VT application.
+
+Manages application initialization, logging, and environment configuration.
 """
 
 import importlib.resources

@@ -1,5 +1,7 @@
 """
-User session helper utilities for the VT.ai application.
+User session helper utilities for the VT application.
+
+Manages user session data and settings access.
 """
 
 from typing import Any

@@ -1,5 +1,5 @@
 """
-VT.ai - Main application entry point.
+VT - Main application entry point.
 
 A multimodal AI chat application with dynamic conversation routing.
 """

@@ -1,5 +1,5 @@
 """
-Core application constants for VT.ai.
+Core application constants for VT.
 
 This module contains constants used throughout the application,
 including names, identifiers, and feature flags.
@@ -8,7 +8,7 @@ including names, identifiers, and feature flags.
 from typing import Dict, Final
 
 # Application names and identifiers
-APP_NAME: Final[str] = "VT.ai"
+APP_NAME: Final[str] = "VT"
 MINO_ASSISTANT_NAME: Final[str] = "Mino"
 
 # Assistant tools

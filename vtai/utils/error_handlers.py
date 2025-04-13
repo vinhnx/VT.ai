@@ -1,7 +1,7 @@
 """
-Error handling utilities for VT.ai application.
+Error handling utilities for VT application.
 
-Centralizes error handling and exception processing.
+Provides standardized error handling and user feedback for various exception types.
 """
 
 import chainlit as cl

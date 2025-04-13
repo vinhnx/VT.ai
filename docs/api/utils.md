@@ -1,10 +1,10 @@
 # Utils API Reference
 
-This page documents the utils module of VT.ai (`vtai/utils/`), which provides various utility functions and classes that support the core functionality of the application.
+This page documents the utils module of VT (`vtai/utils/`), which provides various utility functions and classes that support the core functionality of the application.
 
 ## Overview
 
-The utils module contains helper functions and classes for configuration management, conversation handling, media processing, error handling, and more. These utilities form the foundation of VT.ai's functionality and are used throughout the application.
+The utils module contains helper functions and classes for configuration management, conversation handling, media processing, error handling, and more. These utilities form the foundation of VT's functionality and are used throughout the application.
 
 ## Key Components
 
@@ -41,7 +41,7 @@ def get_logger():
 
 ```python
 # Application constants
-APP_NAME = "VT.ai"
+APP_NAME = "VT"
 DEFAULT_MODEL = "o3-mini"
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_TOP_P = 0.9
