@@ -126,7 +126,8 @@ async def handle_conversation(
         route_layer: The semantic router layer
     """
     model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    msg = cl.Message(content="", author=model)
+    # Use "assistant" as the author name to match the avatar file in /public/avatars/
+    msg = cl.Message(content="")
     await msg.send()
 
     query = message.content
@@ -365,22 +366,22 @@ async def handle_thinking_conversation(
         # Start with a thinking step
         async with cl.Step(name="Thinking") as thinking_step:
             # Create a message for the final answer, but don't send it yet
-            final_answer = cl.Message(content="", author=model)
+            final_answer = cl.Message(content="")
 
             # Process the stream
             async for chunk in stream:
                 delta = chunk.choices[0].delta
                 content = delta.content
-                
+
                 # Skip if content is None or empty
                 if not content:
                     continue
-                    
+
                 # Check for exact <think> tag
                 if content == "<think>":
                     thinking = True
                     continue
-                    
+
                 # Check for exact </think> tag
                 elif content == "</think>":
                     thinking = False
@@ -389,7 +390,7 @@ async def handle_thinking_conversation(
                     thinking_step.name = f"Thought for {thought_for}s"
                     await thinking_step.update()
                     continue
-                    
+
                 # Stream content based on thinking flag
                 if thinking:
                     # Stream to thinking step
@@ -402,8 +403,7 @@ async def handle_thinking_conversation(
         if not final_answer.content:
             # If no final answer was provided, create a fallback message
             await cl.Message(
-                content="I've thought about this but don't have a specific answer to provide.",
-                author=model,
+                content="I've thought about this but don't have a specific answer to provide."
             ).send()
         else:
             # Update message history and add TTS action
@@ -467,21 +467,19 @@ async def handle_deepseek_reasoner_conversation(
     update_message_history_from_user(query)
 
     # Create DeepSeek client
-    client = AsyncOpenAI(
-        api_key=deepseek_api_key, base_url="https://api.deepseek.com"
-    )
+    client = AsyncOpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
 
     try:
         # Prepare messages for the API call
         deepseek_messages = [
             {"role": "system", "content": "You are a helpful assistant"},
         ]
-        
+
         # Add conversation history
         for msg in messages:
             if msg["role"] != "system":  # Skip system messages from history
                 deepseek_messages.append(msg)
-                
+
         # Add the current user query
         deepseek_messages.append({"role": "user", "content": query})
 
@@ -498,13 +496,13 @@ async def handle_deepseek_reasoner_conversation(
         # Start with a thinking step
         async with cl.Step(name="Thinking") as thinking_step:
             # Create a message for the final answer, but don't send it yet
-            final_answer = cl.Message(content="", author=model)
+            final_answer = cl.Message(content="")
 
             # Process the reasoning content first
             async for chunk in stream:
                 delta = chunk.choices[0].delta
                 reasoning_content = getattr(delta, "reasoning_content", None)
-                
+
                 if reasoning_content is not None and not thinking_completed:
                     # Stream the reasoning content to the thinking step
                     await thinking_step.stream_token(reasoning_content)
@@ -527,7 +525,6 @@ async def handle_deepseek_reasoner_conversation(
             # If no final answer was provided, create a fallback message
             await cl.Message(
                 content="I've thought about this but don't have a specific answer to provide.",
-                author=model,
             ).send()
         else:
             # Update message history and add TTS action

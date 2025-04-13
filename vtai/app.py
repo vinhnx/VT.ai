@@ -66,8 +66,8 @@ async def start_chat():
     # Initialize default settings
     cl.user_session.set(conf.SETTINGS_CHAT_MODEL, conf.DEFAULT_MODEL)
 
-    # Build LLM profile
-    build_llm_profile(conf.ICONS_PROVIDER_MAP)
+    # Build LLM profile with direct icon path instead of using map
+    build_llm_profile()
 
     # Settings configuration
     settings = await build_settings()
@@ -469,9 +469,16 @@ async def update_settings(settings: Dict[str, Any]) -> None:
         if settings_top_p := settings.get(conf.SETTINGS_TOP_P):
             cl.user_session.set(conf.SETTINGS_TOP_P, settings_top_p)
 
+        # Check if chat model was changed
+        model_changed = False
+        if conf.SETTINGS_CHAT_MODEL in settings:
+            cl.user_session.set(
+                conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL)
+            )
+            model_changed = True
+
         # Update all other settings
         setting_keys = [
-            conf.SETTINGS_CHAT_MODEL,
             conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE,
             conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY,
             conf.SETTINGS_VISION_MODEL,
@@ -485,6 +492,12 @@ async def update_settings(settings: Dict[str, Any]) -> None:
         for key in setting_keys:
             if key in settings:
                 cl.user_session.set(key, settings.get(key))
+
+        # If model was changed, rebuild the chat profiles to ensure icons are properly set
+        if model_changed:
+            # Rebuild LLM profiles to ensure icons are updated
+            build_llm_profile()
+            logger.info("Chat model changed, rebuilt profiles with icons")
 
         logger.info("Settings updated successfully")
     except Exception as e:
