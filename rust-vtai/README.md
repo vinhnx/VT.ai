@@ -49,13 +49,23 @@ This project is a Rust port of the original Python-based VT.ai application. It p
 
 ### Usage
 
-Run the application with:
+You can run the application using the provided convenience script:
+
+```bash
+# Using the convenience script (recommended)
+./run.sh
+
+# With command-line arguments
+./run.sh --api-key openai=sk-your-api-key-here --model o3-mini
+```
+
+Or run it manually:
 
 ```
 cargo run --release
 ```
 
-Or use the compiled binary:
+Or use the compiled binary directly:
 
 ```
 ./target/release/vtai
@@ -66,7 +76,7 @@ Or use the compiled binary:
 You can provide API keys and select a model when starting the application:
 
 ```
-./target/release/vtai --api-key openai=sk-your-api-key-here --model o3-mini
+./run.sh --api-key openai=sk-your-api-key-here --model o3-mini
 ```
 
 Supported models include a wide range of options from providers like:

@@ -87,17 +87,35 @@ The Rust implementation provides an alternative high-performance version:
 # Clone repository if you haven't already
 git clone https://github.com/vinhnx/VT.ai.git
 cd VT.ai/rust-vtai
+```
 
+### Quick Start with run.sh (Recommended)
+
+The Rust implementation includes a convenient shell script that handles building and running the application:
+
+```bash
+# Run the application using the convenience script
+./run.sh
+
+# With API key and model selection
+./run.sh --api-key openai=sk-your-key-here --model o3-mini
+```
+
+The `run.sh` script:
+- Builds the application in release mode
+- Checks for API keys in environment variables
+- Runs the application with any provided command-line arguments
+- Displays helpful messages and warnings
+
+### Manual Build and Run
+
+If you prefer to build and run manually:
+
+```bash
 # Build the application
 cargo build --release
 
 # Run the application
-cargo run --release
-```
-
-Or after building, you can run the binary directly:
-
-```bash
 ./target/release/vtai
 ```
 

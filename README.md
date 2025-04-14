@@ -151,11 +151,15 @@ The Rust implementation provides an alternative version with focus on performanc
 # Navigate to the Rust directory
 cd rust-vtai
 
-# Build the application
-cargo build --release
+# Quick start using the convenience script (recommended)
+./run.sh
 
-# Run the application
-cargo run --release
+# Or with API key and model selection
+./run.sh --api-key openai=sk-your-key-here --model o3-mini
+
+# Alternatively, build and run manually
+cargo build --release
+./target/release/vtai
 ```
 
 See the [Rust README](./rust-vtai/README.md) for detailed instructions.
