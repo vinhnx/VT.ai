@@ -53,7 +53,7 @@ SETTINGS_USE_THINKING_MODEL: str = "settings_use_thinking_model"
 # Default values
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
-DEFAULT_MODEL: str = "gpt-4o-mini"
+DEFAULT_MODEL: str = "gpt-4.1-mini"
 DEFAULT_IMAGE_GEN_MODEL: str = "dall-e-3"
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
 DEFAULT_TTS_MODEL: str = "gpt-4o-mini-tts"
@@ -135,6 +135,9 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "DeepSeek V3": "deepseek/deepseek-chat",
     "DeepSeek Coder": "deepseek/deepseek-coder",
     # OpenAI models
+    "OpenAI - GPT-4.1": "gpt-4.1",
+    "OpenAI - GPT-4.1 Mini": "gpt-4.1-mini",
+    "OpenAI - GPT-4.1 Nano": "gpt-4.1-nano",
     "OpenAI - GPT-4o Mini": "gpt-4o-mini",
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT-o1": "o1",
@@ -462,7 +465,7 @@ Configuration for the LLM providers.
 # Default configuration for different LLM providers
 DEFAULT_PROVIDERS_CONFIG = {
     "openai": {
-        "model": "gpt-4o",
+        "model": "gpt-4.1-nano",
         "temperature": 0.7,
         "max_tokens": 2000,
     },
