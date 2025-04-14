@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VT.ai - Rust Edition</title>
+    <style>
+        :root {
+            --primary-color: #3f51b5;
+            --secondary-color: #f50057;
+            --background-color: #f5f5f5;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--box-shadow);
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .app-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 64px);
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--card-background);
+            padding: 1rem;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .message {
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            max-width: 70%;
+        }
+
+        .user-message {
+            background-color: var(--primary-color);
+            color: white;
+            align-self: flex-end;
+        }
+
+        .assistant-message {
+            background-color: #e0e0e0;
+            color: var(--text-color);
+            align-self: flex-start;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #ddd;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #303f9f;
+        }
+
+        .settings-container {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .settings-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-section {
+            margin-bottom: 1rem;
+        }
+
+        select,
+        .slider-container {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid #ddd;
+            margin-top: 0.25rem;
+        }
+
+        .connection-status {
+            text-align: center;
+            margin-top: auto;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .disconnected {
+            background-color: var(--secondary-color);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="app-title">VT.ai - Rust Edition</div>
+    </header>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="settings-container">
+                <div class="settings-title">Settings</div>
+
+                <div class="settings-section">
+                    <label for="model-select">Model</label>
+                    <select id="model-select">
+                        <!-- Model options will be populated dynamically -->
+                    </select>
+                </div>
+
+                <div class="settings-section">
+                    <label for="temperature">Temperature: <span id="temperature-value">0.7</span></label>
+                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7"
+                        class="slider-container">
+                </div>
+
+                <div class="settings-section">
+                    <label for="top-p">Top P: <span id="top-p-value">0.9</span></label>
+                    <input type="range" id="top-p" min="0" max="1" step="0.1" value="0.9" class="slider-container">
+                </div>
+            </div>
+
+            <div class="connection-status" id="connection-status">
+                Connecting...
+            </div>
+        </aside>
+
+        <main class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <div class="message assistant-message">
+                    Hello! I'm VT.ai (Rust Edition). How can I help you today?
+                </div>
+            </div>
+
+            <div class="input-container">
+                <input type="text" id="message-input" placeholder="Type your message here...">
+                <button id="send-button">Send</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // DOM Elements
+        const chatMessages = document.getElementById('chat-messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const connectionStatus = document.getElementById('connection-status');
+        const modelSelect = document.getElementById('model-select');
+        const temperatureSlider = document.getElementById('temperature');
+        const temperatureValue = document.getElementById('temperature-value');
+        const topPSlider = document.getElementById('top-p');
+        const topPValue = document.getElementById('top-p-value');
+
+        // WebSocket connection
+        let socket = null;
+
+        // Connect to WebSocket
+        function connectWebSocket() {
+            // Close existing connection if any
+            if (socket) {
+                socket.close();
+            }
+
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/api/chat`;
+
+            connectionStatus.textContent = 'Connecting...';
+            connectionStatus.classList.add('disconnected');
+
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = function () {
+                connectionStatus.textContent = 'Connected';
+                connectionStatus.classList.remove('disconnected');
+
+                // Initialize session with settings
+                sendSettings();
+            };
+
+            socket.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+
+            socket.onclose = function () {
+                connectionStatus.textContent = 'Disconnected - Reconnecting...';
+                connectionStatus.classList.add('disconnected');
+
+                // Attempt to reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            socket.onerror = function (error) {
+                console.error('WebSocket error:', error);
+                connectionStatus.textContent = 'Connection Error';
+                connectionStatus.classList.add('disconnected');
+            };
+        }
+
+        // Handle incoming messages
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'AssistantResponse':
+                    addMessage(data.data, 'assistant');
+                    break;
+                case 'Error':
+                    addMessage(`Error: ${data.data}`, 'assistant');
+                    break;
+                case 'Thinking':
+                    // Handle thinking state
+                    if (data.data) {
+                        // Add or update thinking indicator
+                    } else {
+                        // Remove thinking indicator
+                    }
+                    break;
+                default:
+                    console.log('Unhandled message type:', data.type);
+            }
+        }
+
+        // Add a message to the chat
+        function addMessage(content, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(sender === 'user' ? 'user-message' : 'assistant-message');
+            messageElement.textContent = content;
+
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Send a message to the server
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                addMessage(message, 'user');
+
+                const data = {
+                    type: 'UserMessage',
+                    data: message
+                };
+
+                socket.send(JSON.stringify(data));
+                messageInput.value = '';
+            } else {
+                alert('Not connected to server. Please wait while we reconnect...');
+            }
+        }
+
+        // Send settings to the server
+        function sendSettings() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const settings = {
+                    chat_model: modelSelect.value,
+                    temperature: parseFloat(temperatureSlider.value),
+                    top_p: parseFloat(topPSlider.value),
+                    image_gen: false,
+                    tts: false
+                };
+
+                const data = {
+                    type: 'SettingsUpdate',
+                    data: settings
+                };
+
+                socket.send(JSON.stringify(data));
+            }
+        }
+
+        // Fetch available models from backend and populate dropdown
+        function fetchModels() {
+            fetch('/api/models')
+                .then(response => response.json())
+                .then(models => {
+                    modelSelect.innerHTML = '';
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.value;
+                        option.textContent = model.label;
+                        modelSelect.appendChild(option);
+                    });
+                    // Optionally trigger settings update after loading
+                    sendSettings();
+                })
+                .catch(err => {
+                    // Fallback: show the default model from backend constants
+                    modelSelect.innerHTML = `<option value="gpt-4.1-mini">GPT-4.1 Mini</option>`;
+                });
+        }
+
+        // Event Listeners
+        sendButton.addEventListener('click', sendMessage);
+
+        messageInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        modelSelect.addEventListener('change', sendSettings);
+
+        temperatureSlider.addEventListener('input', function () {
+            temperatureValue.textContent = this.value;
+        });
+
+        temperatureSlider.addEventListener('change', sendSettings);
+
+        topPSlider.addEventListener('input', function () {
+            topPValue.textContent = this.value;
+        });
+
+        topPSlider.addEventListener('change', sendSettings);
+
+        // Initialize connection when page loads
+        window.addEventListener('load', () => {
+            fetchModels();
+            connectWebSocket();
+        });
+    </script>
+</body>
+
+</html>
