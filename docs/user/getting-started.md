@@ -2,7 +2,16 @@
 
 This guide will help you get up and running with VT.ai quickly.
 
-## Installation Options
+## Implementation Options
+
+VT.ai is available in two implementations:
+
+1. **Python Implementation**: The original implementation with full feature support
+2. **Rust Implementation**: A high-performance port focused on efficiency and reliability
+
+You can choose which implementation to use based on your needs. Both share similar configuration approaches and supported models.
+
+## Python Installation Options
 
 VT.ai can be installed and run in multiple ways depending on your needs:
 
@@ -63,18 +72,49 @@ source .venv/bin/activate  # Linux/Mac
 uv pip install -e .
 ```
 
+## Rust Implementation Setup
+
+The Rust implementation provides an alternative high-performance version:
+
+### Prerequisites
+
+- Rust toolchain (1.77.0 or newer recommended)
+- API keys for at least one LLM provider
+
+### Installation Steps
+
+```bash
+# Clone repository if you haven't already
+git clone https://github.com/vinhnx/VT.ai.git
+cd VT.ai/rust-vtai
+
+# Build the application
+cargo build --release
+
+# Run the application
+cargo run --release
+```
+
+Or after building, you can run the binary directly:
+
+```bash
+./target/release/vtai
+```
+
 ## API Key Configuration
 
 You'll need at least one API key to use VT.ai effectively. You can set your API keys in several ways:
 
-### Command Line Option
+### Python Implementation
+
+#### Command Line Option
 
 ```bash
 # Set OpenAI API key
 vtai --api-key openai=<your-key>
 ```
 
-### Environment Variables
+#### Environment Variables
 
 ```bash
 # For OpenAI (recommended for first-time users)
@@ -90,17 +130,19 @@ export GEMINI_API_KEY='your-key-here'
 vtai --model gemini-2.5
 ```
 
-You can combine model selection and API key setting in one command:
+### Rust Implementation
+
+The Rust implementation uses a similar configuration approach:
 
 ```bash
-# Set API key and specify model in one command
-vtai --model o3-mini --api-key openai=<your-key>
+# Set OpenAI API key
+./target/release/vtai --api-key openai=<your-key>
 
-# Use Claude 3.7 Sonnet
-vtai --model sonnet --api-key anthropic=<your-key>
+# Select a specific model
+./target/release/vtai --model o3-mini
 ```
 
-API keys are saved to `~/.config/vtai/.env` and will be loaded automatically for future runs.
+API keys are saved to the same configuration directory as the Python implementation for consistency.
 
 ## First Run Experience
 
@@ -117,8 +159,12 @@ To ensure the best first-run experience:
 # Set at least one API key before running (OpenAI recommended for beginners)
 export OPENAI_API_KEY='sk-your-key-here'
 
-# Run the application
+# Run the application (Python implementation)
 vtai
+
+# Or for the Rust implementation
+cd rust-vtai
+cargo run --release
 ```
 
 ## Basic Usage
@@ -135,6 +181,8 @@ For more detailed usage instructions, see the [Features](features.md) page.
 
 ## Upgrading VT.ai
 
+### Upgrading the Python Implementation
+
 To upgrade VT.ai to the latest version:
 
 ```bash
@@ -148,9 +196,26 @@ pipx upgrade vtai
 uv tool upgrade vtai
 ```
 
+### Upgrading the Rust Implementation
+
+To upgrade the Rust implementation:
+
+```bash
+# Navigate to the repository
+cd VT.ai
+
+# Pull the latest changes
+git pull
+
+# Build the latest version
+cd rust-vtai
+cargo build --release
+```
+
 ## Next Steps
 
 - Explore the [Features](features.md) documentation to learn about all capabilities
 - Learn about [Configuration](configuration.md) options
 - Check out the [Models](models.md) documentation to understand different model options
 - Visit [Troubleshooting](troubleshooting.md) if you encounter any issues
+- Review the [Architecture](../developer/architecture.md) documentation to understand how VT.ai works internally

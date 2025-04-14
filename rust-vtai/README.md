@@ -9,10 +9,12 @@ This project is a Rust port of the original Python-based VT.ai application. It p
 ## Features
 
 - **Semantic Routing**: Intelligently routes user queries to appropriate handlers
-- **Multiple LLM Support**: Works with OpenAI, Anthropic, DeepSeek and more
+- **Multiple LLM Support**: Works with OpenAI, Anthropic, DeepSeek, Google, Meta, Mistral, Groq, Cohere and more
 - **Tool Integration**: Includes code interpreter, file processing, and search capabilities
 - **Web Interface**: Axum-based web server with WebSocket support for real-time chat
 - **OpenAI Assistant API**: Full integration with OpenAI's Assistant API
+- **Thinking Mode**: Support for step-by-step reasoning with the <think> tag on supported models
+- **Vision Capabilities**: Support for image analysis with compatible models
 - **Error Handling**: Robust error handling and logging
 
 ## Project Structure
@@ -35,8 +37,8 @@ This project is a Rust port of the original Python-based VT.ai application. It p
 1. Clone the repository:
 
    ```
-   git clone https://github.com/yourusername/rust-vtai.git
-   cd rust-vtai
+   git clone https://github.com/vinhnx/VT.ai.git
+   cd VT.ai/rust-vtai
    ```
 
 2. Build the application:
@@ -67,31 +69,24 @@ You can provide API keys and select a model when starting the application:
 ./target/release/vtai --api-key openai=sk-your-api-key-here --model o3-mini
 ```
 
-Supported models include:
+Supported models include a wide range of options from providers like:
 
-- `gpt-4.1-mini`: OpenAI - GPT-4.1 Mini
-- `gpt-4o-mini`: OpenAI - GPT-4o Mini
-- `gpt-4o`: OpenAI - GPT-4o
-- `gpt-4.1`: OpenAI - GPT-4.1
-- `gpt-4.1-nano`: OpenAI - GPT-4.1 Nano
-- `o1`: OpenAI - GPT-o1
-- `o3-mini`: OpenAI - GPT-o3 Mini
-- `o1-mini`: OpenAI - GPT-o1 Mini
-- `o1-pro`: OpenAI - GPT-o1 Pro
-- `claude-3-7-sonnet-20250219`: Anthropic - Claude 3.7 Sonnet
-- `claude-3-5-sonnet-20241022`: Anthropic - Claude 3.5 Sonnet
-- `claude-3-5-haiku-20241022`: Anthropic - Claude 3.5 Haiku
-- `deepseek/deepseek-reasoner`: DeepSeek R1
-- `deepseek/deepseek-chat`: DeepSeek V3
-- `deepseek/deepseek-coder`: DeepSeek Coder
-- `gemini/gemini-2.0-pro`: Google - Gemini 2.0 Pro
-- `gemini/gemini-2.0-flash`: Google - Gemini 2.0 Flash
-- `gemini/gemini-2.0-flash-exp`: Google - Gemini 2.0 Flash Exp
-- ...and more, see src/utils/models_map.rs for the full list.
+- **OpenAI**: GPT-4o, GPT-4.1, GPT-o1, GPT-o3 Mini, etc.
+- **Anthropic**: Claude 3.7 Sonnet, Claude 3.5 Sonnet/Haiku, etc.
+- **DeepSeek**: DeepSeek Reasoner (R1), DeepSeek Chat (V3), DeepSeek Coder
+- **Google**: Gemini 2.0 Pro, Gemini 2.0 Flash, etc.
+- **Mistral**: Mistral Small, Mistral Large
+- **Groq**: Llama 4 Scout, Llama 3, Mixtral 8x7b
+- **Cohere**: Command, Command-R, Command-Light, Command-R-Plus
+- **Meta**: Llama 4 Maverick, Llama 4 Scout (via OpenRouter)
+- **Qwen**: QWQ 32B, Qwen 2.5 VL/Coder (via OpenRouter)
+- **Ollama**: Local models including DeepSeek R1, Qwen2.5-coder, Llama 3/3.1/3.2, Phi-3, etc.
+
+See `src/utils/models_map.rs` for the full list of supported models.
 
 ## Dynamic Model Dropdown
 
-The model selection dropdown in the web UI is now dynamically populated from the backend. The backend serves the available models from `src/utils/models_map.rs` via the `/api/models` endpoint.
+The model selection dropdown in the web UI is dynamically populated from the backend. The backend serves the available models from `src/utils/models_map.rs` via the `/api/models` endpoint.
 
 **To add or remove models:**
 - Edit the `MODEL_ALIAS_MAP` in `src/utils/models_map.rs`.
@@ -113,16 +108,25 @@ pub static MODEL_ALIAS_MAP: Lazy<HashMap<&'static str, &'static str>> = Lazy::ne
 });
 ```
 
-**Note:** If you want to use custom models or providers, add them to `MODEL_ALIAS_MAP` and ensure your backend is configured to route requests appropriately.
+## Special Features
+
+### Thinking Mode
+
+Supported models can use the `<think>` tag to show their step-by-step reasoning. This feature is available on models listed in the `REASONING_MODELS` list in `src/utils/models_map.rs`.
+
+### Vision Capabilities
+
+The Rust implementation supports image analysis with compatible models like OpenAI's GPT-4o, Google's Gemini, and Llama 3.2 Vision (via Ollama).
 
 ## Development
 
 This is a work in progress. The current implementation includes:
 
 - Basic web server setup with WebSocket support
-- Core semantic routing functionality (simplified)
+- Core semantic routing functionality
 - Tool registry and implementations
 - OpenAI Assistant API integration
+- Support for a wide range of LLM providers
 
 Future work includes:
 
