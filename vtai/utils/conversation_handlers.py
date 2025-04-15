@@ -52,33 +52,50 @@ async def handle_trigger_async_chat(
         # Set a reasonable timeout for completion
         completion_timeout = 120.0  # 2 minutes
 
-        # Create the stream with timeout handling
-        stream = await asyncio.wait_for(
-            litellm.acompletion(
-                model=llm_model,
-                messages=messages,
-                stream=True,
-                num_retries=3,
-                temperature=temperature,
-                top_p=top_p,
-                timeout=90.0,  # Set LiteLLM timeout slightly less than our overall timeout
-            ),
-            timeout=completion_timeout,
-        )
-
-        # Process the stream safely with proper cancellation handling
+        # Always try to use the Responses API first
         try:
+            logger.info(f"Using Responses API for model: {llm_model}")
+            stream = await asyncio.wait_for(
+                litellm.responses(
+                    model=llm_model,
+                    input=messages,  # For Responses API, messages become input
+                    stream=True,
+                    num_retries=3,
+                    temperature=temperature,
+                    top_p=top_p,
+                    timeout=90.0,  # Set LiteLLM timeout slightly less than our overall timeout
+                ),
+                timeout=completion_timeout,
+            )
+
+            # Process Responses API format
+            async for part in stream:
+                if hasattr(part, "output_text"):
+                    await current_message.stream_token(part.output_text)
+
+        except Exception as e:
+            # If Responses API fails, fall back to Chat Completions API
+            logger.info(
+                f"Falling back to Chat Completions API for model: {llm_model}. Error: {e}"
+            )
+            stream = await asyncio.wait_for(
+                litellm.acompletion(
+                    model=llm_model,
+                    messages=messages,
+                    stream=True,
+                    num_retries=3,
+                    temperature=temperature,
+                    top_p=top_p,
+                    timeout=90.0,
+                    response_format={"type": "text"},
+                ),
+                timeout=completion_timeout,
+            )
+
+            # Process Chat Completions API format
             async for part in stream:
                 if token := part.choices[0].delta.content or "":
                     await current_message.stream_token(token)
-        except asyncio.CancelledError:
-            logger.warning("Stream processing was cancelled")
-            # Make sure we handle cancellation properly
-            if hasattr(stream, "aclose") and callable(stream.aclose):
-                await stream.aclose()
-            elif hasattr(stream, "aclose_async") and callable(stream.aclose_async):
-                await stream.aclose_async()
-            raise
 
         # After successful streaming, update the message content and history
         content = current_message.content
@@ -366,16 +383,6 @@ async def handle_thinking_conversation(
     thinking_messages.append({"role": "user", "content": query})
 
     try:
-        # Create the stream
-        stream = await litellm.acompletion(
-            user=get_user_session_id(),
-            model=model,
-            messages=thinking_messages,
-            temperature=float(temperature),
-            top_p=float(top_p),
-            stream=True,
-        )
-
         # Flag to track if we're currently in thinking mode
         thinking = False
 
@@ -384,36 +391,98 @@ async def handle_thinking_conversation(
             # Create a message for the final answer, but don't send it yet
             final_answer = cl.Message(content="")
 
-            # Process the stream
-            async for chunk in stream:
-                delta = chunk.choices[0].delta
-                content = delta.content
+            # Try Responses API first
+            try:
+                logger.info(
+                    f"Using Responses API for thinking mode with model: {model}"
+                )
+                stream = await asyncio.wait_for(
+                    litellm.responses(
+                        user=get_user_session_id(),
+                        model=model,
+                        input=thinking_messages,
+                        temperature=float(temperature),
+                        top_p=float(top_p),
+                        stream=True,
+                    ),
+                    timeout=120.0,  # Set an overall timeout of 120 seconds
+                )
 
-                # Skip if content is None or empty
-                if not content:
-                    continue
+                # Process Responses API format
+                async for chunk in stream:
+                    if hasattr(chunk, "output_text"):
+                        content = chunk.output_text
 
-                # Check for exact <think> tag
-                if content == "<think>":
-                    thinking = True
-                    continue
+                        # Skip if content is None or empty
+                        if not content:
+                            continue
 
-                # Check for exact </think> tag
-                elif content == "</think>":
-                    thinking = False
-                    # Update the thinking step with duration
-                    thought_for = round(time.time() - start)
-                    thinking_step.name = f"Thought for {thought_for}s"
-                    await thinking_step.update()
-                    continue
+                        # Check for exact <think> tag
+                        if content == "<think>":
+                            thinking = True
+                            continue
 
-                # Stream content based on thinking flag
-                if thinking:
-                    # Stream to thinking step
-                    await thinking_step.stream_token(content)
-                else:
-                    # Stream to final answer
-                    await final_answer.stream_token(content)
+                        # Check for exact </think> tag
+                        elif content == "</think>":
+                            thinking = False
+                            # Update the thinking step with duration
+                            thought_for = round(time.time() - start)
+                            thinking_step.name = f"Thought for {thought_for}s"
+                            await thinking_step.update()
+                            continue
+
+                        # Stream content based on thinking flag
+                        if thinking:
+                            # Stream to thinking step
+                            await thinking_step.stream_token(content)
+                        else:
+                            # Stream to final answer
+                            await final_answer.stream_token(content)
+
+            except Exception as e:
+                # Fall back to Chat Completions API
+                logger.info(
+                    f"Falling back to Chat Completions API for thinking mode with model: {model}. Error: {e}"
+                )
+                stream = await litellm.acompletion(
+                    user=get_user_session_id(),
+                    model=model,
+                    messages=thinking_messages,
+                    temperature=float(temperature),
+                    top_p=float(top_p),
+                    stream=True,
+                    response_format={"type": "text"},
+                )
+
+                # Process Chat Completions API format
+                async for chunk in stream:
+                    content = chunk.choices[0].delta.content
+
+                    # Skip if content is None or empty
+                    if not content:
+                        continue
+
+                    # Check for exact <think> tag
+                    if content == "<think>":
+                        thinking = True
+                        continue
+
+                    # Check for exact </think> tag
+                    elif content == "</think>":
+                        thinking = False
+                        # Update the thinking step with duration
+                        thought_for = round(time.time() - start)
+                        thinking_step.name = f"Thought for {thought_for}s"
+                        await thinking_step.update()
+                        continue
+
+                    # Stream content based on thinking flag
+                    if thinking:
+                        # Stream to thinking step
+                        await thinking_step.stream_token(content)
+                    else:
+                        # Stream to final answer
+                        await final_answer.stream_token(content)
 
         # Send the final answer after thinking is complete
         if not final_answer.content:
