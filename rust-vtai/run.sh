@@ -38,41 +38,12 @@ cargo build --release
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Build successful!${NC}"
 
-    # Parse command line arguments for API keys
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --openai-key)
-                export OPENAI_API_KEY="$2"
-                shift 2
-                ;;
-            --anthropic-key)
-                export ANTHROPIC_API_KEY="$2"
-                shift 2
-                ;;
-            --deepseek-key)
-                export DEEPSEEK_API_KEY="$2"
-                shift 2
-                ;;
-            *)
-                # Collect all other args to pass to the binary
-                ARGS+=" $1"
-                shift
-                ;;
-        esac
-    done
+    # Parse command line arguments to pass to the binary
+    ARGS=""
 
-    # Ask for API keys if not set in env or via args
-    if [ -z "$OPENAI_API_KEY" ]; then
-        read -p "Enter your OpenAI API key (sk-...): " OPENAI_API_KEY
-        export OPENAI_API_KEY
-    fi
-    if [ -z "$ANTHROPIC_API_KEY" ]; then
-        read -p "Enter your Anthropic API key (sk-...): " ANTHROPIC_API_KEY
-        export ANTHROPIC_API_KEY
-    fi
-    if [ -z "$DEEPSEEK_API_KEY" ]; then
-        read -p "Enter your DeepSeek API key (sk-...): " DEEPSEEK_API_KEY
-        export DEEPSEEK_API_KEY
+    # Add any command line arguments
+    if [ $# -gt 0 ]; then
+        ARGS="$@"
     fi
 
     echo -e "${BLUE}Running rust-vtai $ARGS${NC}"
