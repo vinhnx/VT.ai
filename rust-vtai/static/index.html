@@ -1,219 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VT.ai - Rust Edition</title>
-    <style>
-        :root {
-            --primary-color: #3f51b5;
-            --secondary-color: #f50057;
-            --background-color: #f5f5f5;
-            --card-background: #ffffff;
-            --text-color: #333333;
-            --border-radius: 8px;
-            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--box-shadow);
-        }
-
-        .app-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .app-container {
-            display: flex;
-            flex: 1;
-            height: calc(100vh - 64px);
-        }
-
-        .sidebar {
-            width: 250px;
-            background-color: var(--card-background);
-            padding: 1rem;
-            box-shadow: var(--box-shadow);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 1rem;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            padding: 1rem;
-            background-color: var(--card-background);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-        }
-
-        .message {
-            padding: 0.75rem 1rem;
-            border-radius: var(--border-radius);
-            max-width: 70%;
-        }
-
-        .user-message {
-            background-color: var(--primary-color);
-            color: white;
-            align-self: flex-end;
-        }
-
-        .assistant-message {
-            background-color: #e0e0e0;
-            color: var(--text-color);
-            align-self: flex-start;
-        }
-
-        .input-container {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        #message-input {
-            flex: 1;
-            padding: 0.75rem;
-            border-radius: var(--border-radius);
-            border: 1px solid #ddd;
-            font-family: inherit;
-            font-size: 1rem;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #303f9f;
-        }
-
-        .settings-container {
-            background-color: var(--card-background);
-            border-radius: var(--border-radius);
-            padding: 1rem;
-            margin-bottom: 1rem;
-            box-shadow: var(--box-shadow);
-        }
-
-        .settings-title {
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .settings-section {
-            margin-bottom: 1rem;
-        }
-
-        select,
-        .slider-container {
-            width: 100%;
-            padding: 0.5rem;
-            border-radius: var(--border-radius);
-            border: 1px solid #ddd;
-            margin-top: 0.25rem;
-        }
-
-        .connection-status {
-            text-align: center;
-            margin-top: auto;
-            padding: 0.5rem;
-            border-radius: var(--border-radius);
-            background-color: #4caf50;
-            color: white;
-        }
-
-        .disconnected {
-            background-color: var(--secondary-color);
-        }
-    </style>
+    <title>VT.ai</title>
+    <!-- Tailwind CSS CDN for rapid prototyping -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font for modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Motion and Motion-Primitives CDN -->
+    <script src="https://unpkg.com/@motion.dev/dom@latest/dist/motion.min.js"></script>
+    <script src="https://unpkg.com/motion-primitives@latest/dist/motion-primitives.umd.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: { inter: ['Inter', 'sans-serif'] },
+          },
+        },
+      }
+    </script>
 </head>
 
-<body>
-    <header>
-        <div class="app-title">VT.ai - Rust Edition</div>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col font-inter dark:bg-gray-900 dark:text-gray-100">
+    <header class="bg-indigo-700 text-white px-8 py-4 flex justify-between items-center shadow-lg dark:bg-indigo-900">
+        <div class="app-title text-2xl font-bold">
+          <motion-text-effect effect="shimmer" per="char" class="inline-block">VT.ai</motion-text-effect>
+        </div>
     </header>
-
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="settings-container">
-                <div class="settings-title">Settings</div>
-
-                <div class="settings-section">
-                    <label for="model-select">Model</label>
-                    <select id="model-select">
-                        <!-- Model options will be populated dynamically -->
-                    </select>
+    <div class="app-container flex flex-1 h-[calc(100vh-64px)]">
+        <!-- Collapsible sidebar -->
+        <aside id="sidebar" class="sidebar w-16 sm:w-64 bg-gray-800 p-2 sm:p-6 shadow-md flex flex-col rounded-r-2xl transition-all duration-300 dark:bg-gray-900">
+            <button id="sidebar-toggle" class="mb-4 flex items-center justify-center w-10 h-10 rounded-full bg-gray-900 text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <svg id="sidebar-toggle-icon" class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            <div id="sidebar-content" class="flex-1 flex flex-col gap-2 overflow-hidden" style="display: none;">
+                <motion-accordion class="w-full" variants='{"expanded":{"scale":1.02},"collapsed":{"scale":1}}'>
+                    <motion-accordion-item value="settings">
+                        <motion-accordion-trigger class="text-base font-semibold mb-2">Settings</motion-accordion-trigger>
+                        <motion-accordion-content>
+                            <div class="mb-2">
+                                <label class="block mb-1 font-medium text-xs" for="model-select">Model</label>
+                                <select id="model-select" class="w-full border rounded px-2 py-1 dark:bg-gray-900 dark:border-gray-700 text-xs">
+                                    <!-- Model options will be populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="block mb-1 font-medium text-xs" for="temperature">Temp <span id="temperature-value">0.7</span></label>
+                                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" class="w-full accent-indigo-700">
+                            </div>
+                            <div class="mb-2">
+                                <label class="block mb-1 font-medium text-xs" for="top-p">Top P <span id="top-p-value">0.9</span></label>
+                                <input type="range" id="top-p" min="0" max="1" step="0.1" value="0.9" class="w-full accent-indigo-700">
+                            </div>
+                        </motion-accordion-content>
+                    </motion-accordion-item>
+                </motion-accordion>
+                <div class="connection-status mt-8 text-center py-2 rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" id="connection-status">
+                    Connecting...
                 </div>
-
-                <div class="settings-section">
-                    <label for="temperature">Temperature: <span id="temperature-value">0.7</span></label>
-                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7"
-                        class="slider-container">
-                </div>
-
-                <div class="settings-section">
-                    <label for="top-p">Top P: <span id="top-p-value">0.9</span></label>
-                    <input type="range" id="top-p" min="0" max="1" step="0.1" value="0.9" class="slider-container">
-                </div>
-            </div>
-
-            <div class="connection-status" id="connection-status">
-                Connecting...
             </div>
         </aside>
-
-        <main class="chat-container">
-            <div class="chat-messages" id="chat-messages">
-                <div class="message assistant-message">
-                    Hello! I'm VT.ai (Rust Edition). How can I help you today?
+        <main class="chat-container flex-1 flex flex-col p-2 sm:p-6">
+            <div class="chat-messages flex-1 overflow-y-auto flex flex-col gap-4 p-4 bg-white rounded-xl shadow-inner dark:bg-gray-900" id="chat-messages">
+                <!-- Example assistant message with animated text -->
+                <div class="flex items-start gap-2.5">
+                  <div class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-700 text-white font-bold dark:bg-indigo-400 dark:text-indigo-900">V</div>
+                  <div class="flex flex-col w-full max-w-[320px] leading-1.5">
+                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                      <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">VT.ai</span>
+                      <span class="text-sm font-normal text-gray-500 dark:text-gray-400">11:47</span>
+                    </div>
+                    <motion-text-effect effect="scramble" per="word" class="text-sm font-normal py-2.5 text-gray-900 dark:text-white">
+                      Hello! I'm VT.ai. How can I help you today?
+                    </motion-text-effect>
+                    <span class="text-sm font-normal text-gray-500 dark:text-gray-400">Delivered</span>
+                  </div>
                 </div>
             </div>
-
-            <div class="input-container">
-                <input type="text" id="message-input" placeholder="Type your message here...">
-                <button id="send-button">Send</button>
+            <div class="mt-4 flex gap-2 items-center">
+                <input type="text" id="message-input" placeholder="Type your message here..." class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-gray-800 dark:border-gray-700">
+                <!-- Glow effect send button -->
+                <motion-glow-effect mode="pulse" colors='["#6366f1","#818cf8"]' blur="soft" class="rounded-lg">
+                  <motion-button class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg shadow transition font-semibold dark:bg-indigo-800 dark:hover:bg-indigo-900" effect="glow" id="send-button">Send</motion-button>
+                </motion-glow-effect>
             </div>
         </main>
     </div>
 
     <script>
+        // Set dark mode by default
+        document.documentElement.classList.add('dark');
+
         // DOM Elements
         const chatMessages = document.getElementById('chat-messages');
         const messageInput = document.getElementById('message-input');
@@ -296,9 +176,59 @@
         // Add a message to the chat
         function addMessage(content, sender) {
             const messageElement = document.createElement('div');
-            messageElement.classList.add('message');
-            messageElement.classList.add(sender === 'user' ? 'user-message' : 'assistant-message');
-            messageElement.textContent = content;
+            messageElement.classList.add('flex', 'items-start', 'gap-2.5');
+
+            // Initial avatar
+            const initial = document.createElement('div');
+            initial.classList.add('flex', 'items-center', 'justify-center', 'w-8', 'h-8', 'rounded-full', 'font-bold');
+            if (sender === 'assistant') {
+                initial.classList.add('bg-indigo-700', 'text-white', 'dark:bg-indigo-400', 'dark:text-indigo-900');
+                initial.textContent = 'V';
+            } else {
+                initial.classList.add('bg-indigo-100', 'text-indigo-700', 'dark:bg-indigo-900', 'dark:text-indigo-200');
+                initial.textContent = 'Y';
+            }
+            messageElement.appendChild(initial);
+
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('flex', 'flex-col', 'w-full', 'max-w-[320px]', 'leading-1.5');
+            messageElement.appendChild(messageContent);
+
+            const messageHeader = document.createElement('div');
+            messageHeader.classList.add('flex', 'items-center', 'space-x-2', 'rtl:space-x-reverse');
+            messageContent.appendChild(messageHeader);
+
+            const senderName = document.createElement('span');
+            senderName.classList.add('text-sm', 'font-semibold');
+            if (sender === 'assistant') {
+                senderName.classList.add('text-indigo-700', 'dark:text-indigo-300');
+                senderName.textContent = 'VT.ai';
+            } else {
+                senderName.classList.add('text-gray-900', 'dark:text-white');
+                senderName.textContent = 'You';
+            }
+            messageHeader.appendChild(senderName);
+
+            const timestamp = document.createElement('span');
+            timestamp.classList.add('text-sm', 'font-normal', 'text-gray-500', 'dark:text-gray-400');
+            timestamp.textContent = '11:47';
+            messageHeader.appendChild(timestamp);
+
+            const messageText = document.createElement('p');
+            messageText.classList.add('text-sm', 'font-normal', 'py-2.5');
+            if (sender === 'assistant') {
+                messageText.classList.add('text-gray-900', 'dark:text-white');
+                messageText.innerHTML = `<motion-text-effect effect="scramble" per="word">${content}</motion-text-effect>`;
+            } else {
+                messageText.classList.add('text-gray-900', 'dark:text-white');
+                messageText.textContent = content;
+            }
+            messageContent.appendChild(messageText);
+
+            const status = document.createElement('span');
+            status.classList.add('text-sm', 'font-normal', 'text-gray-500', 'dark:text-gray-400');
+            status.textContent = 'Delivered';
+            messageContent.appendChild(status);
 
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -345,24 +275,26 @@
         }
 
         // Fetch available models from backend and populate dropdown
-        function fetchModels() {
-            fetch('/api/models')
-                .then(response => response.json())
-                .then(models => {
-                    modelSelect.innerHTML = '';
-                    models.forEach(model => {
-                        const option = document.createElement('option');
-                        option.value = model.value;
-                        option.textContent = model.label;
-                        modelSelect.appendChild(option);
-                    });
-                    // Optionally trigger settings update after loading
-                    sendSettings();
-                })
-                .catch(err => {
-                    // Fallback: show the default model from backend constants
-                    modelSelect.innerHTML = `<option value="gpt-4.1-mini">GPT-4.1 Mini</option>`;
+        async function fetchModels() {
+            modelSelect.innerHTML = '<option disabled selected>Loading...</option>';
+            try {
+                const response = await fetch('/api/models');
+                if (!response.ok) throw new Error('Failed to fetch models');
+                const models = await response.json();
+                modelSelect.innerHTML = '';
+                // Sort models alphabetically by label for better UX
+                models.sort((a, b) => a.label.localeCompare(b.label));
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.value;
+                    option.textContent = model.label;
+                    modelSelect.appendChild(option);
                 });
+                // Optionally trigger settings update after loading
+                sendSettings();
+            } catch (err) {
+                modelSelect.innerHTML = `<option value="gpt-4.1-mini">GPT-4.1 Mini</option>`;
+            }
         }
 
         // Event Listeners
@@ -387,6 +319,28 @@
         });
 
         topPSlider.addEventListener('change', sendSettings);
+
+        // Collapsible sidebar logic
+        const sidebar = document.getElementById('sidebar');
+        const sidebarContent = document.getElementById('sidebar-content');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        let sidebarOpen = false;
+        function setSidebar(open) {
+            sidebarOpen = open;
+            if (sidebarOpen) {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('sm:w-64');
+                sidebarContent.style.display = 'block';
+                sidebarToggle.querySelector('svg').style.transform = 'rotate(0deg)';
+            } else {
+                sidebar.classList.add('w-16');
+                sidebar.classList.remove('sm:w-64');
+                sidebarContent.style.display = 'none';
+                sidebarToggle.querySelector('svg').style.transform = 'rotate(-90deg)';
+            }
+        }
+        sidebarToggle.addEventListener('click', () => setSidebar(!sidebarOpen));
+        setSidebar(false); // Start collapsed
 
         // Initialize connection when page loads
         window.addEventListener('load', () => {
