@@ -124,8 +124,8 @@ IMAGE_GEN_MODELS_ALIAS_MAP: Dict[str, str] = {
 VISION_MODEL_MAP: Dict[str, str] = {
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
-    "Google - Gemini 1.5 Flash": "gemini/gemini-2.0-flash",
-    "Google - Gemini 1.5 Pro": "gemini/gemini-2.0-pro",
+    "Google - Gemini 2.0 Flash": "gemini/gemini-2.0-flash",
+    "Google - Gemini 2.0 Pro": "gemini/gemini-2.0-pro",
     "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
 }
 
