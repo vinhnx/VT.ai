@@ -14,11 +14,14 @@ pillow>=10.0.0
 # AI models
 google-generativeai>=0.3.0
 
-# Documentation
-mkdocs-llmstxt>=0.2.0
+# Documentation dependencies (optional)
+# mkdocs-llmstxt>=0.2.0
 
-# Development dependencies (uncomment as needed)
-# pytest>=7.4.0
+# Development dependencies (use pip install -e ".[dev]" to install these)
+# pytest>=8.3.5
+# pytest-asyncio>=0.26.0
+# twine>=6.1.0
 # black>=23.7.0
 # isort>=5.12.0
 # flake8>=6.1.0
+# ruff>=0.11.4
