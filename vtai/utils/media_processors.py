@@ -224,39 +224,21 @@ async def handle_vision(
             }
         ]
 
-        description = ""
-        # Try the Responses API first
-        try:
-            logger.info(f"Using Responses API for vision model: {vision_model}")
-            # Using wait_for to enforce a timeout
-            vresponse = await asyncio.wait_for(
-                litellm.responses(
-                    user=get_user_session_id(),
-                    model=vision_model,
-                    input=input_messages,  # For Responses API, use input instead of messages
-                    timeout=45.0,  # Add a specific timeout in litellm
-                ),
-                timeout=60.0,  # Overall operation timeout
-            )
-            # With the Responses API, we get the output_text directly
-            description = vresponse.output_text
-        except Exception as e:
-            # Fall back to Chat Completions API if the Responses API fails
-            logger.info(
-                f"Falling back to Chat Completions API for vision model: {vision_model}. Error: {e}"
-            )
-            vresponse = await asyncio.wait_for(
-                litellm.acompletion(
-                    user=get_user_session_id(),
-                    model=vision_model,
-                    messages=input_messages,
-                    timeout=45.0,  # Add a specific timeout in litellm
-                    response_format={"type": "text"},
-                ),
-                timeout=60.0,  # Overall operation timeout
-            )
-            # With the Chat Completions API format
-            description = vresponse.choices[0].message.content
+        # Use the Chat Completions API directly instead of trying Response API first
+        logger.info(f"Using Chat Completions API for vision model: {vision_model}")
+        vresponse = await asyncio.wait_for(
+            litellm.acompletion(
+                user=get_user_session_id(),
+                model=vision_model,
+                messages=input_messages,
+                timeout=45.0,  # Add a specific timeout in litellm
+                response_format={"type": "text"},
+            ),
+            timeout=60.0,  # Overall operation timeout
+        )
+
+        # With the Chat Completions API format
+        description = vresponse.choices[0].message.content
 
         if is_local:
             image = cl.Image(path=input_image, display="inline")

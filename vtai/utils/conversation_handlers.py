@@ -72,7 +72,7 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     return actions
 
 
-async def try_llm_api_with_fallback(
+async def use_chat_completion_api(
     model: str,
     messages: List[Dict[str, str]],
     temperature: float,
@@ -81,8 +81,8 @@ async def try_llm_api_with_fallback(
     timeout: float = 120.0,
 ) -> None:
     """
-    Tries to use the Responses API first, then falls back to Chat Completions API.
-    Handles streaming for both API types.
+    Uses the Chat Completions API directly instead of trying Responses API first.
+    Handles streaming for the API.
 
     Args:
         model: The LLM model to use
@@ -92,53 +92,27 @@ async def try_llm_api_with_fallback(
         stream_callback: Callback function to handle streaming tokens
         timeout: Timeout in seconds for the operation
     """
-    # Try Responses API first
-    try:
-        logger.info(f"Using Responses API for model: {model}")
-        stream = await asyncio.wait_for(
-            litellm.responses(
-                user=get_user_session_id(),
-                model=model,
-                input=messages,  # For Responses API, messages become input
-                stream=True,
-                num_retries=3,
-                temperature=temperature,
-                top_p=top_p,
-                timeout=timeout
-                - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
-            ),
-            timeout=timeout,
-        )
+    logger.info(f"Using Chat Completions API for model: {model}")
+    stream = await asyncio.wait_for(
+        litellm.acompletion(
+            user=get_user_session_id(),
+            model=model,
+            messages=messages,
+            stream=True,
+            num_retries=3,
+            temperature=temperature,
+            top_p=top_p,
+            timeout=timeout
+            - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
+            response_format={"type": "text"},
+        ),
+        timeout=timeout,
+    )
 
-        # Process Responses API format
-        async for part in stream:
-            if hasattr(part, "output_text"):
-                await stream_callback(part.output_text)
-
-    except Exception as e:
-        # If Responses API fails, fall back to Chat Completions API
-        logger.info(
-            f"Falling back to Chat Completions API for model: {model}. Error: {e}"
-        )
-        stream = await asyncio.wait_for(
-            litellm.acompletion(
-                user=get_user_session_id(),
-                model=model,
-                messages=messages,
-                stream=True,
-                num_retries=3,
-                temperature=temperature,
-                top_p=top_p,
-                timeout=timeout - 30.0,
-                response_format={"type": "text"},
-            ),
-            timeout=timeout,
-        )
-
-        # Process Chat Completions API format
-        async for part in stream:
-            if token := part.choices[0].delta.content or "":
-                await stream_callback(token)
+    # Process Chat Completions API format
+    async for part in stream:
+        if token := part.choices[0].delta.content or "":
+            await stream_callback(token)
 
 
 async def handle_trigger_async_chat(
@@ -166,7 +140,7 @@ async def handle_trigger_async_chat(
         operation_name=f"chat completion with model {llm_model}", on_timeout=on_timeout
     ):
         # Use the helper function for API calls
-        await try_llm_api_with_fallback(
+        await use_chat_completion_api(
             model=llm_model,
             messages=messages,
             temperature=temperature,
@@ -439,7 +413,7 @@ async def handle_thinking_conversation(
                     await final_answer.stream_token(content)
 
             # Use the API fallback helper
-            await try_llm_api_with_fallback(
+            await use_chat_completion_api(
                 model=model,
                 messages=thinking_messages,
                 temperature=float(temperature),
