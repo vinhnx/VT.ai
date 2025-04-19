@@ -48,6 +48,12 @@ async def build_settings() -> Dict[str, Any]:
                 initial=conf.DEFAULT_TOP_P,
                 tooltip="Adjust the top P parameter",
             ),
+            Switch(
+                id=conf.SETTINGS_SUMMARIZE_SEARCH_RESULTS,
+                label="Summarize Web Search Results",
+                description="When enabled, this feature uses AI to generate a coherent summary from multiple web search results instead of showing raw results. This provides a more integrated and readable response to web search queries.",
+                initial=conf.SETTINGS_SUMMARIZE_SEARCH_RESULTS_DEFAULT_VALUE,
+            ),
             Select(
                 id=conf.SETTINGS_VISION_MODEL,
                 label="Vision Model",

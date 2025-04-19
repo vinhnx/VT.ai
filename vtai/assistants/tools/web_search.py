@@ -36,6 +36,11 @@ WEB_SEARCH_TOOL = {
                     "description": "Whether to include URLs in the search results",
                     "default": False,
                 },
+                "summarize_results": {
+                    "type": "boolean",
+                    "description": "Whether to summarize the results instead of returning raw output",
+                    "default": True,
+                },
             },
             "required": ["query"],
         },

@@ -33,6 +33,9 @@ SETTINGS_TOP_K: str = "settings_top_k"
 SETTINGS_TOP_P: str = "settings_top_p"
 SETTINGS_TRIMMED_MESSAGES: str = "settings_trimmed_messages"
 
+# Web search settings
+SETTINGS_SUMMARIZE_SEARCH_RESULTS: str = "settings_summarize_search_results"
+
 # Image and Vision settings
 SETTINGS_VISION_MODEL: str = "settings_vision_model"
 SETTINGS_IMAGE_GEN_LLM_MODEL: str = "settings_image_gen_llm_model"
@@ -65,6 +68,7 @@ SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE: bool = True
 SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE: bool = True
 SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE: bool = True
 SETTINGS_USE_THINKING_MODEL_DEFAULT_VALUE: bool = False
+SETTINGS_SUMMARIZE_SEARCH_RESULTS_DEFAULT_VALUE: bool = True
 
 # List of models that benefit from <think> tag for reasoning
 REASONING_MODELS = [

@@ -268,15 +268,19 @@ async def process_function_tool(
 
         # Build search options if provided
         search_options = None
-        if any(key in function_args for key in ["search_context_size", "include_urls"]):
+        if any(
+            key in function_args
+            for key in ["search_context_size", "include_urls", "summarize_results"]
+        ):
             search_options = WebSearchOptions(
                 search_context_size=function_args.get("search_context_size", "medium"),
                 include_urls=function_args.get("include_urls", True),
+                summarize_results=function_args.get("summarize_results", True),
             )
         else:
             # Default search options
             search_options = WebSearchOptions(
-                search_context_size="medium", include_urls=True
+                search_context_size="medium", include_urls=True, summarize_results=True
             )
 
         # Create search parameters
@@ -310,6 +314,10 @@ async def process_function_tool(
                 await search_step.stream_token(".")
                 await asyncio.sleep(0.5)
                 await search_step.stream_token(".")
+
+                # Indicate if we're summarizing
+                if search_options.summarize_results:
+                    await search_step.stream_token("\nSummarization enabled...")
 
                 # Execute the search
                 search_result = await web_search_tool.search(params)
@@ -401,7 +409,6 @@ async def process_function_tool(
                 "output": error_msg,
                 "tool_call_id": tool_call.id,
             }
-
     # For other tools that are temporarily disabled
     logger.warning(
         "Function tool call received but tools are disabled: %s", function_name

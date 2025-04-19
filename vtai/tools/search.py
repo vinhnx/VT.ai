@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 # Attempt to import TavilyClient at the top level
 try:
     from tavily import TavilyClient
+
     TAVILY_AVAILABLE = True
 except ImportError:
     TAVILY_AVAILABLE = False
@@ -28,6 +29,10 @@ class WebSearchOptions(BaseModel):
     )
     include_urls: bool = Field(
         default=False, description="Whether to include URLs in the response"
+    )
+    summarize_results: bool = Field(
+        default=False,
+        description="Whether to summarize the results instead of returning raw output",
     )
 
 
@@ -73,6 +78,90 @@ class WebSearchTool:
         self.base_url = base_url
         self.tavily_api_key = tavily_api_key
         logger.info("Initialized WebSearchTool")
+
+    async def summarize_search_results(
+        self, query: str, results: List[Dict[str, Any]], model: str
+    ) -> str:
+        """
+        Summarize the search results using an LLM instead of showing raw outputs
+
+        Args:
+            query: The original search query
+            results: List of search result dictionaries
+            model: The model to use for summarization
+
+        Returns:
+            A summarized response based on the search results
+        """
+        logger.info(f"Summarizing {len(results)} search results for query: {query}")
+
+        # Extract content from results
+        contents = []
+        for idx, result in enumerate(results, 1):
+            title = result.get("title", f"Result {idx}")
+            content = result.get("content", "No content available")
+            url = result.get("url", "No URL available")
+
+            if content and content.lower() != "failed":
+                contents.append(
+                    f"Source {idx}: {title}\nURL: {url}\nContent: {content}"
+                )
+
+        # If no valid results, return a default message
+        if not contents:
+            return f"I searched for information about '{query}' but couldn't find relevant results to summarize."
+
+        # Combine all results
+        combined_content = "\n\n".join(contents)
+
+        # Create system prompt for summarization
+        system_prompt = (
+            "You are a helpful assistant that creates concise, accurate summaries of search results. "
+            "Analyze the search results and provide a coherent, well-organized response that: "
+            "1. Directly addresses the user's query "
+            "2. Synthesizes information from multiple sources "
+            "3. Resolves any contradictions between sources "
+            "4. Highlights areas of consensus "
+            "5. Avoids simply listing information from each source separately "
+            "6. Does NOT include phrases like 'according to the search results' or 'based on the provided sources' "
+            "Write as if you're providing a direct, knowledgeable answer."
+        )
+
+        # User prompt that includes the query and results
+        user_prompt = (
+            f"I need a comprehensive summary of these search results for the query: '{query}'\n\n"
+            f"Search Results:\n{combined_content}\n\n"
+            f"Please synthesize this information into a coherent response that directly addresses "
+            f"the query. Only include relevant information, and organize it logically."
+        )
+
+        try:
+            # Call the model to summarize
+            response = completion(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.3,
+                api_key=self.api_key,
+                api_base=self.base_url,
+            )
+
+            # Extract the response
+            summary = response.choices[0].message.content
+            return summary
+        except Exception as e:
+            logger.error(f"Error summarizing search results: {str(e)}")
+            # Fall back to combining results without LLM summarization
+            return f"Here's what I found about '{query}':\n\n" + "\n\n".join(
+                [
+                    f"• {result.get('title', 'Result')}: {result.get('content', 'No content')}"
+                    for result in results
+                    if result.get("content")
+                    and result.get("content").lower() != "failed"
+                ]
+            )
 
     async def search_with_tavily(self, params: WebSearchParameters) -> Dict[str, Any]:
         """
@@ -130,36 +219,54 @@ class WebSearchTool:
             response = tavily_client.search(params.query, **search_kwargs)
 
             # Log the raw Tavily API response
-            logger.debug(f"Raw Tavily API response: {response}") # Changed print to logger.debug
+            logger.debug(
+                f"Raw Tavily API response: {response}"
+            )  # Changed print to logger.debug
 
             # Process the response
-            content = response.get("answer") # Get answer, could be None
+            content = response.get("answer")  # Get answer, could be None
             results = response.get("results", [])
             sources = []
 
-            # If no direct answer, synthesize from results
-            if not content and results:
+            # Check if we should summarize the results
+            should_summarize = (
+                params.search_options
+                and params.search_options.summarize_results
+                and results
+                and len(results) > 1
+            )
+
+            # If summarization is requested, process with LLM
+            if should_summarize:
+                logger.info("Summarizing Tavily search results...")
+                content = await self.summarize_search_results(
+                    query=params.query, results=results, model=params.model
+                )
+            # If no direct answer and no summarization requested, synthesize from results
+            elif not content and results:
                 logger.info("No direct answer from Tavily, synthesizing from results.")
                 summary_parts = []
                 for res in results:
-                    title = res.get('title', 'No Title')
-                    snippet = res.get('content', 'No Content')
+                    title = res.get("title", "No Title")
+                    snippet = res.get("content", "No Content")
                     # Avoid adding results with failed content retrieval
-                    if snippet and snippet.lower() != 'failed':
+                    if snippet and snippet.lower() != "failed":
                         summary_parts.append(f"**{title}**: {snippet}")
                 if summary_parts:
                     content = "\n\n".join(summary_parts)
                 else:
-                    logger.warning("Tavily results had no usable content for synthesis.")
+                    logger.warning(
+                        "Tavily results had no usable content for synthesis."
+                    )
                     content = f"I found some related titles for '{params.query}' but couldn't extract detailed content."
             elif not content and not results:
-                 logger.warning("Tavily returned no answer and no results.")
-                 # Content will be set in the result dictionary creation below
+                logger.warning("Tavily returned no answer and no results.")
+                # Content will be set in the result dictionary creation below
 
             # Extract sources if available and include_urls is True
             if include_urls and results:
                 for idx, res_data in enumerate(results, 1):
-                    if res_data.get("url"): # Only add sources with URLs
+                    if res_data.get("url"):  # Only add sources with URLs
                         source = {
                             "title": res_data.get("title", f"Result {idx}"),
                             "url": res_data.get("url"),
@@ -168,7 +275,7 @@ class WebSearchTool:
 
             # Create result dictionary
             final_response_text = content
-            if not final_response_text: # Set fallback if content is still empty
+            if not final_response_text:  # Set fallback if content is still empty
                 final_response_text = f"I searched for information about '{params.query}' but couldn't find relevant results."
 
             result_dict = {
@@ -285,6 +392,7 @@ class WebSearchTool:
 
             # Extract content from response - key change here
             content = response.choices[0].message.content
+            sources = []
 
             # If content is None or empty, try to get tool calls
             if not content and hasattr(response.choices[0].message, "tool_calls"):
@@ -313,6 +421,34 @@ class WebSearchTool:
                                 sources = arguments["sources"]
                         except Exception as e:
                             logger.error(f"Error extracting data from tool call: {e}")
+
+                # Check if we should summarize the results and have multiple sources
+                if (
+                    params.search_options
+                    and params.search_options.summarize_results
+                    and sources
+                    and len(sources) > 1
+                ):
+                    # Format sources for summarization
+                    formatted_results = []
+                    for idx, source in enumerate(sources, 1):
+                        formatted_results.append(
+                            {
+                                "title": source.get("title", f"Result {idx}"),
+                                "content": source.get(
+                                    "snippet", "No content available"
+                                ),
+                                "url": source.get("url", "No URL available"),
+                            }
+                        )
+
+                    # Summarize the results
+                    logger.info("Summarizing OpenAI web search results...")
+                    content = await self.summarize_search_results(
+                        query=params.query,
+                        results=formatted_results,
+                        model=params.model,
+                    )
 
                 # Create result with extracted data
                 result = {

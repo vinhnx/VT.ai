@@ -577,6 +577,12 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
 
             # Get Tavily API key from environment if available
             tavily_api_key = os.environ.get("TAVILY_API_KEY")
+
+            # Check if summarization setting exists in user settings
+            summarize_setting = get_setting("SETTINGS_SUMMARIZE_SEARCH_RESULTS")
+            # Default to True if the setting doesn't exist
+            summarize_results = True if summarize_setting is None else summarize_setting
+
             use_tavily = tavily_api_key is not None
 
             # Initialize the web search tool with both API keys
@@ -590,7 +596,9 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
                 model="openai/gpt-4o",
                 max_results=5,
                 search_options=WebSearchOptions(
-                    search_context_size="medium", include_urls=True
+                    search_context_size="medium",
+                    include_urls=True,
+                    summarize_results=summarize_results,
                 ),
                 use_tavily=use_tavily,
             )
@@ -603,6 +611,11 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
                 logger.info("Using LiteLLM function calling for web search")
                 await search_step.stream_token(
                     "\nUsing OpenAI function calling for search..."
+                )
+
+            if summarize_results:
+                await search_step.stream_token(
+                    "\nSummarization enabled - synthesizing results..."
                 )
 
             # Add some visual indicator that search is in progress
@@ -621,10 +634,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
 
             # Small delay to let the user see the completed step
             await asyncio.sleep(1)
-
-            # Remove the step
-            await search_step.remove()
-
+            
         # Get the response content
         response_content = search_result.get("response", "No search results available")
 
@@ -655,9 +665,16 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
 
         # Clear any existing content and show search results
         current_message.content = ""
-        await current_message.stream_token(
-            f"Here's what I found on the web about '{query}':\n\n{response_content}"
-        )
+
+        # Add a prefix based on whether summarization was used
+        if summarize_results:
+            await current_message.stream_token(
+                f"Here's a summary of information about '{query}':\n\n{response_content}"
+            )
+        else:
+            await current_message.stream_token(
+                f"Here's what I found on the web about '{query}':\n\n{response_content}"
+            )
 
         # Try to extract and display sources if available
         try:
@@ -689,13 +706,6 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
     except Exception as e:
         error_msg = f"Error performing web search: {str(e)}"
         logger.error(error_msg)
-
-        # Try to remove the step if it exists
-        if search_step:
-            try:
-                await search_step.remove()
-            except:
-                pass
 
         # Clear any partial content and show error
         current_message.content = ""

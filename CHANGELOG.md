@@ -1,3 +1,11 @@
+## Upcoming (Next Release)
+
+### Features
+
+- **Web Search Summarization**: Added intelligent summarization capability to web search results that synthesizes information from multiple sources into coherent, readable answers while preserving source attribution
+- **Configurable Search Experience**: Added new setting to toggle between summarized and raw search results based on user preference
+- **Enhanced Search Documentation**: Updated user docs with comprehensive information about the web search summarization feature
+
 ## v0.1.15 (2025-04-10)
 
 ### Other Changes

@@ -39,9 +39,14 @@ Smart routing system that automatically directs queries to specialized handlers 
 
 Support for text, image, and audio inputs with vision analysis for images and URLs, plus DALL-E 3 image generation.
 
-### Web Search
+### Web Search with Smart Summarization
 
-Integrated web search capabilities powered by OpenAI's web search or Tavily API to retrieve real-time information from the internet, providing up-to-date answers with source attribution.
+Integrated web search capabilities powered by OpenAI's web search or Tavily API to retrieve real-time information from the internet, providing up-to-date answers with source attribution. Features include:
+
+- **Smart Summarization**: Intelligently synthesizes multiple search results into coherent answers
+- **Source Attribution**: Provides clickable links to original sources for verification
+- **Configurable Experience**: Toggle between summarized results and raw search output
+- **Seamless Integration**: Automatically detects queries that need current information
 
 ### Voice Interaction
 

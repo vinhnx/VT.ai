@@ -149,6 +149,7 @@ def create_routes() -> list[Route]:
         Route(
             name="web-search",
             utterances=[
+                "Who is",
                 "Search for information about",
                 "Find the latest news on",
                 "Look up information about",

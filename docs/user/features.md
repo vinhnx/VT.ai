@@ -38,6 +38,34 @@ To use assistant mode:
 
 ## Specialized Features
 
+### Web Search with Smart Summarization
+
+VT.ai can search the web for information and intelligently summarize the results:
+
+- Accumulate information from multiple search results
+- Generate coherent, comprehensive summaries
+- Cite sources with proper attribution
+- Toggle between raw results and AI-synthesized summaries
+
+To use web search with summarization:
+
+1. Ask a question that might require current information
+2. VT.ai will automatically route to the web search tool
+3. Results will be summarized into a concise, readable answer
+4. Sources will be listed with clickable links
+
+You can control summarization behavior:
+
+- Enable/disable summarization in the settings menu
+- When enabled, multiple search results are synthesized into a unified response
+- When disabled, search results are presented in a more raw format
+
+Example queries:
+
+- "What are the latest developments in quantum computing?"
+- "Search for information about sustainable energy solutions"
+- "Find recent news about Mars exploration"
+
 ### Thinking Mode
 
 Thinking mode gives you access to step-by-step reasoning from the models:

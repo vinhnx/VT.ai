@@ -20,6 +20,21 @@ You can configure which models to use for different types of operations:
 - Text-to-speech models
 - Image generation models
 
+## Web Search Settings
+
+Customize how VT.ai handles web searches:
+
+- **Summarize Search Results**: Toggle between AI-summarized results and raw search output
+  - Enabled (default): Synthesizes multiple search results into a coherent summary
+  - Disabled: Shows raw search results with minimal processing
+
+- **Include URLs**: Choose whether to include source URLs in the search results
+  - Useful for citation and verification
+
+- **Search Context Size**: Control the depth of web searches
+  - Options: low, medium, high
+  - Higher values search more deeply but may take longer
+
 ## Performance Settings
 
 Fine-tune the performance of your models:
