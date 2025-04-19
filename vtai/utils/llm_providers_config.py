@@ -53,7 +53,7 @@ SETTINGS_USE_THINKING_MODEL: str = "settings_use_thinking_model"
 # Default values
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
-DEFAULT_MODEL: str = "gpt-4.1-mini"
+DEFAULT_MODEL: str = "gpt-4o-mini"
 DEFAULT_IMAGE_GEN_MODEL: str = "dall-e-3"
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
 DEFAULT_TTS_MODEL: str = "gpt-4o-mini-tts"
