@@ -18,7 +18,7 @@ from openai import AsyncOpenAI
 from vtai.router.constants import SemanticRouterType
 from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import logger
-from vtai.utils.error_handlers import handle_exception
+from vtai.utils.error_handlers import handle_exception, safe_execution
 from vtai.utils.media_processors import (
     handle_audio_transcribe,
     handle_trigger_async_image_gen,
@@ -31,6 +31,114 @@ from vtai.utils.user_session_helper import (
     update_message_history_from_assistant,
     update_message_history_from_user,
 )
+
+
+def create_message_actions(content: str, model: str) -> List[cl.Action]:
+    """
+    Creates standard message actions for chat responses.
+
+    Args:
+        content: The message content
+        model: The model that generated the content
+
+    Returns:
+        List of actions to attach to the message
+    """
+    actions = []
+
+    # Add TTS action if enabled
+    enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
+    if enable_tts_response:
+        actions.append(
+            cl.Action(
+                icon="speech",
+                name="speak_chat_response_action",
+                payload={"value": content},
+                tooltip="Speak response",
+                label="Speak response",
+            )
+        )
+
+    # Add model change action
+    actions.append(
+        cl.Action(
+            name="change_model_action",
+            payload={"value": content},
+            label=f"Using: {model}",
+            description="Click to change model in settings",
+        )
+    )
+
+    return actions
+
+
+async def try_llm_api_with_fallback(
+    model: str,
+    messages: List[Dict[str, str]],
+    temperature: float,
+    top_p: float,
+    stream_callback,
+    timeout: float = 120.0,
+) -> None:
+    """
+    Tries to use the Responses API first, then falls back to Chat Completions API.
+    Handles streaming for both API types.
+
+    Args:
+        model: The LLM model to use
+        messages: The conversation history messages
+        temperature: Temperature parameter for the model
+        top_p: Top-p parameter for the model
+        stream_callback: Callback function to handle streaming tokens
+        timeout: Timeout in seconds for the operation
+    """
+    # Try Responses API first
+    try:
+        logger.info(f"Using Responses API for model: {model}")
+        stream = await asyncio.wait_for(
+            litellm.responses(
+                user=get_user_session_id(),
+                model=model,
+                input=messages,  # For Responses API, messages become input
+                stream=True,
+                num_retries=3,
+                temperature=temperature,
+                top_p=top_p,
+                timeout=timeout
+                - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
+            ),
+            timeout=timeout,
+        )
+
+        # Process Responses API format
+        async for part in stream:
+            if hasattr(part, "output_text"):
+                await stream_callback(part.output_text)
+
+    except Exception as e:
+        # If Responses API fails, fall back to Chat Completions API
+        logger.info(
+            f"Falling back to Chat Completions API for model: {model}. Error: {e}"
+        )
+        stream = await asyncio.wait_for(
+            litellm.acompletion(
+                user=get_user_session_id(),
+                model=model,
+                messages=messages,
+                stream=True,
+                num_retries=3,
+                temperature=temperature,
+                top_p=top_p,
+                timeout=timeout - 30.0,
+                response_format={"type": "text"},
+            ),
+            timeout=timeout,
+        )
+
+        # Process Chat Completions API format
+        async for part in stream:
+            if token := part.choices[0].delta.content or "":
+                await stream_callback(token)
 
 
 async def handle_trigger_async_chat(
@@ -48,102 +156,32 @@ async def handle_trigger_async_chat(
     temperature = get_setting(conf.SETTINGS_TEMPERATURE)
     top_p = get_setting(conf.SETTINGS_TOP_P)
 
-    try:
-        # Set a reasonable timeout for completion
-        completion_timeout = 120.0  # 2 minutes
+    async def on_timeout():
+        await current_message.stream_token(
+            "\n\nI apologize, but the response timed out. Please try again with a shorter query."
+        )
+        await current_message.update()
 
-        # Always try to use the Responses API first
-        try:
-            logger.info(f"Using Responses API for model: {llm_model}")
-            stream = await asyncio.wait_for(
-                litellm.responses(
-                    model=llm_model,
-                    input=messages,  # For Responses API, messages become input
-                    stream=True,
-                    num_retries=3,
-                    temperature=temperature,
-                    top_p=top_p,
-                    timeout=90.0,  # Set LiteLLM timeout slightly less than our overall timeout
-                ),
-                timeout=completion_timeout,
-            )
-
-            # Process Responses API format
-            async for part in stream:
-                if hasattr(part, "output_text"):
-                    await current_message.stream_token(part.output_text)
-
-        except Exception as e:
-            # If Responses API fails, fall back to Chat Completions API
-            logger.info(
-                f"Falling back to Chat Completions API for model: {llm_model}. Error: {e}"
-            )
-            stream = await asyncio.wait_for(
-                litellm.acompletion(
-                    model=llm_model,
-                    messages=messages,
-                    stream=True,
-                    num_retries=3,
-                    temperature=temperature,
-                    top_p=top_p,
-                    timeout=90.0,
-                    response_format={"type": "text"},
-                ),
-                timeout=completion_timeout,
-            )
-
-            # Process Chat Completions API format
-            async for part in stream:
-                if token := part.choices[0].delta.content or "":
-                    await current_message.stream_token(token)
+    async with safe_execution(
+        operation_name=f"chat completion with model {llm_model}", on_timeout=on_timeout
+    ):
+        # Use the helper function for API calls
+        await try_llm_api_with_fallback(
+            model=llm_model,
+            messages=messages,
+            temperature=temperature,
+            top_p=top_p,
+            stream_callback=current_message.stream_token,
+        )
 
         # After successful streaming, update the message content and history
         content = current_message.content
         update_message_history_from_assistant(content)
 
-        # Create actions list
-        actions = []
-
-        # Add TTS action if enabled
-        enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-        if enable_tts_response:
-            actions.append(
-                cl.Action(
-                    icon="speech",
-                    name="speak_chat_response_action",
-                    payload={"value": content},
-                    tooltip="Speak response",
-                    label="Speak response",
-                )
-            )
-
-        # Add model change action
-        actions.append(
-            cl.Action(
-                name="change_model_action",
-                payload={"value": content},
-                label=f"Using: {llm_model}",
-                description="Click to change model in settings",
-            )
-        )
-
-        # Set the actions on the message
-        current_message.actions = actions
+        # Set the actions on the message using the helper function
+        current_message.actions = create_message_actions(content, llm_model)
 
         await current_message.update()
-
-    except asyncio.TimeoutError:
-        logger.error(f"Timeout while processing chat completion with model {llm_model}")
-        await current_message.stream_token(
-            "\n\nI apologize, but the response timed out. Please try again with a shorter query."
-        )
-        await current_message.update()
-    except asyncio.CancelledError:
-        logger.warning("Chat completion was cancelled")
-        raise
-    except Exception as e:
-        logger.error(f"Error in handle_trigger_async_chat: {e}")
-        await handle_exception(e)
 
 
 async def handle_conversation(
@@ -166,7 +204,7 @@ async def handle_conversation(
     query = message.content
     update_message_history_from_user(query)
 
-    try:
+    async with safe_execution(operation_name="conversation handling"):
         use_dynamic_conversation_routing = get_setting(
             conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
         )
@@ -179,12 +217,6 @@ async def handle_conversation(
             await handle_trigger_async_chat(
                 llm_model=model, messages=messages, current_message=msg
             )
-    except asyncio.CancelledError:
-        logger.warning("Conversation handling was cancelled")
-        raise
-    except Exception as e:
-        logger.error(f"Error in handle_conversation: {e}")
-        await handle_exception(e)
 
 
 async def handle_dynamic_conversation_routing(
@@ -204,7 +236,7 @@ async def handle_dynamic_conversation_routing(
         query: The user's query
         route_layer: The semantic router layer
     """
-    try:
+    async with safe_execution(operation_name="dynamic conversation routing"):
         route_choice = route_layer(query)
         route_choice_name = route_choice.name
 
@@ -236,16 +268,6 @@ async def handle_dynamic_conversation_routing(
             await handle_trigger_async_chat(
                 llm_model=model, messages=messages, current_message=msg
             )
-    except asyncio.CancelledError:
-        logger.warning("Dynamic conversation routing was cancelled")
-        raise
-    except Exception as e:
-        logger.error(f"Error in handle_dynamic_conversation_routing: {e}")
-        await handle_exception(e)
-        # Fallback to regular chat if routing fails
-        await handle_trigger_async_chat(
-            llm_model=model, messages=messages, current_message=msg
-        )
 
 
 async def handle_files_attachment(
@@ -265,7 +287,7 @@ async def handle_files_attachment(
 
     prompt = message.content
 
-    try:
+    async with safe_execution(operation_name="file attachment handling"):
         for file in message.elements:
             path = str(file.path)
             mime_type = file.mime or ""
@@ -301,13 +323,6 @@ async def handle_files_attachment(
                     content=f"File type {mime_type} is not supported for direct processing."
                 ).send()
 
-    except asyncio.CancelledError:
-        logger.warning("File attachment handling was cancelled")
-        raise
-    except Exception as e:
-        logger.error(f"Error handling file attachment: {e}")
-        await handle_exception(e)
-
 
 async def config_chat_session(settings: Dict[str, Any]) -> None:
     """
@@ -319,7 +334,7 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
     from vtai.assistants.mino.mino import INSTRUCTIONS
     from vtai.utils.chat_profile import AppChatProfileType
 
-    try:
+    async with safe_execution(operation_name="chat session configuration"):
         chat_profile = cl.user_session.get("chat_profile")
         if chat_profile == AppChatProfileType.CHAT.value:
             cl.user_session.set(
@@ -340,9 +355,6 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
 
             msg = "Hello! I'm Mino, your Assistant. I'm here to assist you. Please don't hesitate to ask me anything you'd like to know. Currently, I can write and run code to answer math questions."
             await cl.Message(content=msg).send()
-    except Exception as e:
-        logger.error(f"Error configuring chat session: {e}")
-        await handle_exception(e)
 
 
 async def handle_thinking_conversation(
@@ -382,107 +394,59 @@ async def handle_thinking_conversation(
     # Add the user query
     thinking_messages.append({"role": "user", "content": query})
 
-    try:
-        # Flag to track if we're currently in thinking mode
-        thinking = False
+    # Create empty objects that will be initialized in the context
+    thinking_step = None
+    final_answer = None
+    thinking = False
 
+    async with safe_execution(
+        operation_name=f"thinking conversation with model {model}"
+    ):
         # Start with a thinking step
-        async with cl.Step(name="Thinking") as thinking_step:
+        async with cl.Step(name="Thinking") as step:
+            thinking_step = step
             # Create a message for the final answer, but don't send it yet
             final_answer = cl.Message(content="")
 
-            # Try Responses API first
-            try:
-                logger.info(
-                    f"Using Responses API for thinking mode with model: {model}"
-                )
-                stream = await asyncio.wait_for(
-                    litellm.responses(
-                        user=get_user_session_id(),
-                        model=model,
-                        input=thinking_messages,
-                        temperature=float(temperature),
-                        top_p=float(top_p),
-                        stream=True,
-                    ),
-                    timeout=120.0,  # Set an overall timeout of 120 seconds
-                )
+            # Define a custom streaming callback that handles thinking tags
+            async def thinking_stream_callback(content):
+                nonlocal thinking, thinking_step, final_answer
 
-                # Process Responses API format
-                async for chunk in stream:
-                    if hasattr(chunk, "output_text"):
-                        content = chunk.output_text
+                # Skip if content is None or empty
+                if not content:
+                    return
 
-                        # Skip if content is None or empty
-                        if not content:
-                            continue
+                # Check for exact <think> tag
+                if content == "<think>":
+                    thinking = True
+                    return
 
-                        # Check for exact <think> tag
-                        if content == "<think>":
-                            thinking = True
-                            continue
+                # Check for exact </think> tag
+                elif content == "</think>":
+                    thinking = False
+                    # Update the thinking step with duration
+                    thought_for = round(time.time() - start)
+                    thinking_step.name = f"Thought for {thought_for}s"
+                    await thinking_step.update()
+                    return
 
-                        # Check for exact </think> tag
-                        elif content == "</think>":
-                            thinking = False
-                            # Update the thinking step with duration
-                            thought_for = round(time.time() - start)
-                            thinking_step.name = f"Thought for {thought_for}s"
-                            await thinking_step.update()
-                            continue
+                # Stream content based on thinking flag
+                if thinking:
+                    # Stream to thinking step
+                    await thinking_step.stream_token(content)
+                else:
+                    # Stream to final answer
+                    await final_answer.stream_token(content)
 
-                        # Stream content based on thinking flag
-                        if thinking:
-                            # Stream to thinking step
-                            await thinking_step.stream_token(content)
-                        else:
-                            # Stream to final answer
-                            await final_answer.stream_token(content)
-
-            except Exception as e:
-                # Fall back to Chat Completions API
-                logger.info(
-                    f"Falling back to Chat Completions API for thinking mode with model: {model}. Error: {e}"
-                )
-                stream = await litellm.acompletion(
-                    user=get_user_session_id(),
-                    model=model,
-                    messages=thinking_messages,
-                    temperature=float(temperature),
-                    top_p=float(top_p),
-                    stream=True,
-                    response_format={"type": "text"},
-                )
-
-                # Process Chat Completions API format
-                async for chunk in stream:
-                    content = chunk.choices[0].delta.content
-
-                    # Skip if content is None or empty
-                    if not content:
-                        continue
-
-                    # Check for exact <think> tag
-                    if content == "<think>":
-                        thinking = True
-                        continue
-
-                    # Check for exact </think> tag
-                    elif content == "</think>":
-                        thinking = False
-                        # Update the thinking step with duration
-                        thought_for = round(time.time() - start)
-                        thinking_step.name = f"Thought for {thought_for}s"
-                        await thinking_step.update()
-                        continue
-
-                    # Stream content based on thinking flag
-                    if thinking:
-                        # Stream to thinking step
-                        await thinking_step.stream_token(content)
-                    else:
-                        # Stream to final answer
-                        await final_answer.stream_token(content)
+            # Use the API fallback helper
+            await try_llm_api_with_fallback(
+                model=model,
+                messages=thinking_messages,
+                temperature=float(temperature),
+                top_p=float(top_p),
+                stream_callback=thinking_stream_callback,
+                timeout=120.0,
+            )
 
         # Send the final answer after thinking is complete
         if not final_answer.content:
@@ -495,48 +459,10 @@ async def handle_thinking_conversation(
             content = final_answer.content
             update_message_history_from_assistant(content)
 
-            # Create actions list
-            actions = []
-
-            # Add TTS action if enabled
-            enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-            if enable_tts_response:
-                actions.append(
-                    cl.Action(
-                        icon="speech",
-                        name="speak_chat_response_action",
-                        payload={"value": content},
-                        tooltip="Speak response",
-                        label="Speak response",
-                    )
-                )
-
-            # Add model change action
-            actions.append(
-                cl.Action(
-                    name="change_model_action",
-                    payload={"value": content},
-                    label=f"Using: {model}",
-                    description="Click to change model in settings",
-                )
-            )
-
-            # Set the actions on the message
-            final_answer.actions = actions
+            # Set the actions on the message using the helper function
+            final_answer.actions = create_message_actions(content, model)
 
             await final_answer.send()
-
-    except asyncio.TimeoutError:
-        logger.error(f"Timeout while processing chat completion with model {model}")
-        await cl.Message(
-            content="\n\nI apologize, but the response timed out. Please try again with a shorter query."
-        ).send()
-    except asyncio.CancelledError:
-        logger.warning("Chat completion was cancelled")
-        raise
-    except Exception as e:
-        logger.error(f"Error in handle_thinking_conversation: {e}")
-        await handle_exception(e)
 
 
 async def handle_deepseek_reasoner_conversation(
@@ -570,7 +496,14 @@ async def handle_deepseek_reasoner_conversation(
     # Create DeepSeek client
     client = AsyncOpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
 
-    try:
+    # Variables that will be initialized in the context
+    thinking_step = None
+    final_answer = None
+    thinking_completed = False
+
+    async with safe_execution(
+        operation_name=f"deepseek reasoner conversation with model {model}"
+    ):
         # Prepare messages for the API call
         deepseek_messages = [
             {"role": "system", "content": "You are a helpful assistant"},
@@ -591,11 +524,9 @@ async def handle_deepseek_reasoner_conversation(
             stream=True,
         )
 
-        # Flag to track if we've exited the thinking step
-        thinking_completed = False
-
         # Start with a thinking step
-        async with cl.Step(name="Thinking") as thinking_step:
+        async with cl.Step(name="Thinking") as step:
+            thinking_step = step
             # Create a message for the final answer, but don't send it yet
             final_answer = cl.Message(content="")
 
@@ -632,45 +563,7 @@ async def handle_deepseek_reasoner_conversation(
             content = final_answer.content
             update_message_history_from_assistant(content)
 
-            # Create actions list
-            actions = []
-
-            # Add TTS action if enabled
-            enable_tts_response = get_setting(conf.SETTINGS_ENABLE_TTS_RESPONSE)
-            if enable_tts_response:
-                actions.append(
-                    cl.Action(
-                        icon="speech",
-                        name="speak_chat_response_action",
-                        payload={"value": content},
-                        tooltip="Speak response",
-                        label="Speak response",
-                    )
-                )
-
-            # Add model change action
-            actions.append(
-                cl.Action(
-                    name="change_model_action",
-                    payload={"value": content},
-                    label=f"Using: {model}",
-                    description="Click to change model in settings",
-                )
-            )
-
-            # Set the actions on the message
-            final_answer.actions = actions
+            # Set the actions on the message using the helper function
+            final_answer.actions = create_message_actions(content, model)
 
             await final_answer.send()
-
-    except asyncio.TimeoutError:
-        logger.error(f"Timeout while processing chat completion with model {model}")
-        await cl.Message(
-            content="\n\nI apologize, but the response timed out. Please try again with a shorter query."
-        ).send()
-    except asyncio.CancelledError:
-        logger.warning("DeepSeek reasoner chat was cancelled")
-        raise
-    except Exception as e:
-        logger.error(f"Error in handle_deepseek_reasoner_conversation: {e}")
-        await handle_exception(e)

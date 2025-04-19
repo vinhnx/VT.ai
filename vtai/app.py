@@ -33,6 +33,7 @@ from vtai.utils.error_handlers import handle_exception
 from vtai.utils.file_handlers import process_files
 from vtai.utils.llm_profile_builder import build_llm_profile
 from vtai.utils.media_processors import handle_tts_response
+from vtai.utils.safe_execution import safe_execution
 from vtai.utils.settings_builder import build_settings
 from vtai.utils.user_session_helper import get_setting, is_in_assistant_profile
 
@@ -401,7 +402,10 @@ async def on_message(message: cl.Message) -> None:
     Args:
         message: The user message object
     """
-    try:
+    async with safe_execution(
+        operation_name="message processing",
+        cancelled_message="The operation was cancelled. Please try again.",
+    ):
         if is_in_assistant_profile():
             thread: Thread = cl.user_session.get("thread")
             files_ids = await process_files(message.elements, async_openai_client)
@@ -439,17 +443,6 @@ async def on_message(message: cl.Message) -> None:
                     await handle_thinking_conversation(message, messages, route_layer)
                 else:
                     await handle_conversation(message, messages, route_layer)
-    except asyncio.CancelledError:
-        logger.warning("Message processing was cancelled")
-        await cl.Message(
-            content="The operation was cancelled. Please try again."
-        ).send()
-    except (ValueError, KeyError, AttributeError) as e:
-        logger.error("Error in message processing: %s", e)
-        await handle_exception(e)
-    except Exception as e:
-        logger.error("Unexpected error processing message: %s", repr(e))
-        await handle_exception(e)
 
 
 @cl.on_settings_update
@@ -521,11 +514,54 @@ async def on_speak_chat_response(action: cl.Action) -> None:
         await cl.Message(content="Failed to generate speech. Please try again.").send()
 
 
+def copy_if_newer(src: Path, dst: Path, log_msg: str = None) -> bool:
+    """
+    Copy a file only if the source is newer than the destination or if destination doesn't exist.
+
+    Args:
+        src: Source file path
+        dst: Destination file path
+        log_msg: Optional message to log if copy occurs
+
+    Returns:
+        bool: True if file was copied, False otherwise
+    """
+    if not dst.exists() or src.stat().st_mtime > dst.stat().st_mtime:
+        shutil.copy2(src, dst)
+        if log_msg:
+            logger.info(f"{log_msg} to {dst}")
+        return True
+    return False
+
+
+def create_symlink_or_empty_file(src: Path, dst: Path, is_dir: bool = False) -> None:
+    """
+    Creates a symlink if possible, otherwise creates an empty directory or file.
+
+    Args:
+        src: Source path to link to
+        dst: Destination path for the symlink
+        is_dir: Whether the source is a directory
+    """
+    if dst.exists():
+        if dst.is_symlink():
+            # Already a symlink, no action needed
+            return
+        elif is_dir:
+            # It's a regular directory, rename it as backup
+            backup_dir = dst.parent / f"{dst.name}.backup"
+            if backup_dir.exists():
+                shutil.rmtree(backup_dir)
+            dst.rename(backup_dir)
+
+    # Create the symlink
+    os.symlink(str(src), str(dst))
+    logger.info(f"Created symlink from {dst} to {src}")
+
+
 def setup_chainlit_config():
     """
-    Sets up a centralized Chainlit configuration directory in ~/.config/vtai/.chainlit
-    and creates symbolic links from the current directory to avoid file duplication.
-    This process is fully automated and requires no user intervention.
+    Sets up a centralized Chainlit configuration directory and creates necessary files.
 
     Returns:
         Path: Path to the centralized chainlit config directory
@@ -538,111 +574,73 @@ def setup_chainlit_config():
     user_config_dir = Path(os.path.expanduser("~/.config/vtai"))
     chainlit_config_dir = user_config_dir / ".chainlit"
 
-    # Create directory if it doesn't exist
+    # Create directories
     user_config_dir.mkdir(parents=True, exist_ok=True)
     chainlit_config_dir.mkdir(parents=True, exist_ok=True)
 
-    # Check if we have a config.toml in the source package
+    # Handle configuration files
     if src_chainlit_dir.exists() and src_chainlit_dir.is_dir():
-        # Copy config.toml if it exists and target doesn't exist or is older
-        src_config = src_chainlit_dir / "config.toml"
-        dst_config = chainlit_config_dir / "config.toml"
+        # Copy config.toml if needed
+        copy_if_newer(
+            src=src_chainlit_dir / "config.toml",
+            dst=chainlit_config_dir / "config.toml",
+            log_msg="Copied default config.toml",
+        )
 
-        if src_config.exists() and (
-            not dst_config.exists()
-            or src_config.stat().st_mtime > dst_config.stat().st_mtime
-        ):
-            shutil.copy2(src_config, dst_config)
-            logger.info(f"Copied default config.toml to {dst_config}")
-
-        # Copy translations directory if it exists
+        # Handle translations directory
         src_translations = src_chainlit_dir / "translations"
         dst_translations = chainlit_config_dir / "translations"
 
         if src_translations.exists() and src_translations.is_dir():
-            # Create translations directory if it doesn't exist
             dst_translations.mkdir(exist_ok=True)
 
             # Copy translation files
             for trans_file in src_translations.glob("*.json"):
-                dst_file = dst_translations / trans_file.name
-                if (
-                    not dst_file.exists()
-                    or trans_file.stat().st_mtime > dst_file.stat().st_mtime
-                ):
-                    shutil.copy2(trans_file, dst_file)
+                copy_if_newer(
+                    src=trans_file,
+                    dst=dst_translations / trans_file.name,
+                    log_msg=None,  # Don't log individual translation files
+                )
 
             logger.info(f"Copied translations to {dst_translations}")
 
-    # Handle the chainlit.md file - we'll create an empty one to prevent Chainlit from creating its own
+    # Handle chainlit.md
     src_md = pkg_dir / "chainlit.md"
     central_md = user_config_dir / "chainlit.md"
 
-    # If our source package has a custom chainlit.md, use that, otherwise create empty file
     if src_md.exists() and src_md.stat().st_size > 0:
-        # Copy the non-empty chainlit.md file to the central location
-        if (
-            not central_md.exists()
-            or src_md.stat().st_mtime > central_md.stat().st_mtime
-        ):
-            shutil.copy2(src_md, central_md)
-            logger.info(f"Copied custom chainlit.md to {central_md}")
-    else:
-        # Create an empty chainlit.md file in the central location if it doesn't exist
-        if not central_md.exists():
-            central_md.touch()
-            logger.info(f"Created empty chainlit.md at {central_md}")
+        copy_if_newer(src=src_md, dst=central_md, log_msg="Copied custom chainlit.md")
+    elif not central_md.exists():
+        # Create empty file
+        central_md.touch()
+        logger.info(f"Created empty chainlit.md at {central_md}")
 
-    # Create symbolic links in current directory to point to the central config
+    # Create symlinks if not in project directory
     current_dir = Path.cwd()
     local_chainlit_dir = current_dir / ".chainlit"
     local_md = current_dir / "chainlit.md"
 
-    # Don't create symlinks when we're already in the project directory
     if str(current_dir) != str(pkg_dir.parent):
         try:
-            # Handle .chainlit directory
-            if local_chainlit_dir.exists():
-                if local_chainlit_dir.is_symlink():
-                    # If it's already a symlink, no need to do anything
-                    pass
-                else:
-                    # If it's a regular directory, rename it as backup
-                    backup_dir = current_dir / ".chainlit.backup"
-                    if backup_dir.exists():
-                        shutil.rmtree(backup_dir)
-                    local_chainlit_dir.rename(backup_dir)
-                    os.symlink(str(chainlit_config_dir), str(local_chainlit_dir))
-                    logger.info(
-                        f"Created symlink from {local_chainlit_dir} to {chainlit_config_dir}"
-                    )
-            else:
-                # Create a symlink to the centralized config
-                os.symlink(str(chainlit_config_dir), str(local_chainlit_dir))
-                logger.info(
-                    f"Created symlink from {local_chainlit_dir} to {chainlit_config_dir}"
-                )
-
-            # Handle chainlit.md file - CRITICAL: Create this BEFORE Chainlit starts
-            # Create an empty chainlit.md in the current directory to prevent Chainlit from creating one
-            if not local_md.exists():
-                # Just create an empty file (not a symlink) to prevent Chainlit's default content
-                local_md.touch()
-                logger.info(
-                    f"Created empty chainlit.md at {local_md} to prevent default content"
-                )
-        except Exception as e:
-            logger.warning(
-                f"Could not create symlinks or empty files: {e}. Using local files instead."
+            # Handle .chainlit directory symlink
+            create_symlink_or_empty_file(
+                src=chainlit_config_dir, dst=local_chainlit_dir, is_dir=True
             )
-            # If symlink creation fails, ensure the local directory exists
+
+            # Handle chainlit.md file - create empty file to prevent Chainlit defaults
+            if not local_md.exists():
+                local_md.touch()
+                logger.info(f"Created empty chainlit.md to prevent default content")
+
+        except Exception as e:
+            # Fallback if symlink creation fails
+            logger.warning(f"Could not create symlinks: {e}. Using local files.")
             local_chainlit_dir.mkdir(exist_ok=True)
 
-            # Create an empty chainlit.md file if it doesn't exist
             if not local_md.exists():
                 try:
                     local_md.touch()
-                    logger.info(f"Created empty chainlit.md at {local_md} as fallback")
+                    logger.info(f"Created empty chainlit.md as fallback")
                 except Exception as create_error:
                     logger.warning(
                         f"Failed to create empty chainlit.md: {create_error}"
