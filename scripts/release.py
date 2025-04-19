@@ -35,6 +35,14 @@ def run_command(command, description=None):
     return result.stdout.strip()
 
 
+def check_command(command):
+    """Run a shell command and return output without printing, return None if command fails"""
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
+
+
 def get_current_version():
     """Get the current version from pyproject.toml"""
     pyproject_path = Path("pyproject.toml")
@@ -56,6 +64,12 @@ def update_version(new_version):
     print(f"Version updated to {new_version} in pyproject.toml")
 
 
+def tag_exists(tag_name):
+    """Check if a git tag already exists"""
+    result = check_command(f"git tag -l {tag_name}")
+    return result and tag_name in result.splitlines()
+
+
 def main():
     # 1. Get current version and ask for new version
     current_version = get_current_version()
@@ -70,14 +84,20 @@ def main():
         update_version(new_version)
 
     # 2. Create git tag (optional)
-    create_tag = input(f"Create git tag 'v{new_version}'? (y/n): ").lower()
+    tag_name = f"v{new_version}"
+    create_tag = input(f"Create git tag '{tag_name}'? (y/n): ").lower()
+    
+    tag_created = False
     if create_tag == "y":
-        run_command(
-            f'git tag -a v{new_version} -m "Version {new_version}"',
-            f"Creating git tag v{new_version}",
-        )
-        print(f"✅ Git tag 'v{new_version}' created successfully")
-        print("Note: You'll need to push tags manually with 'git push --tags'")
+        if tag_exists(tag_name):
+            print(f"⚠️  Tag '{tag_name}' already exists, skipping tag creation")
+        else:
+            run_command(
+                f'git tag -a {tag_name} -m "Version {new_version}"',
+                f"Creating git tag {tag_name}",
+            )
+            print(f"✅ Git tag '{tag_name}' created successfully")
+            tag_created = True
 
     # 3. Build distribution packages
     run_command(
@@ -136,7 +156,7 @@ def main():
             changes_to_push = True
 
         # Check if we have a tag to push
-        if create_tag == "y":
+        if create_tag == "y" or tag_exists(tag_name):
             tags_to_push = True
 
         # Push changes if there are any
@@ -145,7 +165,9 @@ def main():
 
         # Push tags if there are any
         if tags_to_push:
-            run_command("git push --tags", "Pushing tags to GitHub")
+            # Use git push origin tagname instead of git push --tags
+            # This is more reliable across different git versions and configurations
+            run_command(f"git push origin {tag_name}", f"Pushing tag {tag_name} to GitHub")
 
         if not changes_to_push and not tags_to_push:
             print("No changes or tags to push.")
