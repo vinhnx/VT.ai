@@ -146,6 +146,31 @@ def create_routes() -> list[Route]:
                 "I love learning new things, what can you tell me?",
             ],
         ),
+        Route(
+            name="web-search",
+            utterances=[
+                "Search for information about",
+                "Find the latest news on",
+                "Look up information about",
+                "Get me up-to-date information on",
+                "Search the web for",
+                "What are the recent developments in",
+                "Find current information about",
+                "What's happening with",
+                "Look online for information about",
+                "I need recent information about",
+                "Get me the latest details on",
+                "Find out what's new with",
+                "What does the internet say about",
+                "Search for recent news about",
+                "Can you find information on",
+                "Look up the current status of",
+                "What's the latest on",
+                "Find me up-to-date facts about",
+                "Get real-time information about",
+                "Tell me what's currently happening with",
+            ],
+        ),
     ]
     return routes
 

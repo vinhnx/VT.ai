@@ -5,6 +5,7 @@ Handles chat interactions, semantic routing, and message processing.
 """
 
 import asyncio
+import json
 import os
 import pathlib
 import time
@@ -16,6 +17,7 @@ from litellm.utils import trim_messages
 from openai import AsyncOpenAI
 
 from vtai.router.constants import SemanticRouterType
+from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
 from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import logger
 from vtai.utils.error_handlers import handle_exception, safe_execution
@@ -237,6 +239,11 @@ async def handle_dynamic_conversation_routing(
                 await handle_trigger_async_chat(
                     llm_model=model, messages=messages, current_message=msg
                 )
+
+        elif route_choice_name == SemanticRouterType.WEB_SEARCH:
+            logger.info(f"Processing {route_choice_name} - Web search")
+            await handle_web_search(query=query, current_message=msg)
+
         else:
             logger.info(f"Processing {route_choice_name} - Default chat")
             await handle_trigger_async_chat(
@@ -541,3 +548,132 @@ async def handle_deepseek_reasoner_conversation(
             final_answer.actions = create_message_actions(content, model)
 
             await final_answer.send()
+
+
+async def handle_web_search(query: str, current_message: cl.Message) -> None:
+    """
+    Handles web search requests by using the WebSearchTool.
+    Performs a web search for the query and displays the results.
+
+    Args:
+        query: The search query from the user
+        current_message: The chainlit message object to stream response to
+    """
+    logger.info(f"Handling web search for query: {query}")
+
+    try:
+        # Display a searching message
+        await current_message.stream_token("🔍 Searching the web for information... ")
+
+        # Get OpenAI API key from environment
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+        # Get Tavily API key from environment if available
+        tavily_api_key = os.environ.get("TAVILY_API_KEY")
+        use_tavily = tavily_api_key is not None
+
+        # Initialize the web search tool with both API keys
+        web_search_tool = WebSearchTool(
+            api_key=openai_api_key, tavily_api_key=tavily_api_key
+        )
+
+        # Create search parameters
+        params = WebSearchParameters(
+            query=query,
+            model="openai/gpt-4o",
+            max_results=5,
+            search_options=WebSearchOptions(
+                search_context_size="medium", include_urls=True
+            ),
+            use_tavily=use_tavily,
+        )
+
+        # Log which search method we're using
+        if use_tavily:
+            logger.info("Using Tavily for web search")
+        else:
+            logger.info("Using LiteLLM function calling for web search")
+
+        # Perform the search
+        search_result = await web_search_tool.search(params)
+
+        # Get the response content
+        response_content = search_result.get("response", "No search results available")
+
+        # Get search status
+        search_status = search_result.get("status", "unknown")
+
+        # Check if search had an error
+        if search_status == "error":
+            error_message = search_result.get("error", "Unknown error occurred")
+            logger.error(f"Web search error: {error_message}")
+
+            # Clear the current message content and show error with fallback
+            current_message.content = ""
+            await current_message.stream_token(
+                f"I encountered an issue while searching the web: {error_message}\n\n"
+                f"Let me try to answer your question about '{query}' based on my knowledge instead."
+            )
+
+            # Fall back to regular chat completion
+            model = get_setting(conf.SETTINGS_CHAT_MODEL)
+            messages = cl.user_session.get("message_history") or []
+            messages.append({"role": "user", "content": query})
+
+            await handle_trigger_async_chat(
+                llm_model=model, messages=messages, current_message=current_message
+            )
+            return
+
+        # Clear any existing content and show search results
+        current_message.content = ""
+        await current_message.stream_token(
+            f"Here's what I found on the web about '{query}':\n\n{response_content}"
+        )
+
+        # Try to extract and display sources if available
+        try:
+            sources_json = search_result.get("sources_json")
+            if sources_json:
+                sources = json.loads(sources_json).get("sources", [])
+                if sources:
+                    source_text = "\n\n**Sources:**\n"
+                    for i, source in enumerate(sources, 1):
+                        title = source.get("title", "Untitled")
+                        url = source.get("url", "No URL")
+                        source_text += f"{i}. [{title}]({url})\n"
+
+                    await current_message.stream_token(source_text)
+        except Exception as e:
+            logger.error(f"Error processing sources: {e}")
+
+        # Update the message content in the message history
+        final_content = current_message.content
+        update_message_history_from_assistant(final_content)
+
+        # Set the actions on the message
+        model_name = search_result.get("model", "WebSearch")
+        current_message.actions = create_message_actions(final_content, model_name)
+
+        # Update the message
+        await current_message.update()
+
+    except Exception as e:
+        error_msg = f"Error performing web search: {str(e)}"
+        logger.error(error_msg)
+
+        # Clear any partial content and show error
+        current_message.content = ""
+        await current_message.stream_token(
+            f"I encountered an issue while searching the web: {error_msg}\n\nLet me try to answer based on my knowledge instead."
+        )
+        await current_message.update()
+
+        # Fall back to regular chat completion
+        model = get_setting(conf.SETTINGS_CHAT_MODEL)
+        messages = cl.user_session.get("message_history") or []
+        messages.append({"role": "user", "content": query})
+
+        await handle_trigger_async_chat(
+            llm_model=model, messages=messages, current_message=current_message
+        )

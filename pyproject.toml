@@ -12,6 +12,7 @@ dependencies = [
     "semantic-router[fastembed]>=0.0.54",
     "pillow>=10.0.0",
     "google-generativeai>=0.3.0",
+    "tavily-python>=0.5.4",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"

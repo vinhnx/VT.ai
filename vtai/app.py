@@ -18,6 +18,7 @@ import dotenv
 from chainlit.types import ChatProfile
 
 # Import modules
+from vtai.assistants.manager import get_or_create_assistant
 from vtai.utils import constants as const
 from vtai.utils import llm_providers_config as conf
 from vtai.utils.assistant_tools import process_thread_message, process_tool_call
@@ -37,8 +38,43 @@ from vtai.utils.safe_execution import safe_execution
 from vtai.utils.settings_builder import build_settings
 from vtai.utils.user_session_helper import get_setting, is_in_assistant_profile
 
+import sys
+import subprocess
+
 # Initialize the application with improved client configuration
 route_layer, assistant_id, openai_client, async_openai_client = initialize_app()
+# Removed the debugging code for printing python executable and pip list
+
+# Initialize or retrieve the assistant (with web search capabilities)
+import os
+
+async def init_assistant():
+    """Initialize or retrieve the OpenAI assistant with web search enabled."""
+    global assistant_id  # Moved to the beginning of the function
+
+    # Print all environment variables
+    print("All environment variables:", os.environ)
+
+    try:
+        # Get or create the assistant with web search capabilities
+        assistant = await get_or_create_assistant(
+            client=async_openai_client,
+            assistant_id=assistant_id,
+            name=const.APP_NAME,
+            instructions="You are a helpful assistant with web search capabilities. When information might be outdated or not in your training data, you can search the web for more current information.",
+            model="gpt-4o",
+        )
+
+        # Store the assistant ID globally
+        assistant_id = assistant.id
+
+        logger.info(f"Successfully initialized assistant: {assistant.id}")
+        return assistant.id
+    except Exception as e:
+        logger.error(f"Error initializing assistant: {e}")
+        # Return the existing assistant_id if any
+        return assistant_id
+
 
 # App name constant
 APP_NAME = const.APP_NAME
@@ -78,6 +114,12 @@ async def start_chat():
 
     if is_in_assistant_profile():
         try:
+            # Initialize or get the assistant with web search capabilities
+            assistant_id_result = await init_assistant()
+            if not assistant_id_result:
+                raise ValueError("Failed to initialize assistant")
+
+            # Create a new thread for the conversation
             thread = await async_openai_client.beta.threads.create()
             cl.user_session.set("thread", thread)
             logger.info("Created new thread: %s", thread.id)
@@ -173,7 +215,141 @@ async def process_function_tool(
     function_name = tool_call.function.name
     function_args = json.loads(tool_call.function.arguments)
 
-    # Since tools are temporarily removed, log and return placeholder
+    # Handle the web search tool specifically
+    if function_name == "web_search":
+        from vtai.tools.search import (
+            WebSearchOptions,
+            WebSearchParameters,
+            WebSearchTool,
+        )
+
+        # Get API keys from environment
+        openai_api_key = os.environ.get("OPENAI_API_KEY") or None
+        tavily_api_key = os.environ.get("TAVILY_API_KEY") or None
+
+        # Determine if we should use Tavily
+        use_tavily = tavily_api_key is not None
+        if use_tavily:
+            logger.info("Using Tavily for assistant web search")
+
+        # Initialize the web search tool with appropriate API keys
+        web_search_tool = WebSearchTool(
+            api_key=openai_api_key, tavily_api_key=tavily_api_key
+        )
+
+        # Extract search parameters
+        query = function_args.get("query", "")
+        model = function_args.get("model", "openai/gpt-4o")
+        max_results = function_args.get("max_results", None)
+
+        # Build search options if provided
+        search_options = None
+        if any(key in function_args for key in ["search_context_size", "include_urls"]):
+            search_options = WebSearchOptions(
+                search_context_size=function_args.get("search_context_size", "medium"),
+                include_urls=function_args.get("include_urls", True),
+            )
+        else:
+            # Default search options
+            search_options = WebSearchOptions(
+                search_context_size="medium", include_urls=True
+            )
+
+        # Create search parameters
+        params = WebSearchParameters(
+            query=query,
+            model=model,
+            max_results=max_results,
+            search_options=search_options,
+            use_tavily=use_tavily,
+        )
+
+        # Perform the search
+        try:
+            logger.info(f"Performing web search for: {query}")
+            search_result = await web_search_tool.search(params)
+
+            # Get search status
+            search_status = search_result.get("status", "unknown")
+
+            # Check if search had an error
+            if search_status == "error":
+                error_msg = search_result.get("error", "Unknown error occurred")
+                logger.error(f"Web search error: {error_msg}")
+
+                await process_tool_call(
+                    step_references=step_references,
+                    step=step,
+                    tool_call=tool_call,
+                    name=function_name,
+                    input=function_args,
+                    output=f"Error performing web search: {error_msg}",
+                    show_input="json",
+                )
+
+                return {
+                    "output": f"Error performing web search: {error_msg}",
+                    "tool_call_id": tool_call.id,
+                }
+
+            # Process the results
+            response_content = search_result.get(
+                "response", "No search results available"
+            )
+
+            # Add source information if available
+            sources_text = ""
+            try:
+                sources_json = search_result.get("sources_json")
+                if sources_json:
+                    sources = json.loads(sources_json).get("sources", [])
+                    if sources:
+                        sources_text = "\n\nSources:\n"
+                        for i, source in enumerate(sources, 1):
+                            title = source.get("title", "Untitled")
+                            url = source.get("url", "No URL")
+                            sources_text += f"{i}. {title} - {url}\n"
+
+                # Append sources to response if available
+                if sources_text:
+                    response_content = f"{response_content}\n{sources_text}"
+            except Exception as e:
+                logger.error(f"Error processing sources: {e}")
+
+            await process_tool_call(
+                step_references=step_references,
+                step=step,
+                tool_call=tool_call,
+                name=function_name,
+                input=function_args,
+                output=response_content,
+                show_input="json",
+            )
+
+            return {
+                "output": response_content,
+                "tool_call_id": tool_call.id,
+            }
+        except Exception as e:
+            error_msg = f"Error performing web search: {str(e)}"
+            logger.error(error_msg)
+
+            await process_tool_call(
+                step_references=step_references,
+                step=step,
+                tool_call=tool_call,
+                name=function_name,
+                input=function_args,
+                output=error_msg,
+                show_input="json",
+            )
+
+            return {
+                "output": error_msg,
+                "tool_call_id": tool_call.id,
+            }
+
+    # For other tools that are temporarily disabled
     logger.warning(
         "Function tool call received but tools are disabled: %s", function_name
     )
@@ -225,15 +401,25 @@ async def create_run_instance(thread_id: str) -> Any:
     Returns:
         Run instance object
     """
+    global assistant_id
+
+    # Ensure we have a valid assistant ID
     if not assistant_id:
-        # Log warning that we're using a placeholder as Mino is disabled
-        logger.warning("No assistant ID provided and Mino assistant is disabled")
-        raise ValueError("No assistant ID available. Please configure an assistant ID")
-    else:
-        return await async_openai_client.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=assistant_id,
-        )
+        # Try to initialize the assistant if not already done
+        assistant_id_result = await init_assistant()
+        if not assistant_id_result:
+            logger.error("Could not create or retrieve assistant")
+            raise ValueError(
+                "No assistant ID available. Please configure an assistant ID"
+            )
+        assistant_id = assistant_id_result
+
+    # Create a run with the assistant
+    logger.info(f"Creating run for thread {thread_id} with assistant {assistant_id}")
+    return await async_openai_client.beta.threads.runs.create(
+        thread_id=thread_id,
+        assistant_id=assistant_id,
+    )
 
 
 async def process_tool_calls(

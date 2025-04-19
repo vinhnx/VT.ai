@@ -39,6 +39,7 @@ class SemanticRouterType(str, Enum):
     CASUAL_CONVERSATION: Final[str] = "casual-conversation"
     CURIOUS: Final[str] = "curious"
     VISION_IMAGE_PROCESSING: Final[str] = "vision-image-processing"
+    WEB_SEARCH: Final[str] = "web-search"
 
     @classmethod
     def values(cls) -> List[str]:
