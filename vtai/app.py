@@ -9,6 +9,8 @@ import asyncio
 import json
 import os
 import shutil
+import subprocess
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -38,15 +40,13 @@ from vtai.utils.safe_execution import safe_execution
 from vtai.utils.settings_builder import build_settings
 from vtai.utils.user_session_helper import get_setting, is_in_assistant_profile
 
-import sys
-import subprocess
-
 # Initialize the application with improved client configuration
 route_layer, assistant_id, openai_client, async_openai_client = initialize_app()
 # Removed the debugging code for printing python executable and pip list
 
 # Initialize or retrieve the assistant (with web search capabilities)
 import os
+
 
 async def init_assistant():
     """Initialize or retrieve the OpenAI assistant with web search enabled."""
@@ -182,6 +182,30 @@ async def process_code_interpreter_tool(
     ):
         output_value = tool_call.code_interpreter.outputs[0]
 
+    # Create a step for code execution
+    async with cl.Step(
+        name="Code Interpreter",
+        type="code",
+        parent_id=(
+            cl.context.current_step.id
+            if hasattr(cl.context, "current_step") and cl.context.current_step
+            else None
+        ),
+    ) as code_step:
+        code_step.input = tool_call.code_interpreter.input or "# Generating code"
+
+        # Stream tokens to show activity
+        await code_step.stream_token("Executing code")
+        await asyncio.sleep(0.3)  # Small delay for visibility
+        await code_step.stream_token(".")
+        await asyncio.sleep(0.3)
+        await code_step.stream_token(".")
+
+        # Update with output when available
+        if output_value:
+            code_step.output = output_value
+            await code_step.update()
+
     await process_tool_call(
         step_references=step_references,
         step=step,
@@ -267,54 +291,83 @@ async def process_function_tool(
         # Perform the search
         try:
             logger.info(f"Performing web search for: {query}")
-            search_result = await web_search_tool.search(params)
 
-            # Get search status
-            search_status = search_result.get("status", "unknown")
+            # Create a step for the web search execution
+            async with cl.Step(
+                name=f"Web Search: {query}",
+                type="tool",
+                parent_id=(
+                    cl.context.current_step.id
+                    if hasattr(cl.context, "current_step") and cl.context.current_step
+                    else None
+                ),
+            ) as search_step:
+                search_step.input = f"Searching for: {query}"
 
-            # Check if search had an error
-            if search_status == "error":
-                error_msg = search_result.get("error", "Unknown error occurred")
-                logger.error(f"Web search error: {error_msg}")
+                # Stream tokens to show activity
+                await search_step.stream_token("Searching")
+                await asyncio.sleep(0.5)  # Small delay for visibility
+                await search_step.stream_token(".")
+                await asyncio.sleep(0.5)
+                await search_step.stream_token(".")
 
-                await process_tool_call(
-                    step_references=step_references,
-                    step=step,
-                    tool_call=tool_call,
-                    name=function_name,
-                    input=function_args,
-                    output=f"Error performing web search: {error_msg}",
-                    show_input="json",
+                # Execute the search
+                search_result = await web_search_tool.search(params)
+
+                # Get search status
+                search_status = search_result.get("status", "unknown")
+
+                # Check if search had an error
+                if search_status == "error":
+                    error_msg = search_result.get("error", "Unknown error occurred")
+                    logger.error(f"Web search error: {error_msg}")
+
+                    # Update step with error info
+                    search_step.output = f"Error performing web search: {error_msg}"
+                    await search_step.update()
+
+                    await process_tool_call(
+                        step_references=step_references,
+                        step=step,
+                        tool_call=tool_call,
+                        name=function_name,
+                        input=function_args,
+                        output=f"Error performing web search: {error_msg}",
+                        show_input="json",
+                    )
+
+                    return {
+                        "output": f"Error performing web search: {error_msg}",
+                        "tool_call_id": tool_call.id,
+                    }
+
+                # Process the results
+                response_content = search_result.get(
+                    "response", "No search results available"
                 )
 
-                return {
-                    "output": f"Error performing web search: {error_msg}",
-                    "tool_call_id": tool_call.id,
-                }
+                # Add source information if available
+                sources_text = ""
+                try:
+                    sources_json = search_result.get("sources_json")
+                    if sources_json:
+                        sources = json.loads(sources_json).get("sources", [])
+                        if sources:
+                            sources_text = "\n\nSources:\n"
+                            for i, source in enumerate(sources, 1):
+                                title = source.get("title", "Untitled")
+                                url = source.get("url", "No URL")
+                                sources_text += f"{i}. {title} - {url}\n"
 
-            # Process the results
-            response_content = search_result.get(
-                "response", "No search results available"
-            )
+                    # Append sources to response if available
+                    if sources_text:
+                        response_content = f"{response_content}\n{sources_text}"
+                except Exception as e:
+                    logger.error(f"Error processing sources: {e}")
 
-            # Add source information if available
-            sources_text = ""
-            try:
-                sources_json = search_result.get("sources_json")
-                if sources_json:
-                    sources = json.loads(sources_json).get("sources", [])
-                    if sources:
-                        sources_text = "\n\nSources:\n"
-                        for i, source in enumerate(sources, 1):
-                            title = source.get("title", "Untitled")
-                            url = source.get("url", "No URL")
-                            sources_text += f"{i}. {title} - {url}\n"
-
-                # Append sources to response if available
-                if sources_text:
-                    response_content = f"{response_content}\n{sources_text}"
-            except Exception as e:
-                logger.error(f"Error processing sources: {e}")
+                # Update step with final result
+                search_step.output = f"Found information about '{query}'"
+                await search_step.update()
 
             await process_tool_call(
                 step_references=step_references,
@@ -381,6 +434,29 @@ async def process_retrieval_tool(
         step: The run step
         tool_call: The tool call to process
     """
+    # Create a step for retrieval execution
+    async with cl.Step(
+        name="Document Retrieval",
+        type="retrieval",
+        parent_id=(
+            cl.context.current_step.id
+            if hasattr(cl.context, "current_step") and cl.context.current_step
+            else None
+        ),
+    ) as retrieval_step:
+        retrieval_step.input = "Retrieving relevant information from uploaded documents"
+
+        # Stream tokens to show activity
+        await retrieval_step.stream_token("Retrieving")
+        await asyncio.sleep(0.3)  # Small delay for visibility
+        await retrieval_step.stream_token(".")
+        await asyncio.sleep(0.3)
+        await retrieval_step.stream_token(".")
+
+        # Update with completion indication
+        retrieval_step.output = "Retrieved relevant information from documents"
+        await retrieval_step.update()
+
     await process_tool_call(
         step_references=step_references,
         step=step,

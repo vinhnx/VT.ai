@@ -560,42 +560,70 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         current_message: The chainlit message object to stream response to
     """
     logger.info(f"Handling web search for query: {query}")
+    search_step = None
 
     try:
-        # Display a searching message
-        await current_message.stream_token("🔍 Searching the web for information... ")
+        # Start timing for search duration
+        start = time.time()
 
-        # Get OpenAI API key from environment
-        openai_api_key = os.environ.get("OPENAI_API_KEY")
+        # Start with a web search step
+        async with cl.Step(name="Web Search") as step:
+            search_step = step
+            # Display a searching message in the step
+            await search_step.stream_token(f"🔍 Searching the web for: {query}")
 
-        # Get Tavily API key from environment if available
-        tavily_api_key = os.environ.get("TAVILY_API_KEY")
-        use_tavily = tavily_api_key is not None
+            # Get OpenAI API key from environment
+            openai_api_key = os.environ.get("OPENAI_API_KEY")
 
-        # Initialize the web search tool with both API keys
-        web_search_tool = WebSearchTool(
-            api_key=openai_api_key, tavily_api_key=tavily_api_key
-        )
+            # Get Tavily API key from environment if available
+            tavily_api_key = os.environ.get("TAVILY_API_KEY")
+            use_tavily = tavily_api_key is not None
 
-        # Create search parameters
-        params = WebSearchParameters(
-            query=query,
-            model="openai/gpt-4o",
-            max_results=5,
-            search_options=WebSearchOptions(
-                search_context_size="medium", include_urls=True
-            ),
-            use_tavily=use_tavily,
-        )
+            # Initialize the web search tool with both API keys
+            web_search_tool = WebSearchTool(
+                api_key=openai_api_key, tavily_api_key=tavily_api_key
+            )
 
-        # Log which search method we're using
-        if use_tavily:
-            logger.info("Using Tavily for web search")
-        else:
-            logger.info("Using LiteLLM function calling for web search")
+            # Create search parameters
+            params = WebSearchParameters(
+                query=query,
+                model="openai/gpt-4o",
+                max_results=5,
+                search_options=WebSearchOptions(
+                    search_context_size="medium", include_urls=True
+                ),
+                use_tavily=use_tavily,
+            )
 
-        # Perform the search
-        search_result = await web_search_tool.search(params)
+            # Log which search method we're using
+            if use_tavily:
+                logger.info("Using Tavily for web search")
+                await search_step.stream_token("\nUsing Tavily search engine...")
+            else:
+                logger.info("Using LiteLLM function calling for web search")
+                await search_step.stream_token(
+                    "\nUsing OpenAI function calling for search..."
+                )
+
+            # Add some visual indicator that search is in progress
+            await asyncio.sleep(0.5)
+            await search_step.stream_token(".")
+            await asyncio.sleep(0.5)
+            await search_step.stream_token(".")
+
+            # Perform the search
+            search_result = await web_search_tool.search(params)
+
+            # Calculate search duration
+            search_duration = round(time.time() - start)
+            search_step.name = f"Web Search ({search_duration}s)"
+            await search_step.update()
+
+            # Small delay to let the user see the completed step
+            await asyncio.sleep(1)
+
+            # Remove the step
+            await search_step.remove()
 
         # Get the response content
         response_content = search_result.get("response", "No search results available")
@@ -661,6 +689,13 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
     except Exception as e:
         error_msg = f"Error performing web search: {str(e)}"
         logger.error(error_msg)
+
+        # Try to remove the step if it exists
+        if search_step:
+            try:
+                await search_step.remove()
+            except:
+                pass
 
         # Clear any partial content and show error
         current_message.content = ""
