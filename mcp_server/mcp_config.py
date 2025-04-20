@@ -1,8 +1,11 @@
 """
-MCP configuration settings for VT.ai.
+MCP (Model Context Protocol) server configuration for VT.ai.
 
-This module contains configuration settings for the Model Context Protocol (MCP) integration.
+This module configures the available tools for the MCP server and contains configuration settings for the MCP integration.
 """
+
+import os
+from typing import Dict, List, Optional
 
 # MCP Server Configuration
 MCP_HOST = "localhost"
@@ -54,3 +57,60 @@ MCP_DEFAULT_PARAMS = {
 # Maximum message context size (in characters)
 # to prevent overloading the MCP server with large requests
 MCP_MAX_CONTEXT_SIZE = 1_000_000
+
+# Example tool configurations
+WEATHER_TOOL = {
+    "name": "get_weather",
+    "description": "Get the current weather for a location",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The location to get weather for (city, country)",
+            }
+        },
+        "required": ["location"],
+    },
+}
+
+WEB_SEARCH_TOOL = {
+    "name": "web_search",
+    "description": "Search the web for information",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "The search query"},
+            "max_results": {
+                "type": "integer",
+                "description": "Maximum number of results to return",
+                "default": 5,
+            },
+        },
+        "required": ["query"],
+    },
+}
+
+IMAGE_GENERATION_TOOL = {
+    "name": "generate_image",
+    "description": "Generate an image based on a text prompt",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "prompt": {
+                "type": "string",
+                "description": "Text description of the image to generate",
+            },
+            "style": {
+                "type": "string",
+                "description": "Style of the image (e.g., photo, cartoon, abstract)",
+                "enum": ["photo", "cartoon", "abstract", "painting"],
+                "default": "photo",
+            },
+        },
+        "required": ["prompt"],
+    },
+}
+
+# List of available tools for the MCP server
+AVAILABLE_TOOLS = [WEATHER_TOOL, WEB_SEARCH_TOOL, IMAGE_GENERATION_TOOL]
