@@ -86,7 +86,7 @@ def main():
     # 2. Create git tag (optional)
     tag_name = f"v{new_version}"
     create_tag = input(f"Create git tag '{tag_name}'? (y/n): ").lower()
-    
+
     tag_created = False
     if create_tag == "y":
         if tag_exists(tag_name):
@@ -167,7 +167,9 @@ def main():
         if tags_to_push:
             # Use git push origin tagname instead of git push --tags
             # This is more reliable across different git versions and configurations
-            run_command(f"git push origin {tag_name}", f"Pushing tag {tag_name} to GitHub")
+            run_command(
+                f"git push origin {tag_name}", f"Pushing tag {tag_name} to GitHub"
+            )
 
         if not changes_to_push and not tags_to_push:
             print("No changes or tags to push.")

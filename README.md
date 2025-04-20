@@ -98,6 +98,34 @@ VT.ai includes several utility scripts in the `scripts/` directory to help with 
 ./scripts/vtai_runner.py   # Simple script to run the VT.ai application
 ```
 
+### Run Scripts
+
+VT.ai also includes two convenient shell scripts in the root directory for running the application:
+
+```bash
+# Run the VT.ai application with Chainlit interface
+./run_vtai_app.sh
+
+# Run the VT.ai MCP (Model Context Protocol) server
+# Default: localhost:9393
+./run_vtai_server.sh
+```
+
+These scripts will:
+
+1. Load environment variables from a `.env` file if it exists
+2. Install dependencies using `uv`
+3. Start the appropriate application (Chainlit app or MCP server)
+
+You can customize the MCP server host and port by setting environment variables:
+
+```bash
+# Set custom host and port for the MCP server
+export MCP_HOST="your-host"
+export MCP_PORT="your-port"
+./run_vtai_server.sh
+```
+
 ## Installation (Python)
 
 VT.ai can be installed in multiple ways:

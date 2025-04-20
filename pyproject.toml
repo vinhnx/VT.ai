@@ -16,7 +16,7 @@ dependencies = [
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
-license = {text = "MIT"}
+license = { text = "MIT" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -44,9 +44,7 @@ allow-direct-references = true
 packages = ["vtai"]
 
 [dependency-groups]
-dev = [
-    "ruff>=0.11.4",
-]
+dev = ["ruff>=0.11.4"]
 
 [project.optional-dependencies]
 dev = [
@@ -58,9 +56,7 @@ dev = [
     "flake8>=6.1.0",
 ]
 
-docs = [
-    "mkdocs-llmstxt>=0.2.0",
-]
+docs = ["mkdocs-llmstxt>=0.2.0"]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
