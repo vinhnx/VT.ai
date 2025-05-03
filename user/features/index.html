@@ -1212,18 +1212,30 @@
 <li>"What text appears in this screenshot?"</li>
 </ul>
 <h3 id="image-generation">Image Generation<a class="headerlink" href="#image-generation" title="Permanent link">&para;</a></h3>
-<p>Generate images based on text descriptions using DALL-E 3:</p>
+<p>Generate images based on text descriptions:</p>
 <ul>
-<li>Create custom images from detailed prompts</li>
-<li>Control style and quality parameters</li>
-<li>Visualize concepts and ideas</li>
+<li><strong>DALL-E 3</strong>: Create custom images from detailed prompts</li>
+<li><strong>GPT-Image-1</strong>: Advanced image generation with extensive customization options</li>
+<li>Transparent backgrounds for logos and graphics</li>
+<li>Multiple output formats (PNG, JPEG)</li>
+<li>Customizable dimensions (square, landscape, portrait)</li>
+<li>Variable quality and compression settings</li>
+<li>Moderation controls</li>
 </ul>
 <p>To generate an image:</p>
 <ol>
 <li>Type a prompt like "Generate an image of a futuristic city with flying cars"</li>
 <li>The system will recognize the image generation intent</li>
-<li>DALL-E 3 will create and display the image based on your description</li>
+<li>The appropriate image generation model will create and display the image based on your description</li>
 </ol>
+<p>For advanced GPT-Image-1 options, you can configure:</p>
+<ul>
+<li>Image size: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_SIZE</code> (e.g., "1024x1024", "1536x1024", "1024x1536")</li>
+<li>Quality: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_QUALITY</code> (e.g., "standard", "high")</li>
+<li>Background: Set with <code>VT_SETTINGS_IMAGE_GEN_BACKGROUND</code> (e.g., "auto", "transparent")</li>
+<li>Output format: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_FORMAT</code> (e.g., "png", "jpeg")</li>
+<li>Compression: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION</code> (e.g., "90", "100")</li>
+</ul>
 <h3 id="voice-interaction">Voice Interaction<a class="headerlink" href="#voice-interaction" title="Permanent link">&para;</a></h3>
 <p>VT.ai supports voice-based interaction:</p>
 <ul>

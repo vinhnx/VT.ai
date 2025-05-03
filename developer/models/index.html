@@ -762,6 +762,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Image Generation Models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gpt-image-1-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPT-Image-1 Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1171,6 +1186,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Image Generation Models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gpt-image-1-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPT-Image-1 Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -1352,59 +1382,88 @@
         <span class="k">raise</span>
 </code></pre></div>
 <h3 id="image-generation-models">Image Generation Models<a class="headerlink" href="#image-generation-models" title="Permanent link">&para;</a></h3>
-<p>VT.ai now uses GPT-Image-1 for image generation with advanced configuration options:</p>
+<p>VT.ai supports advanced image generation capabilities with multiple models:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Example image generation call</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">generate_image</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># Configure settings for image generation</span>
+    <span class="n">image_size</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SETTINGS_IMAGE_GEN_IMAGE_SIZE</span><span class="p">)</span>  <span class="c1"># 1024x1024, 1536x1024, etc.</span>
+    <span class="n">image_quality</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SETTINGS_IMAGE_GEN_IMAGE_QUALITY</span><span class="p">)</span>  <span class="c1"># &quot;standard&quot;, &quot;high&quot;</span>
+    <span class="n">background</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SETTINGS_IMAGE_GEN_BACKGROUND</span><span class="p">)</span>  <span class="c1"># &quot;auto&quot;, &quot;transparent&quot;</span>
+    <span class="n">output_format</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SETTINGS_IMAGE_GEN_OUTPUT_FORMAT</span><span class="p">)</span>  <span class="c1"># &quot;png&quot;, &quot;jpeg&quot;</span>
+    <span class="n">compression</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION</span><span class="p">)</span>  <span class="c1"># 0-100</span>
+
     <span class="c1"># GPT-Image-1 is now the default image generation model</span>
     <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-image-1&quot;</span><span class="p">,</span>
         <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">,</span>
         <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">size</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SETTINGS_IMAGE_GEN_IMAGE_SIZE</span><span class="p">),</span>  <span class="c1"># 1024x1024, 1536x1024, etc.</span>
-        <span class="n">background</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SETTINGS_IMAGE_GEN_BACKGROUND</span><span class="p">),</span>  <span class="c1"># &quot;auto&quot;, &quot;transparent&quot;, &quot;opaque&quot;</span>
-        <span class="n">quality</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION</span><span class="p">),</span>  <span class="c1"># 0-100</span>
-        <span class="n">style</span><span class="o">=</span><span class="s2">&quot;vivid&quot;</span><span class="p">,</span>  <span class="c1"># Default style</span>
+        <span class="n">size</span><span class="o">=</span><span class="n">image_size</span><span class="p">,</span>
+        <span class="n">quality</span><span class="o">=</span><span class="n">image_quality</span><span class="p">,</span>
+        <span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span>
+        <span class="n">output_format</span><span class="o">=</span><span class="n">output_format</span><span class="p">,</span>
+        <span class="n">output_compression</span><span class="o">=</span><span class="n">compression</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">response</span>
 </code></pre></div>
+<h4 id="gpt-image-1-configuration">GPT-Image-1 Configuration<a class="headerlink" href="#gpt-image-1-configuration" title="Permanent link">&para;</a></h4>
 <p>GPT-Image-1 supports several configuration options in VT.ai:</p>
 <ul>
-<li><strong>Image Size</strong>: Control the dimensions of generated images</li>
+<li>
+<p><strong>Image Size</strong>: Control the dimensions of generated images</p>
+<ul>
 <li><code>1024x1024</code> (square - default)</li>
 <li><code>1536x1024</code> (landscape)</li>
+<li><code>1024x1536</code> (portrait)</li>
+</ul>
+</li>
 <li>
-<p><code>1024x1536</code> (portrait)</p>
+<p><strong>Image Quality</strong>: Control the rendering quality</p>
+<ul>
+<li><code>standard</code> - Regular quality (default)</li>
+<li><code>high</code> - Enhanced quality for detailed images</li>
+</ul>
 </li>
 <li>
 <p><strong>Background Type</strong>: Control transparency</p>
-</li>
+<ul>
 <li><code>auto</code> - Let the model decide (default)</li>
 <li><code>transparent</code> - Create images with transparent backgrounds (for PNG format)</li>
-<li>
-<p><code>opaque</code> - Force an opaque background</p>
+<li><code>opaque</code> - Force an opaque background</li>
+</ul>
 </li>
 <li>
 <p><strong>Output Format</strong>: Select image format</p>
-</li>
+<ul>
 <li><code>jpeg</code> - Good for photographs (default)</li>
 <li><code>png</code> - Best for images needing transparency</li>
-<li>
-<p><code>webp</code> - Optimized for web use with good compression</p>
+<li><code>webp</code> - Optimized for web use with good compression</li>
+</ul>
 </li>
 <li>
 <p><strong>Moderation Level</strong>: Content filtering level</p>
-</li>
+<ul>
 <li><code>auto</code> - Standard moderation (default)</li>
-<li>
-<p><code>low</code> - Less restrictive moderation</p>
+<li><code>low</code> - Less restrictive moderation</li>
+</ul>
 </li>
 <li>
 <p><strong>Compression Quality</strong>: For JPEG and WebP formats</p>
-</li>
+<ul>
 <li>Values from 0-100 (75 is default)</li>
 <li>Higher values produce better quality but larger files</li>
 </ul>
+</li>
+</ul>
+<p>All these settings can be configured through environment variables:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Example configuration</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VT_SETTINGS_IMAGE_GEN_IMAGE_SIZE</span><span class="o">=</span><span class="s2">&quot;1536x1024&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VT_SETTINGS_IMAGE_GEN_IMAGE_QUALITY</span><span class="o">=</span><span class="s2">&quot;high&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VT_SETTINGS_IMAGE_GEN_BACKGROUND</span><span class="o">=</span><span class="s2">&quot;transparent&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VT_SETTINGS_IMAGE_GEN_OUTPUT_FORMAT</span><span class="o">=</span><span class="s2">&quot;png&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VT_SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION</span><span class="o">=</span><span class="s2">&quot;90&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">VT_SETTINGS_IMAGE_GEN_MODERATION</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+</code></pre></div>
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p>VT.ai implements robust error handling for model calls:</p>
 <ul>
