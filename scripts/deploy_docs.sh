@@ -1,3 +1,5 @@
+# Set the working directory to the VT.ai project root directory
+cd "$(dirname "$0")/.." || { echo "Error: Cannot find VT.ai root directory"; exit 1; }
 #!/bin/bash
 
 # First, run the build script to generate the site and copy llms.txt

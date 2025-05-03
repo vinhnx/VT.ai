@@ -2,8 +2,8 @@
 
 # Script to run the VT.ai application
 
-# Set the working directory to the VT.ai project directory
-cd "$(dirname "$0")" || { echo "Error: Cannot find VT.ai directory"; exit 1; }
+# Set the working directory to the VT.ai project root directory
+cd "$(dirname "$0")/.." || { echo "Error: Cannot find VT.ai root directory"; exit 1; }
 
 # Load environment variables if .env file exists
 if [ -f .env ]; then

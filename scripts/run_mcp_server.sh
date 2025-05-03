@@ -2,7 +2,7 @@
 # Script to run the MCP server component of VT.ai
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR/mcp_server" || exit 1
+cd "$SCRIPT_DIR/../mcp_server" || exit 1
 VENV_DIR=".venv"
 
 # Default port for MCP server

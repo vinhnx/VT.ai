@@ -2,7 +2,7 @@
 # Run the standalone MCP server for VT.ai
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR/mcp_server" || exit 1
+cd "$SCRIPT_DIR/../mcp_server" || exit 1
 VENV_DIR=".venv"
 
 # Create venv if it doesn't exist
