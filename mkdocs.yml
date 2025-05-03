@@ -63,6 +63,7 @@ nav:
     - Semantic Routing: developer/routing.md
     - Models Integration: developer/models.md
     - Assistant Tools: developer/tools.md
+    - Rust Implementation: developer/rust-implementation.md
   - API Reference:
     - Overview: api/index.md
     - App: api/app.md

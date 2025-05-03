@@ -4,7 +4,7 @@ This guide explains the Assistant Tools feature in VT.ai, which provides special
 
 ## Overview
 
-VT.ai includes an Assistant mode based on OpenAI's Assistants API that provides powerful tools for code interpretation, file handling, and function calling. These tools enable more complex workflows and specialized functionality.
+VT.ai includes an Assistant mode based on OpenAI's Assistants API that provides powerful tools for code interpretation, file handling, web search, and function calling. These tools enable complex workflows and specialized functionality.
 
 ## Available Tools
 
@@ -53,13 +53,77 @@ The File Processing tool enables working with uploaded files:
   - Process structured data
   - Generate insights from file content
 
+### Web Search
+
+The Web Search tool enables querying the web for current information:
+
+- **Features**:
+  - Real-time web search for up-to-date information
+  - Smart summarization of search results
+  - Source attribution and URL inclusion
+  - Customizable search parameters
+
+- **Implementation**:
+
+  The WebSearchTool is implemented in `vtai/tools/search.py` and integrates with the Tavily API for enhanced search capabilities. It provides:
+
+  - Context-aware search
+  - Domain filtering (include/exclude specific sites)
+  - Result summarization
+  - Customizable result count
+
+- **Usage Example**:
+
+  ```python
+  from vtai.tools import WebSearchTool, WebSearchOptions
+
+  # Initialize the search tool with API keys
+  search_tool = WebSearchTool(
+      api_key="your-openai-key",
+      tavily_api_key="your-tavily-key"
+  )
+
+  # Configure search options
+  options = WebSearchOptions(
+      search_context_size="medium",  # Options: small, medium, large
+      include_urls=True,             # Include source URLs
+      summarize_results=True         # Provide an AI-generated summary
+  )
+
+  # Execute search with options
+  results = await search_tool.search(
+      query="latest developments in AI",
+      model="openai/gpt-4o",
+      search_options=options,
+      max_results=5
+  )
+  ```
+
+- **Return Format**:
+
+  The search tool returns structured results including:
+
+  ```json
+  {
+      "search_results": [
+          {"title": "Article Title", "url": "https://example.com/article", "content": "Snippet of content..."},
+          // Additional results...
+      ],
+      "summary": "An AI-generated summary of the search results",
+      "query": "Original search query"
+  }
+  ```
+
 ### Function Calling
 
 Function Calling allows the assistant to interact with external systems and APIs:
 
-- **Current Status**: Function tools are temporarily disabled in the current version.
-- **Planned Features**:
-  - Web search integration
+- **Current Status**: Basic function tools are implemented with a focus on web search integration.
+- **Available Functions**:
+  - Web search (integrated with Tavily)
+  - Context-aware information retrieval
+  - Search summarization
+- **Planned Functions**:
   - External API calls
   - Database interactions
   - System operations
@@ -79,7 +143,22 @@ assistant = {
     "tools": [
         {"type": "code_interpreter"},
         {"type": "retrieval"},
-        # Function tools temporarily disabled
+        {
+            "type": "function",
+            "function": {
+                "name": "web_search",
+                "description": "Search the web for current information",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Search query"},
+                        "model": {"type": "string", "description": "Model for processing"},
+                        "max_results": {"type": "integer", "description": "Maximum results"}
+                    },
+                    "required": ["query"]
+                }
+            }
+        }
     ],
     "model": "o3"
 }
@@ -92,7 +171,7 @@ The processing flow for tools follows this pattern:
 1. User submits a query in Assistant mode
 2. Query is processed by the appropriate model
 3. If the model decides to use a tool, a tool call is generated
-4. VT.ai processes the tool call (e.g., executes code, analyzes files)
+4. VT.ai processes the tool call (e.g., executes code, searches the web)
 5. Tool output is returned to the model
 6. Model generates final response incorporating tool results
 
@@ -101,40 +180,47 @@ The processing flow for tools follows this pattern:
 Tool calls are processed by specialized handlers:
 
 ```python
-# Example of code interpreter tool processing
-async def process_code_interpreter_tool(
+# Example of web search tool processing (simplified)
+async def process_function_tool(
     step_references: Dict[str, cl.Step], step: Any, tool_call: Any
 ) -> Dict[str, Any]:
-    """
-    Process code interpreter tool calls.
+    """Process function tool calls like web search."""
+    function_name = tool_call.function.name
+    function_args = json.loads(tool_call.function.arguments)
 
-    Args:
-        step_references: Dictionary of step references
-        step: The run step
-        tool_call: The tool call to process
+    if function_name == "web_search":
+        # Initialize the web search tool
+        web_search_tool = WebSearchTool(
+            api_key=openai_api_key, tavily_api_key=tavily_api_key
+        )
 
-    Returns:
-        Tool output dictionary
-    """
-    output_value = ""
-    if tool_call.code_interpreter.outputs and len(tool_call.code_interpreter.outputs) > 0:
-        output_value = tool_call.code_interpreter.outputs[0]
+        # Extract search parameters
+        query = function_args.get("query", "")
+        model = function_args.get("model", "openai/gpt-4o")
+        max_results = function_args.get("max_results", None)
 
-    # Process and display the results in the UI
-    await process_tool_call(
-        step_references=step_references,
-        step=step,
-        tool_call=tool_call,
-        name=tool_call.type,
-        input=tool_call.code_interpreter.input or "# Generating code",
-        output=output_value,
-        show_input="python",
-    )
+        # Build search options
+        search_options = WebSearchOptions(
+            search_context_size="medium",
+            include_urls=True,
+            summarize_results=True,
+        )
 
-    return {
-        "output": tool_call.code_interpreter.outputs or "",
-        "tool_call_id": tool_call.id,
-    }
+        # Execute search
+        search_result = await web_search_tool.search(
+            query=query,
+            model=model,
+            search_options=search_options,
+            max_results=max_results,
+        )
+
+        # Process and return results
+        return {
+            "output": search_result,
+            "tool_call_id": tool_call.id,
+        }
+
+    # Handle other function tools...
 ```
 
 ## Thread Management
@@ -152,17 +238,50 @@ The Assistant Tools interface in VT.ai provides:
 
 - **Step Visualization**: Shows each step of the assistant's work
 - **Code Displays**: Properly formatted code blocks with syntax highlighting
+- **Search Results Display**: Formatted presentation of web search results
 - **Output Visualization**: Displays images, charts, and other outputs
 - **Interactive Elements**: Allows users to interact with the assistant's outputs
 
 ## Extending Assistant Tools
 
-While function tools are temporarily disabled, VT.ai is designed to be extended with custom tools:
+VT.ai is designed to be extended with custom tools:
 
 1. Define the tool interface in `vtai/tools/`
 2. Add the tool to the assistant configuration
 3. Implement the tool processing logic
 4. Add UI components to display tool outputs
+
+### Creating a Custom Tool
+
+Here's an example of how to create a new tool:
+
+```python
+# In vtai/tools/my_custom_tool.py
+from typing import Dict, Any, Optional
+
+class MyCustomTool:
+    """A custom tool implementation for VT.ai."""
+
+    def __init__(self, api_key: Optional[str] = None):
+        """Initialize the custom tool."""
+        self.api_key = api_key
+
+    async def process(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process the input and generate a result.
+
+        Args:
+            input_data: The input parameters for the tool
+
+        Returns:
+            Dict containing the processing results
+        """
+        # Tool implementation
+        result = {"status": "success", "data": "Custom tool output"}
+        return result
+```
+
+Then register it in the assistant configuration and add a handler in the function tool processor.
 
 See the [Extending VT.ai](extending.md) guide for more details.
 
@@ -180,9 +299,30 @@ When using Assistant Tools:
    - Ask specific questions about file content
    - Upload files in appropriate formats
 
-3. **General Usage**:
+3. **Web Search**:
+   - Use specific, focused search queries
+   - Specify the number of results when quality is important
+   - Ask follow-up questions about search results for clarification
+
+4. **General Usage**:
    - Be explicit about what you want the assistant to do
    - Check intermediate results
    - Break complex tasks into smaller steps
 
-*This page is under construction. More detailed information about assistant tools will be added soon.*
+## Limitations and Considerations
+
+- **API Rate Limits**: Web search and other API-based tools may have rate limits
+- **Result Freshness**: Web search results reflect the state of the web at the time of the search
+- **Processing Time**: Complex tool operations may take longer to complete
+- **Tool Selection**: The model decides which tool to use based on the query; you cannot directly specify a tool
+- **Tool Chaining**: Tools can be chained together (e.g., search → code interpretation) for more complex workflows
+
+## Future Enhancements
+
+Planned enhancements for Assistant Tools include:
+
+- **Enhanced Tool Discovery**: More intuitive UI for understanding available tools
+- **Custom Tool Registry**: User-defined tools with a simplified registration process
+- **Tool Permissions**: Granular control over which tools can be used
+- **Improved Visualization**: Better display of complex tool outputs
+- **Additional Integrations**: More built-in tools for common services and APIs
