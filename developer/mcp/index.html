@@ -476,6 +476,8 @@
       
         
       
+        
+      
     
     
     
@@ -619,6 +621,29 @@
   
   <span class="md-ellipsis">
     Assistant Tools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rust-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rust Implementation
     
   </span>
   
@@ -848,6 +873,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-standalone-mcp-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Standalone MCP Server
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Standalone MCP Server">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#features-of-the-standalone-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      Features of the Standalone Server
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-the-standalone-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running the Standalone Server
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-mcp-in-your-applications" class="md-nav__link">
     <span class="md-ellipsis">
       Using MCP in Your Applications
@@ -935,6 +993,48 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#multimodal-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multimodal Support
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-optimizations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Optimizations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Optimizations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#connection-pooling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connection Pooling
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#local-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      Local Caching
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -944,6 +1044,15 @@
   <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       Troubleshooting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extending-the-mcp-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extending the MCP Server
     </span>
   </a>
   
@@ -969,7 +1078,7 @@
 
 
 <h1 id="model-context-protocol-mcp-integration">Model Context Protocol (MCP) Integration<a class="headerlink" href="#model-context-protocol-mcp-integration" title="Permanent link">&para;</a></h1>
-<p>VT.ai now includes built-in support for the Model Context Protocol (MCP), a standardized way to interact with language models across different providers. This document explains how to use the MCP integration in your VT.ai applications.</p>
+<p>VT.ai includes built-in support for the Model Context Protocol (MCP), a standardized way to interact with language models across different providers. This document explains how to use the MCP integration in your VT.ai applications.</p>
 <h2 id="what-is-mcp">What is MCP?<a class="headerlink" href="#what-is-mcp" title="Permanent link">&para;</a></h2>
 <p>The Model Context Protocol (MCP) is a standardized protocol for AI model providers and clients to exchange information. It helps standardize how models receive inputs and return outputs, making it easier to swap models or use multiple models in a system.</p>
 <p>MCP provides several benefits:</p>
@@ -977,6 +1086,8 @@
 <li><strong>Model Interchangeability</strong>: Switch easily between models without changing your code</li>
 <li><strong>Standardized Interface</strong>: Consistent API for all language models</li>
 <li><strong>Improved Stability</strong>: Reduced dependency on provider-specific API changes</li>
+<li><strong>Unified Response Format</strong>: Consistent response structure regardless of provider</li>
+<li><strong>Enhanced Reliability</strong>: Built-in error handling and fallback mechanisms</li>
 </ul>
 <h2 id="how-mcp-works-in-vtai">How MCP Works in VT.ai<a class="headerlink" href="#how-mcp-works-in-vtai" title="Permanent link">&para;</a></h2>
 <p>When you start VT.ai, an MCP server is automatically launched in the background. This server acts as a middleware between your application and various language models, providing a standardized interface.</p>
@@ -986,7 +1097,44 @@
 <li>Maps standardized model names to provider-specific models</li>
 <li>Forwards the request to the appropriate provider via LiteLLM</li>
 <li>Returns responses in a standardized format</li>
+<li>Handles errors and retries gracefully</li>
 </ol>
+<div class="highlight"><pre><span></span><code>┌─────────────────┐     ┌───────────────┐     ┌────────────────┐
+│ VT.ai           │     │ MCP Server    │     │ LiteLLM        │
+│ Application     │────▶│ Middleware    │────▶│ Client         │
+└─────────────────┘     └───────────────┘     └────────────────┘
+        │                       │                     │
+        ▼                       ▼                     ▼
+┌─────────────────┐     ┌───────────────┐     ┌────────────────┐
+│ User            │     │ Model         │     │ AI Provider    │
+│ Interface       │     │ Mapping       │     │ APIs           │
+└─────────────────┘     └───────────────┘     └────────────────┘
+</code></pre></div>
+<h2 id="the-standalone-mcp-server">The Standalone MCP Server<a class="headerlink" href="#the-standalone-mcp-server" title="Permanent link">&para;</a></h2>
+<p>VT.ai includes a standalone MCP server in the <code>mcp_server/</code> directory that can be run independently of the main application.</p>
+<h3 id="features-of-the-standalone-server">Features of the Standalone Server<a class="headerlink" href="#features-of-the-standalone-server" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Independent Operation</strong>: Can run separately from the main VT.ai application</li>
+<li><strong>API Standardization</strong>: Uses LiteLLM to standardize interactions with different LLM providers</li>
+<li><strong>Flexible Configuration</strong>: Configure through environment variables or command-line arguments</li>
+<li><strong>Simple HTTP API</strong>: Follows the Model Context Protocol specification</li>
+<li><strong>Cross-Application Usage</strong>: Can be used by multiple applications simultaneously</li>
+</ul>
+<h3 id="running-the-standalone-server">Running the Standalone Server<a class="headerlink" href="#running-the-standalone-server" title="Permanent link">&para;</a></h3>
+<p>You can run the MCP server directly:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># From the project root</span>
+./scripts/run_mcp_server.sh
+
+<span class="c1"># Or manually</span>
+<span class="nb">cd</span><span class="w"> </span>mcp_server
+python<span class="w"> </span>server.py
+</code></pre></div>
+<p>By default, the server runs on <code>localhost:9393</code>, but you can customize this:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Custom host and port</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MCP_HOST</span><span class="o">=</span><span class="s2">&quot;your-host&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MCP_PORT</span><span class="o">=</span><span class="s2">&quot;your-port&quot;</span>
+./scripts/run_mcp_server.sh
+</code></pre></div>
 <h2 id="using-mcp-in-your-applications">Using MCP in Your Applications<a class="headerlink" href="#using-mcp-in-your-applications" title="Permanent link">&para;</a></h2>
 <h3 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h3>
 <p>You can use MCP in your VT.ai applications by importing the necessary components:</p>
@@ -1074,7 +1222,9 @@
 <ul>
 <li><code>MCP_HOST</code>: Host address for the MCP server (default: "localhost")</li>
 <li><code>MCP_PORT</code>: Port for the MCP server (default: 9393)</li>
-<li><code>MCP_DEFAULT_MODEL</code>: Default model--mcp-port to use when none is specified (default: "o3-mini")</li>
+<li><code>MCP_DEFAULT_MODEL</code>: Default model to use when none is specified (default: "o3-mini")</li>
+<li><code>MCP_TIMEOUT</code>: Request timeout in seconds (default: 60)</li>
+<li><code>MCP_MAX_RETRIES</code>: Maximum number of retry attempts (default: 3)</li>
 </ul>
 <p>Model mappings are defined in <code>MCP_MODEL_MAP</code> in the config file.</p>
 <h2 id="example-application">Example Application<a class="headerlink" href="#example-application" title="Permanent link">&para;</a></h2>
@@ -1087,6 +1237,7 @@
 <li>Streaming responses</li>
 <li>Temperature adjustment</li>
 <li>Token count display</li>
+<li>Error handling and retries</li>
 </ul>
 <h2 id="advanced-usage">Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permanent link">&para;</a></h2>
 <h3 id="custom-model-mappings">Custom Model Mappings<a class="headerlink" href="#custom-model-mappings" title="Permanent link">&para;</a></h3>
@@ -1118,12 +1269,110 @@
 
     <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 </code></pre></div>
+<h3 id="multimodal-support">Multimodal Support<a class="headerlink" href="#multimodal-support" title="Permanent link">&para;</a></h3>
+<p>MCP supports multimodal inputs including images:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_mcp_completion</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">image_analysis</span><span class="p">():</span>
+    <span class="c1"># Read image file and convert to base64</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;image.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">image_data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Create multimodal message</span>
+    <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;What&#39;s in this image?&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;image_url&quot;</span><span class="p">,</span> <span class="s2">&quot;image_url&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;data:image/jpeg;base64,</span><span class="si">{</span><span class="n">image_data</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}}</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Send to vision-capable model</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">create_mcp_completion</span><span class="p">(</span>
+        <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o&quot;</span><span class="p">,</span>  <span class="c1"># Must be a vision-capable model</span>
+        <span class="n">temperature</span><span class="o">=</span><span class="mf">0.5</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="performance-optimizations">Performance Optimizations<a class="headerlink" href="#performance-optimizations" title="Permanent link">&para;</a></h2>
+<h3 id="connection-pooling">Connection Pooling<a class="headerlink" href="#connection-pooling" title="Permanent link">&para;</a></h3>
+<p>The MCP server uses connection pooling to improve performance when making multiple requests:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Configure connection pooling</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">aiohttp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">batch_requests</span><span class="p">():</span>
+    <span class="c1"># Create a shared session</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+        <span class="c1"># Create 10 completion requests</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">call_mcp_api</span><span class="p">(</span>
+                <span class="n">messages</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Question </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}],</span>
+                <span class="n">model</span><span class="o">=</span><span class="s2">&quot;o3-mini&quot;</span><span class="p">,</span>
+                <span class="n">session</span><span class="o">=</span><span class="n">session</span>  <span class="c1"># Pass the session to reuse connections</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Run all requests concurrently</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="local-caching">Local Caching<a class="headerlink" href="#local-caching" title="Permanent link">&para;</a></h3>
+<p>You can implement caching to reduce duplicate requests:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+
+<span class="c1"># Simple cache for MCP responses</span>
+<span class="n">response_cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cached_mcp_call</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">):</span>
+    <span class="c1"># Create a cache key from the input parameters</span>
+    <span class="n">key_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;messages&quot;</span><span class="p">:</span> <span class="n">messages</span><span class="p">,</span>
+        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+        <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="n">temperature</span>
+    <span class="p">}</span>
+    <span class="n">cache_key</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">key_data</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+    <span class="c1"># Check cache</span>
+    <span class="k">if</span> <span class="n">cache_key</span> <span class="ow">in</span> <span class="n">response_cache</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using cached response&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response_cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span>
+
+    <span class="c1"># Make actual API call</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">call_mcp_api</span><span class="p">(</span>
+        <span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Cache the response</span>
+    <span class="n">response_cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">response</span>
+    <span class="k">return</span> <span class="n">response</span>
+</code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <ul>
 <li>If you encounter errors connecting to the MCP server, check that it's running by looking for the log message "Started MCP server on localhost:9393"</li>
 <li>If a model isn't working, verify that you've set the appropriate API key for that provider</li>
 <li>For model mapping issues, check the <code>MCP_MODEL_MAP</code> in <code>mcp_config.py</code></li>
+<li>If the server is unresponsive, try restarting it with <code>./scripts/run_mcp_server.sh</code></li>
+<li>For persistent issues, check the server logs in the terminal where it's running</li>
 </ul>
+<h2 id="extending-the-mcp-server">Extending the MCP Server<a class="headerlink" href="#extending-the-mcp-server" title="Permanent link">&para;</a></h2>
+<p>You can extend the MCP server by:</p>
+<ol>
+<li>Adding new model mappings in <code>mcp_config.py</code></li>
+<li>Implementing custom response processors</li>
+<li>Creating middleware for request/response modification</li>
+<li>Adding custom error handling logic</li>
+</ol>
+<p>For more advanced customization, you can modify <code>mcp_server/server.py</code> directly.</p>
 <hr />
 <p>For more information on the Model Context Protocol, visit <a href="https://github.com/lostinthestack/mcp">the MCP documentation</a>.</p>
 

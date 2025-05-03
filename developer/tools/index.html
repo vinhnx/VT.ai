@@ -18,7 +18,7 @@
         <link rel="prev" href="../models/">
       
       
-        <link rel="next" href="../../api/">
+        <link rel="next" href="../rust-implementation/">
       
       
       <link rel="icon" href="../../images/favicon.ico">
@@ -482,6 +482,8 @@
       
         
       
+        
+      
     
     
     
@@ -704,6 +706,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#web-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#function-calling" class="md-nav__link">
     <span class="md-ellipsis">
       Function Calling
@@ -784,6 +795,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Extending Assistant Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-custom-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating a Custom Tool
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -795,10 +821,51 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#limitations-and-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations and Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Enhancements
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rust-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rust Implementation
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -1042,6 +1109,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#web-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      Web Search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#function-calling" class="md-nav__link">
     <span class="md-ellipsis">
       Function Calling
@@ -1122,12 +1198,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Extending Assistant Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-custom-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating a Custom Tool
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
   <a href="#best-practices" class="md-nav__link">
     <span class="md-ellipsis">
       Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations-and-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations and Considerations
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Future Enhancements
     </span>
   </a>
   
@@ -1155,7 +1264,7 @@
 <h1 id="assistant-tools">Assistant Tools<a class="headerlink" href="#assistant-tools" title="Permanent link">&para;</a></h1>
 <p>This guide explains the Assistant Tools feature in VT.ai, which provides specialized capabilities beyond standard chat interaction.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>VT.ai includes an Assistant mode based on OpenAI's Assistants API that provides powerful tools for code interpretation, file handling, and function calling. These tools enable more complex workflows and specialized functionality.</p>
+<p>VT.ai includes an Assistant mode based on OpenAI's Assistants API that provides powerful tools for code interpretation, file handling, web search, and function calling. These tools enable complex workflows and specialized functionality.</p>
 <h2 id="available-tools">Available Tools<a class="headerlink" href="#available-tools" title="Permanent link">&para;</a></h2>
 <h3 id="code-interpreter">Code Interpreter<a class="headerlink" href="#code-interpreter" title="Permanent link">&para;</a></h3>
 <p>The Code Interpreter tool allows executing Python code directly within the chat interface:</p>
@@ -1204,12 +1313,77 @@ plt.show()
 <li>Process structured data</li>
 <li>Generate insights from file content</li>
 </ul>
+<h3 id="web-search">Web Search<a class="headerlink" href="#web-search" title="Permanent link">&para;</a></h3>
+<p>The Web Search tool enables querying the web for current information:</p>
+<ul>
+<li><strong>Features</strong>:</li>
+<li>Real-time web search for up-to-date information</li>
+<li>Smart summarization of search results</li>
+<li>Source attribution and URL inclusion</li>
+<li>
+<p>Customizable search parameters</p>
+</li>
+<li>
+<p><strong>Implementation</strong>:</p>
+</li>
+</ul>
+<p>The WebSearchTool is implemented in <code>vtai/tools/search.py</code> and integrates with the Tavily API for enhanced search capabilities. It provides:</p>
+<ul>
+<li>Context-aware search</li>
+<li>Domain filtering (include/exclude specific sites)</li>
+<li>Result summarization</li>
+<li>
+<p>Customizable result count</p>
+</li>
+<li>
+<p><strong>Usage Example</strong>:</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">WebSearchTool</span><span class="p">,</span> <span class="n">WebSearchOptions</span>
+
+<span class="c1"># Initialize the search tool with API keys</span>
+<span class="n">search_tool</span> <span class="o">=</span> <span class="n">WebSearchTool</span><span class="p">(</span>
+    <span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;your-openai-key&quot;</span><span class="p">,</span>
+    <span class="n">tavily_api_key</span><span class="o">=</span><span class="s2">&quot;your-tavily-key&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Configure search options</span>
+<span class="n">options</span> <span class="o">=</span> <span class="n">WebSearchOptions</span><span class="p">(</span>
+    <span class="n">search_context_size</span><span class="o">=</span><span class="s2">&quot;medium&quot;</span><span class="p">,</span>  <span class="c1"># Options: small, medium, large</span>
+    <span class="n">include_urls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>             <span class="c1"># Include source URLs</span>
+    <span class="n">summarize_results</span><span class="o">=</span><span class="kc">True</span>         <span class="c1"># Provide an AI-generated summary</span>
+<span class="p">)</span>
+
+<span class="c1"># Execute search with options</span>
+<span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">search_tool</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+    <span class="n">query</span><span class="o">=</span><span class="s2">&quot;latest developments in AI&quot;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;openai/gpt-4o&quot;</span><span class="p">,</span>
+    <span class="n">search_options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
+    <span class="n">max_results</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+</code></pre></div>
+<ul>
+<li><strong>Return Format</strong>:</li>
+</ul>
+<p>The search tool returns structured results including:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;search_results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Article Title&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://example.com/article&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Snippet of content...&quot;</span><span class="p">},</span>
+<span class="w">        </span><span class="c1">// Additional results...</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;An AI-generated summary of the search results&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Original search query&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
 <h3 id="function-calling">Function Calling<a class="headerlink" href="#function-calling" title="Permanent link">&para;</a></h3>
 <p>Function Calling allows the assistant to interact with external systems and APIs:</p>
 <ul>
-<li><strong>Current Status</strong>: Function tools are temporarily disabled in the current version.</li>
-<li><strong>Planned Features</strong>:</li>
-<li>Web search integration</li>
+<li><strong>Current Status</strong>: Basic function tools are implemented with a focus on web search integration.</li>
+<li><strong>Available Functions</strong>:</li>
+<li>Web search (integrated with Tavily)</li>
+<li>Context-aware information retrieval</li>
+<li>Search summarization</li>
+<li><strong>Planned Functions</strong>:</li>
 <li>External API calls</li>
 <li>Database interactions</li>
 <li>System operations</li>
@@ -1225,7 +1399,22 @@ plt.show()
     <span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="p">[</span>
         <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;code_interpreter&quot;</span><span class="p">},</span>
         <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;retrieval&quot;</span><span class="p">},</span>
-        <span class="c1"># Function tools temporarily disabled</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;function&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;function&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;web_search&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Search the web for current information&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Search query&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Model for processing&quot;</span><span class="p">},</span>
+                        <span class="s2">&quot;max_results&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Maximum results&quot;</span><span class="p">}</span>
+                    <span class="p">},</span>
+                    <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">]</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
     <span class="p">],</span>
     <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;o3&quot;</span>
 <span class="p">}</span>
@@ -1236,46 +1425,53 @@ plt.show()
 <li>User submits a query in Assistant mode</li>
 <li>Query is processed by the appropriate model</li>
 <li>If the model decides to use a tool, a tool call is generated</li>
-<li>VT.ai processes the tool call (e.g., executes code, analyzes files)</li>
+<li>VT.ai processes the tool call (e.g., executes code, searches the web)</li>
 <li>Tool output is returned to the model</li>
 <li>Model generates final response incorporating tool results</li>
 </ol>
 <h3 id="processing-tool-calls">Processing Tool Calls<a class="headerlink" href="#processing-tool-calls" title="Permanent link">&para;</a></h3>
 <p>Tool calls are processed by specialized handlers:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Example of code interpreter tool processing</span>
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_code_interpreter_tool</span><span class="p">(</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Example of web search tool processing (simplified)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_function_tool</span><span class="p">(</span>
     <span class="n">step_references</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">cl</span><span class="o">.</span><span class="n">Step</span><span class="p">],</span> <span class="n">step</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">tool_call</span><span class="p">:</span> <span class="n">Any</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Process code interpreter tool calls.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process function tool calls like web search.&quot;&quot;&quot;</span>
+    <span class="n">function_name</span> <span class="o">=</span> <span class="n">tool_call</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">function_args</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">tool_call</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">arguments</span><span class="p">)</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        step_references: Dictionary of step references</span>
-<span class="sd">        step: The run step</span>
-<span class="sd">        tool_call: The tool call to process</span>
+    <span class="k">if</span> <span class="n">function_name</span> <span class="o">==</span> <span class="s2">&quot;web_search&quot;</span><span class="p">:</span>
+        <span class="c1"># Initialize the web search tool</span>
+        <span class="n">web_search_tool</span> <span class="o">=</span> <span class="n">WebSearchTool</span><span class="p">(</span>
+            <span class="n">api_key</span><span class="o">=</span><span class="n">openai_api_key</span><span class="p">,</span> <span class="n">tavily_api_key</span><span class="o">=</span><span class="n">tavily_api_key</span>
+        <span class="p">)</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        Tool output dictionary</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">output_value</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">tool_call</span><span class="o">.</span><span class="n">code_interpreter</span><span class="o">.</span><span class="n">outputs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tool_call</span><span class="o">.</span><span class="n">code_interpreter</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">output_value</span> <span class="o">=</span> <span class="n">tool_call</span><span class="o">.</span><span class="n">code_interpreter</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># Extract search parameters</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">function_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">function_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;openai/gpt-4o&quot;</span><span class="p">)</span>
+        <span class="n">max_results</span> <span class="o">=</span> <span class="n">function_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_results&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="c1"># Process and display the results in the UI</span>
-    <span class="k">await</span> <span class="n">process_tool_call</span><span class="p">(</span>
-        <span class="n">step_references</span><span class="o">=</span><span class="n">step_references</span><span class="p">,</span>
-        <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
-        <span class="n">tool_call</span><span class="o">=</span><span class="n">tool_call</span><span class="p">,</span>
-        <span class="n">name</span><span class="o">=</span><span class="n">tool_call</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
-        <span class="nb">input</span><span class="o">=</span><span class="n">tool_call</span><span class="o">.</span><span class="n">code_interpreter</span><span class="o">.</span><span class="n">input</span> <span class="ow">or</span> <span class="s2">&quot;# Generating code&quot;</span><span class="p">,</span>
-        <span class="n">output</span><span class="o">=</span><span class="n">output_value</span><span class="p">,</span>
-        <span class="n">show_input</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+        <span class="c1"># Build search options</span>
+        <span class="n">search_options</span> <span class="o">=</span> <span class="n">WebSearchOptions</span><span class="p">(</span>
+            <span class="n">search_context_size</span><span class="o">=</span><span class="s2">&quot;medium&quot;</span><span class="p">,</span>
+            <span class="n">include_urls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">summarize_results</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">tool_call</span><span class="o">.</span><span class="n">code_interpreter</span><span class="o">.</span><span class="n">outputs</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;tool_call_id&quot;</span><span class="p">:</span> <span class="n">tool_call</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-    <span class="p">}</span>
+        <span class="c1"># Execute search</span>
+        <span class="n">search_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">web_search_tool</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">search_options</span><span class="o">=</span><span class="n">search_options</span><span class="p">,</span>
+            <span class="n">max_results</span><span class="o">=</span><span class="n">max_results</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Process and return results</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">search_result</span><span class="p">,</span>
+            <span class="s2">&quot;tool_call_id&quot;</span><span class="p">:</span> <span class="n">tool_call</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="c1"># Handle other function tools...</span>
 </code></pre></div>
 <h2 id="thread-management">Thread Management<a class="headerlink" href="#thread-management" title="Permanent link">&para;</a></h2>
 <p>Assistant mode uses threads to maintain conversation context:</p>
@@ -1290,17 +1486,45 @@ plt.show()
 <ul>
 <li><strong>Step Visualization</strong>: Shows each step of the assistant's work</li>
 <li><strong>Code Displays</strong>: Properly formatted code blocks with syntax highlighting</li>
+<li><strong>Search Results Display</strong>: Formatted presentation of web search results</li>
 <li><strong>Output Visualization</strong>: Displays images, charts, and other outputs</li>
 <li><strong>Interactive Elements</strong>: Allows users to interact with the assistant's outputs</li>
 </ul>
 <h2 id="extending-assistant-tools">Extending Assistant Tools<a class="headerlink" href="#extending-assistant-tools" title="Permanent link">&para;</a></h2>
-<p>While function tools are temporarily disabled, VT.ai is designed to be extended with custom tools:</p>
+<p>VT.ai is designed to be extended with custom tools:</p>
 <ol>
 <li>Define the tool interface in <code>vtai/tools/</code></li>
 <li>Add the tool to the assistant configuration</li>
 <li>Implement the tool processing logic</li>
 <li>Add UI components to display tool outputs</li>
 </ol>
+<h3 id="creating-a-custom-tool">Creating a Custom Tool<a class="headerlink" href="#creating-a-custom-tool" title="Permanent link">&para;</a></h3>
+<p>Here's an example of how to create a new tool:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># In vtai/tools/my_custom_tool.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyCustomTool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A custom tool implementation for VT.ai.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the custom tool.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">api_key</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process the input and generate a result.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input_data: The input parameters for the tool</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict containing the processing results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Tool implementation</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;Custom tool output&quot;</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">result</span>
+</code></pre></div>
+<p>Then register it in the assistant configuration and add a handler in the function tool processor.</p>
 <p>See the <a href="../extending/">Extending VT.ai</a> guide for more details.</p>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <p>When using Assistant Tools:</p>
@@ -1320,13 +1544,37 @@ plt.show()
 <p>Upload files in appropriate formats</p>
 </li>
 <li>
+<p><strong>Web Search</strong>:</p>
+</li>
+<li>Use specific, focused search queries</li>
+<li>Specify the number of results when quality is important</li>
+<li>
+<p>Ask follow-up questions about search results for clarification</p>
+</li>
+<li>
 <p><strong>General Usage</strong>:</p>
 </li>
 <li>Be explicit about what you want the assistant to do</li>
 <li>Check intermediate results</li>
 <li>Break complex tasks into smaller steps</li>
 </ol>
-<p><em>This page is under construction. More detailed information about assistant tools will be added soon.</em></p>
+<h2 id="limitations-and-considerations">Limitations and Considerations<a class="headerlink" href="#limitations-and-considerations" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>API Rate Limits</strong>: Web search and other API-based tools may have rate limits</li>
+<li><strong>Result Freshness</strong>: Web search results reflect the state of the web at the time of the search</li>
+<li><strong>Processing Time</strong>: Complex tool operations may take longer to complete</li>
+<li><strong>Tool Selection</strong>: The model decides which tool to use based on the query; you cannot directly specify a tool</li>
+<li><strong>Tool Chaining</strong>: Tools can be chained together (e.g., search → code interpretation) for more complex workflows</li>
+</ul>
+<h2 id="future-enhancements">Future Enhancements<a class="headerlink" href="#future-enhancements" title="Permanent link">&para;</a></h2>
+<p>Planned enhancements for Assistant Tools include:</p>
+<ul>
+<li><strong>Enhanced Tool Discovery</strong>: More intuitive UI for understanding available tools</li>
+<li><strong>Custom Tool Registry</strong>: User-defined tools with a simplified registration process</li>
+<li><strong>Tool Permissions</strong>: Granular control over which tools can be used</li>
+<li><strong>Improved Visualization</strong>: Better display of complex tool outputs</li>
+<li><strong>Additional Integrations</strong>: More built-in tools for common services and APIs</li>
+</ul>
 
 
 

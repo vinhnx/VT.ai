@@ -477,6 +477,48 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Thinking Mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-thinking-mode-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How Thinking Mode Works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-thinking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Thinking Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-uses-for-thinking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Uses for Thinking Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#models-that-excel-with-thinking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Models That Excel with Thinking Mode
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -494,6 +536,30 @@
       Image Generation
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Image Generation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#advanced-image-generation-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Image Generation Settings
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpt-image-1-prompt-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPT-Image-1 Prompt Guide
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -622,6 +688,8 @@
   
     
     
+      
+        
       
         
       
@@ -776,6 +844,29 @@
   
   <span class="md-ellipsis">
     Assistant Tools
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/rust-implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rust Implementation
     
   </span>
   
@@ -1045,6 +1136,48 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Thinking Mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-thinking-mode-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      How Thinking Mode Works
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-thinking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Thinking Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-uses-for-thinking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Uses for Thinking Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#models-that-excel-with-thinking-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Models That Excel with Thinking Mode
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1062,6 +1195,30 @@
       Image Generation
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Image Generation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#advanced-image-generation-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Image Generation Settings
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpt-image-1-prompt-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPT-Image-1 Prompt Guide
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1140,6 +1297,7 @@
 <li>File attachment support (PDF, CSV, images, etc.)</li>
 <li>Persistent conversation threads</li>
 <li>Function calling for external integrations</li>
+<li>Web search with intelligent summarization</li>
 </ul>
 <p>To use assistant mode:</p>
 <ol>
@@ -1177,27 +1335,78 @@
 <li>"Find recent news about Mars exploration"</li>
 </ul>
 <h3 id="thinking-mode">Thinking Mode<a class="headerlink" href="#thinking-mode" title="Permanent link">&para;</a></h3>
-<p>Thinking mode gives you access to step-by-step reasoning from the models:</p>
+<p>Thinking mode gives you access to step-by-step reasoning from the models, providing transparency into the AI's thought process:</p>
 <ul>
 <li>See the model's internal reasoning process</li>
 <li>Understand how the model arrived at its conclusion</li>
 <li>Great for learning, debugging, and complex problem-solving</li>
+<li>Helps with verification of facts and logical reasoning</li>
 </ul>
-<p>To use thinking mode:</p>
+<h4 id="how-thinking-mode-works">How Thinking Mode Works<a class="headerlink" href="#how-thinking-mode-works" title="Permanent link">&para;</a></h4>
+<p>In the background, VT.ai uses special reasoning-enhanced models and prompt engineering to make the model's thought process explicit:</p>
 <ol>
-<li>Add the <code>&lt;think&gt;</code> tag at the beginning of your message</li>
-<li>The model will show its reasoning steps before providing the final answer</li>
-<li>You can see both the thinking process and the final response</li>
+<li>The query is sent to a reasoning-capable model with instructions to show its work</li>
+<li>The model breaks down the problem into steps</li>
+<li>Each step of reasoning is displayed in the interface</li>
+<li>The final conclusion is presented after the reasoning steps</li>
 </ol>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code>&lt;think&gt;What are the key factors that contributed to the Industrial Revolution?
+<h4 id="using-thinking-mode">Using Thinking Mode<a class="headerlink" href="#using-thinking-mode" title="Permanent link">&para;</a></h4>
+<p>There are two ways to activate thinking mode:</p>
+<ol>
+<li>
+<p><strong>Manual Activation</strong>: Add the <code>&lt;think&gt;</code> tag at the beginning of your message
+   <div class="highlight"><pre><span></span><code>&lt;think&gt;What are the key factors that contributed to the Industrial Revolution?
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Automatic Activation</strong>: Enable "Use Thinking Mode For Reasoning Models" in settings</p>
+</li>
+<li>When enabled, VT.ai will automatically use thinking mode for models in the reasoning-enhanced list</li>
+<li>This includes models like DeepSeek Reasoner, DeepSeek R1 series, Qwen 2.5, Claude 3, and GPT-4o</li>
+</ol>
+<h4 id="best-uses-for-thinking-mode">Best Uses for Thinking Mode<a class="headerlink" href="#best-uses-for-thinking-mode" title="Permanent link">&para;</a></h4>
+<p>Thinking mode is especially useful for:</p>
+<ul>
+<li><strong>Complex problem solving</strong>: Mathematics, logic puzzles, step-by-step analysis</li>
+<li><strong>Fact verification</strong>: See how the model reaches factual conclusions</li>
+<li><strong>Learning</strong>: Understand reasoning processes for educational topics</li>
+<li><strong>Debugging</strong>: Identify where reasoning might go wrong</li>
+<li><strong>Decision making</strong>: Follow the model's decision process</li>
+</ul>
+<p>Example queries that work well with thinking mode:</p>
+<div class="highlight"><pre><span></span><code>&lt;think&gt;Is it more environmentally friendly to use paper bags or plastic bags?
+
+&lt;think&gt;Solve the quadratic equation: 2x² + 7x - 15 = 0
+
+&lt;think&gt;What would happen to Earth&#39;s climate if the sun suddenly became 10% brighter?
+
+&lt;think&gt;Analyze the following code and explain what it does:
+def mystery_function(arr):
+    result = []
+    for i in range(len(arr)):
+        if i % 2 == 0:
+            result.append(arr[i] * 2)
+        else:
+            result.append(arr[i] + 3)
+    return result
 </code></pre></div>
+<h4 id="models-that-excel-with-thinking-mode">Models That Excel with Thinking Mode<a class="headerlink" href="#models-that-excel-with-thinking-mode" title="Permanent link">&para;</a></h4>
+<p>While thinking mode works with all models, these models are specifically optimized for step-by-step reasoning:</p>
+<ul>
+<li><strong>DeepSeek Reasoner</strong>: Specifically designed for transparent reasoning</li>
+<li><strong>DeepSeek R1 Series</strong>: Enhanced reasoning capabilities across different model sizes</li>
+<li><strong>Qwen 2.5 Models</strong>: Excellent structured reasoning abilities</li>
+<li><strong>Claude 3 Opus/Sonnet</strong>: Strong logical reasoning with clear explanations</li>
+<li><strong>GPT-4o</strong>: Advanced reasoning with multimodal capabilities</li>
+</ul>
 <h3 id="image-analysis">Image Analysis<a class="headerlink" href="#image-analysis" title="Permanent link">&para;</a></h3>
 <p>VT.ai can analyze and interpret images:</p>
 <ul>
 <li>Upload images directly from your device</li>
 <li>Provide URLs to online images</li>
 <li>Get detailed descriptions and analysis</li>
+<li>Extract text with optical character recognition (OCR)</li>
+<li>Identify objects, scenes, and visual elements</li>
 </ul>
 <p>To analyze an image:</p>
 <ol>
@@ -1210,6 +1419,8 @@
 <li>"What's in this image?"</li>
 <li>"Can you describe this diagram?"</li>
 <li>"What text appears in this screenshot?"</li>
+<li>"Identify the objects in this picture"</li>
+<li>"What emotion does the person in this image appear to be feeling?"</li>
 </ul>
 <h3 id="image-generation">Image Generation<a class="headerlink" href="#image-generation" title="Permanent link">&para;</a></h3>
 <p>Generate images based on text descriptions:</p>
@@ -1217,9 +1428,10 @@
 <li><strong>DALL-E 3</strong>: Create custom images from detailed prompts</li>
 <li><strong>GPT-Image-1</strong>: Advanced image generation with extensive customization options</li>
 <li>Transparent backgrounds for logos and graphics</li>
-<li>Multiple output formats (PNG, JPEG)</li>
+<li>Multiple output formats (PNG, JPEG, WEBP)</li>
 <li>Customizable dimensions (square, landscape, portrait)</li>
 <li>Variable quality and compression settings</li>
+<li>HD options for higher quality outputs</li>
 <li>Moderation controls</li>
 </ul>
 <p>To generate an image:</p>
@@ -1228,36 +1440,96 @@
 <li>The system will recognize the image generation intent</li>
 <li>The appropriate image generation model will create and display the image based on your description</li>
 </ol>
+<h4 id="advanced-image-generation-settings">Advanced Image Generation Settings<a class="headerlink" href="#advanced-image-generation-settings" title="Permanent link">&para;</a></h4>
 <p>For advanced GPT-Image-1 options, you can configure:</p>
 <ul>
-<li>Image size: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_SIZE</code> (e.g., "1024x1024", "1536x1024", "1024x1536")</li>
-<li>Quality: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_QUALITY</code> (e.g., "standard", "high")</li>
-<li>Background: Set with <code>VT_SETTINGS_IMAGE_GEN_BACKGROUND</code> (e.g., "auto", "transparent")</li>
-<li>Output format: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_FORMAT</code> (e.g., "png", "jpeg")</li>
-<li>Compression: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION</code> (e.g., "90", "100")</li>
+<li><strong>Image size</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_SIZE</code> </li>
+<li>
+<p>Options: "1024x1024" (square), "1792x1024" (landscape), "1024x1792" (portrait), "1536x1536" (large square)</p>
+</li>
+<li>
+<p><strong>Quality</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_QUALITY</code> </p>
+</li>
+<li>
+<p>Options: "standard" (faster), "hd" (higher quality)</p>
+</li>
+<li>
+<p><strong>Background</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_BACKGROUND</code> </p>
+</li>
+<li>
+<p>Options: "auto" (context-dependent), "transparent" (for PNG format)</p>
+</li>
+<li>
+<p><strong>Output format</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_FORMAT</code> </p>
+</li>
+<li>
+<p>Options: "png" (lossless, supports transparency), "jpeg" (smaller file size), "webp" (best compression)</p>
+</li>
+<li>
+<p><strong>Compression</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION</code> </p>
+</li>
+<li>Range: 0-100, where 100 is maximum quality (webp/jpeg only)</li>
 </ul>
-<h3 id="voice-interaction">Voice Interaction<a class="headerlink" href="#voice-interaction" title="Permanent link">&para;</a></h3>
-<p>VT.ai supports voice-based interaction:</p>
+<h4 id="gpt-image-1-prompt-guide">GPT-Image-1 Prompt Guide<a class="headerlink" href="#gpt-image-1-prompt-guide" title="Permanent link">&para;</a></h4>
+<p>To get the best results with GPT-Image-1, consider these prompting strategies:</p>
 <ul>
-<li>Text-to-speech for hearing responses</li>
-<li>Multiple voice models to choose from</li>
-<li>Natural speech synthesis</li>
+<li><strong>Be specific and detailed</strong>: Describe subjects, setting, lighting, style, mood</li>
+<li><strong>Specify artistic style</strong>: Photorealistic, cartoon, oil painting, watercolor, etc.</li>
+<li><strong>Include perspective information</strong>: Close-up, aerial view, isometric, etc.</li>
+<li><strong>Mention lighting conditions</strong>: Natural light, studio lighting, dramatic shadows</li>
+<li><strong>Reference time period or era</strong>: Victorian, futuristic, 1980s, etc.</li>
+</ul>
+<p>Example of a detailed prompt:
+<div class="highlight"><pre><span></span><code>Generate an image of a serene Japanese garden at sunset, with a small wooden bridge crossing a koi pond. Cherry blossom trees frame the scene, with soft pink petals falling onto the water&#39;s surface. The lighting is warm and golden, creating long shadows. Style: watercolor painting with fine details.
+</code></pre></div></p>
+<h3 id="voice-interaction">Voice Interaction<a class="headerlink" href="#voice-interaction" title="Permanent link">&para;</a></h3>
+<p>VT.ai supports comprehensive voice-based interaction:</p>
+<ul>
+<li><strong>Speech-to-Text</strong>: Real-time voice transcription using OpenAI's Whisper model</li>
+<li>Smart silence detection for natural conversation flow</li>
+<li>High-accuracy transcription across multiple languages</li>
+<li>
+<p>Seamless integration with conversation routing</p>
+</li>
+<li>
+<p><strong>Text-to-Speech</strong>: Listen to AI responses with natural-sounding voices</p>
+</li>
+<li>Multiple voice options (alloy, echo, fable, onyx, nova, shimmer)</li>
+<li>Toggle TTS on/off in settings</li>
+<li>High-quality voice synthesis using OpenAI's Audio API</li>
+<li>
+<p>Speak response action appears on all messages</p>
+</li>
+<li>
+<p><strong>Audio Understanding</strong>: Analyze and understand audio content</p>
+</li>
+<li>Upload audio files for detailed analysis</li>
+<li>Get both transcription and contextual understanding</li>
+<li>Support for various audio formats (MP3, WAV, M4A, etc.)</li>
 </ul>
 <p>To use voice features:</p>
 <ol>
 <li>Enable TTS in the settings menu</li>
 <li>Select your preferred voice model</li>
 <li>Each response will include a speech button to listen to the content</li>
+<li>For voice input, click the microphone icon and speak your query</li>
 </ol>
+<p>For the best voice interaction experience:</p>
+<ul>
+<li>Use a good quality microphone in a quiet environment</li>
+<li>Speak clearly and at a moderate pace</li>
+<li>Allow a brief pause after speaking to trigger automatic detection</li>
+<li>Choose a voice model that matches your preference for response playback</li>
+</ul>
 <h2 id="model-selection">Model Selection<a class="headerlink" href="#model-selection" title="Permanent link">&para;</a></h2>
 <p>VT.ai supports a wide range of models:</p>
 <ul>
-<li><strong>OpenAI</strong>: GPT-o1, GPT-o3 Mini, GPT-4o</li>
-<li><strong>Anthropic</strong>: Claude 3.5/3.7 (Sonnet, Opus)</li>
-<li><strong>Google</strong>: Gemini 2.0/2.5</li>
-<li><strong>Vision Models</strong>: GPT-4o, Gemini 1.5 Pro/Flash, Llama3.2 Vision</li>
+<li><strong>OpenAI</strong>: GPT-o1, GPT-o1 Mini, GPT-o1 Pro, GPT-o3 Mini, GPT-4.5 Preview, GPT-4o</li>
+<li><strong>Anthropic</strong>: Claude 3.5/3.7 (Sonnet, Haiku, Opus)</li>
+<li><strong>Google</strong>: Gemini 1.5 Pro/Flash, Gemini 2.0, Gemini 2.5 Pro/Flash</li>
+<li><strong>Vision Models</strong>: GPT-4o, Gemini 1.5 Pro/Flash, Gemini 2.5 Pro/Flash, Claude 3 models, Llama 3.2 Vision</li>
 <li><strong>TTS Models</strong>: GPT-4o mini TTS, TTS-1, TTS-1-HD</li>
-<li><strong>Local Models</strong>: Llama3, Mistral, DeepSeek R1 (via Ollama)</li>
+<li><strong>Local Models</strong>: Llama3, Mistral, DeepSeek R1, Qwen2.5-coder (via Ollama)</li>
 </ul>
 <p>You can select models in several ways:</p>
 <ol>
@@ -1268,11 +1540,13 @@
 <h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
 <p>VT.ai offers various configuration options accessible through the settings menu:</p>
 <ul>
-<li><strong>Temperature</strong>: Control randomness in responses</li>
-<li><strong>Top P</strong>: Adjust response diversity</li>
-<li><strong>Image Generation Settings</strong>: Style and quality options</li>
+<li><strong>Temperature</strong>: Control randomness in responses (0.0-2.0)</li>
+<li><strong>Top P</strong>: Adjust response diversity (0.0-1.0)</li>
+<li><strong>Image Generation Settings</strong>: Style, quality, format, and dimension options</li>
 <li><strong>TTS Settings</strong>: Voice models and quality options</li>
 <li><strong>Routing Options</strong>: Enable/disable dynamic conversation routing</li>
+<li><strong>Thinking Mode</strong>: Enable/disable automatic thinking mode for reasoning models</li>
+<li><strong>Web Search</strong>: Configure search result display and summarization</li>
 </ul>
 <p>For more details on configuration, see the <a href="../configuration/">Configuration</a> page.</p>
 
