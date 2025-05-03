@@ -198,6 +198,123 @@ You can extend VT.ai with new assistant tools for specialized capabilities.
        }
    ```
 
+## Extending Image Generation
+
+VT.ai now uses GPT-Image-1 for image generation with enhanced capabilities and configuration options. Here's how to extend or customize the image generation functionality:
+
+### Customizing Image Generation Settings
+
+You can modify the default settings for GPT-Image-1 by updating the configuration in `vtai/utils/llm_providers_config.py`:
+
+```python
+# Example: Changing default image generation settings
+DEFAULT_IMAGE_GEN_IMAGE_SIZE = "1536x1024"  # Default to landscape format
+DEFAULT_IMAGE_GEN_BACKGROUND = "transparent"  # Default to transparent backgrounds
+DEFAULT_IMAGE_GEN_OUTPUT_FORMAT = "png"  # Default to PNG format
+DEFAULT_IMAGE_GEN_MODERATION = "auto"  # Default moderation level
+DEFAULT_IMAGE_GEN_OUTPUT_COMPRESSION = 90  # Higher quality default
+```
+
+### Extending Image Processing Features
+
+The image generation process is handled in `vtai/utils/media_processors.py`. To extend this functionality:
+
+1. **Add New Image Processing Features**
+
+   You can add post-processing features for generated images:
+
+   ```python
+   async def process_generated_image(image_data, format="jpeg"):
+       """
+       Apply custom processing to generated images.
+
+       Args:
+           image_data: Raw image data
+           format: Image format (jpeg, png, webp)
+
+       Returns:
+           Processed image data
+       """
+       from PIL import Image, ImageFilter
+       import io
+
+       # Convert bytes to PIL Image
+       image = Image.open(io.BytesIO(image_data))
+
+       # Apply custom processing
+       image = image.filter(ImageFilter.SHARPEN)
+
+       # Convert back to bytes
+       buffer = io.BytesIO()
+       image.save(buffer, format=format.upper())
+
+       return buffer.getvalue()
+   ```
+
+2. **Modify Image Generation UI**
+
+   To add custom UI elements for your new image settings, update the settings in `vtai/utils/settings_builder.py`:
+
+   ```python
+   # Add a new setting for image generation
+   settings_components.append(
+       cl.Select(
+           id="my_custom_image_setting",
+           label="🖼️ My Custom Setting",
+           values=["option1", "option2", "option3"],
+           initial_value="option1"
+       )
+   )
+   ```
+
+3. **Add Custom Image Metadata**
+
+   You can modify how image metadata is displayed by updating the `handle_trigger_async_image_gen` function:
+
+   ```python
+   # Add custom metadata to the image display
+   metadata = {
+       # ...existing metadata...
+       "Custom Info": "Your custom information",
+       "Processing": f"Applied {your_custom_process}"
+   }
+   ```
+
+### Saving and Managing Generated Images
+
+Generated images are now saved in an `imgs` directory with timestamped filenames. To extend this functionality:
+
+1. **Custom Storage Locations**
+
+   You can modify where images are stored:
+
+   ```python
+   # Example: Change image storage location or naming convention
+   timestamp = int(time.time())
+   img_dir = Path("custom_images_folder")
+   img_dir.mkdir(exist_ok=True)
+   img_path = img_dir / f"custom_prefix_{timestamp}.{format}"
+   ```
+
+2. **Image Organization Features**
+
+   You could add features to organize images by prompt or category:
+
+   ```python
+   # Organize images by category derived from prompt
+   def get_category_from_prompt(prompt):
+       # Simple category extraction
+       if "landscape" in prompt.lower():
+           return "landscapes"
+       elif "portrait" in prompt.lower():
+           return "portraits"
+       return "miscellaneous"
+
+   category = get_category_from_prompt(query)
+   img_dir = Path(f"imgs/{category}")
+   img_dir.mkdir(exist_ok=True, parents=True)
+   ```
+
 ## Creating Custom UI Components
 
 VT.ai uses Chainlit for the web interface. You can extend the UI with custom components.

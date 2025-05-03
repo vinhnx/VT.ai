@@ -37,7 +37,7 @@ Smart routing system that automatically directs queries to specialized handlers 
 
 ### Multimodal Capabilities
 
-Support for text, image, and audio inputs with vision analysis for images and URLs, plus DALL-E 3 image generation.
+Support for text, image, and audio inputs with vision analysis for images and URLs, plus GPT-Image-1 image generation with advanced settings for backgrounds, formats, and quality.
 
 ### Web Search with Smart Summarization
 
@@ -206,7 +206,12 @@ API keys are saved to `~/.config/vtai/.env` for future use.
 ### Specialized Features
 
 - **Web Search**: Get up-to-date information from the internet with source attribution
-- **Image Generation**: Generate images through prompts
+- **Image Generation**: Generate images through prompts with advanced controls
+  - Multiple image sizes (1024x1024, 1536x1024, 1024x1536)
+  - Background options (auto, transparent, opaque)
+  - Format selection (PNG, JPEG, WebP) with compression settings
+  - Customizable moderation levels
+  - Images saved automatically with timestamps for easy reference
 - **Image Analysis**: Upload or provide URL for image interpretation
 - **Drag and Drop**: Easily share files by dragging and dropping them directly into the chat interface
 - **Text Processing**: Request summaries, translations, or content transformation
@@ -218,7 +223,7 @@ API keys are saved to `~/.config/vtai/.env` for future use.
 |----------------|-----------------------------------------------------------|
 | **Chat**       | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5 |
 | **Vision**     | GPT-4o, Gemini 1.5 Pro/Flash, Llama3.2 Vision             |
-| **Image Gen**  | DALL-E 3                                                   |
+| **Image Gen**  | GPT-Image-1                                               |
 | **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                          |
 | **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B)                |
 

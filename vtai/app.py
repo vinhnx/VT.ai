@@ -869,14 +869,18 @@ async def on_audio_chunk(chunk: cl.InputAudioChunk) -> None:
         chunk.data, 2
     )  # Assumes 16-bit audio (2 bytes per sample)
 
-    logger.debug(f"Audio energy: {audio_energy}, Silent duration: {silent_duration_ms}ms")
+    logger.debug(
+        f"Audio energy: {audio_energy}, Silent duration: {silent_duration_ms}ms"
+    )
 
     if audio_energy < SILENCE_THRESHOLD:
         # Audio is considered silent
         silent_duration_ms += time_diff_ms
         cl.user_session.set("silent_duration_ms", silent_duration_ms)
         if silent_duration_ms >= SILENCE_TIMEOUT and is_speaking:
-            logger.info(f"Silence detected for {silent_duration_ms}ms, processing audio")
+            logger.info(
+                f"Silence detected for {silent_duration_ms}ms, processing audio"
+            )
             cl.user_session.set("is_speaking", False)
             await process_audio()
     else:

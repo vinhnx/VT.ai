@@ -41,6 +41,11 @@ SETTINGS_VISION_MODEL: str = "settings_vision_model"
 SETTINGS_IMAGE_GEN_LLM_MODEL: str = "settings_image_gen_llm_model"
 SETTINGS_IMAGE_GEN_IMAGE_STYLE: str = "settings_image_gen_image_style"
 SETTINGS_IMAGE_GEN_IMAGE_QUALITY: str = "settings_image_gen_image_quality"
+SETTINGS_IMAGE_GEN_IMAGE_SIZE: str = "settings_image_gen_image_size"
+SETTINGS_IMAGE_GEN_BACKGROUND: str = "settings_image_gen_background"
+SETTINGS_IMAGE_GEN_OUTPUT_FORMAT: str = "settings_image_gen_output_format"
+SETTINGS_IMAGE_GEN_MODERATION: str = "settings_image_gen_moderation"
+SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION: str = "settings_image_gen_output_compression"
 
 # Voice and TTS settings
 SETTINGS_TTS_MODEL: str = "settings_tts_model"
@@ -57,12 +62,20 @@ SETTINGS_USE_THINKING_MODEL: str = "settings_use_thinking_model"
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
 DEFAULT_MODEL: str = "gpt-4o-mini"
-DEFAULT_IMAGE_GEN_MODEL: str = "dall-e-3"
+DEFAULT_IMAGE_GEN_MODEL: str = "gpt-image-1"  # Updated from "dall-e-3" to "gpt-image-1"
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
 DEFAULT_TTS_MODEL: str = "gpt-4o-mini-tts"
 DEFAULT_TTS_PRESET: str = "nova"
 DEFAULT_WHISPER_MODEL: str = "whisper-1"
 DEFAULT_AUDIO_UNDERSTANDING_MODEL: str = "gpt-4o"
+
+# Default image generation settings
+DEFAULT_IMAGE_GEN_BACKGROUND: str = "auto"  # For GPT-Image-1: auto, transparent, opaque
+DEFAULT_IMAGE_GEN_OUTPUT_FORMAT: str = "jpeg"  # For GPT-Image-1: png, jpeg, webp
+DEFAULT_IMAGE_GEN_MODERATION: str = "low"  # For GPT-Image-1: auto, low
+DEFAULT_IMAGE_GEN_OUTPUT_COMPRESSION: int = (
+    100  # For GPT-Image-1: 0-100 (webp/jpeg only)
+)
 
 # Default boolean settings
 SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE: bool = True
@@ -104,6 +117,17 @@ def is_reasoning_model(model_id: str) -> bool:
 # Image generation options
 SETTINGS_IMAGE_GEN_IMAGE_STYLES: List[str] = ["vivid", "natural"]
 SETTINGS_IMAGE_GEN_IMAGE_QUALITIES: List[str] = ["standard", "hd"]
+SETTINGS_IMAGE_GEN_IMAGE_QUALITIES_GPT: List[str] = ["auto", "high", "medium", "low"]
+SETTINGS_IMAGE_GEN_IMAGE_SIZES: List[str] = ["1024x1024", "1792x1024", "1024x1792"]
+SETTINGS_IMAGE_GEN_IMAGE_SIZES_GPT: List[str] = [
+    "auto",
+    "1024x1024",
+    "1536x1024",
+    "1024x1536",
+]
+SETTINGS_IMAGE_GEN_BACKGROUNDS: List[str] = ["auto", "transparent", "opaque"]
+SETTINGS_IMAGE_GEN_OUTPUT_FORMATS: List[str] = ["png", "jpeg", "webp"]
+SETTINGS_IMAGE_GEN_MODERATION_LEVELS: List[str] = ["auto", "low"]
 
 # TTS options
 TTS_VOICE_PRESETS: List[str] = [
@@ -123,8 +147,7 @@ TTS_MODELS_MAP: Dict[str, str] = {
 }
 
 IMAGE_GEN_MODELS_ALIAS_MAP: Dict[str, str] = {
-    "OpenAI - DALL·E 3": "dall-e-3",
-    "OpenAI - GPT Image 1": "dall-e-3",  # Added alias for gpt-image-1
+    "OpenAI - GPT Image 1": "gpt-image-1",  # Only support GPT-Image-1
 }
 
 VISION_MODEL_MAP: Dict[str, str] = {

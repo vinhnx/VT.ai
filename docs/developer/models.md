@@ -126,6 +126,52 @@ async def generate_speech(text, model="tts-1", voice="alloy"):
         raise
 ```
 
+### Image Generation Models
+
+VT.ai now uses GPT-Image-1 for image generation with advanced configuration options:
+
+```python
+# Example image generation call
+async def generate_image(prompt, **kwargs):
+    # GPT-Image-1 is now the default image generation model
+    response = await client.images.generate(
+        model="gpt-image-1",
+        prompt=prompt,
+        n=1,
+        size=settings.get(SETTINGS_IMAGE_GEN_IMAGE_SIZE),  # 1024x1024, 1536x1024, etc.
+        background=settings.get(SETTINGS_IMAGE_GEN_BACKGROUND),  # "auto", "transparent", "opaque"
+        quality=settings.get(SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION),  # 0-100
+        style="vivid",  # Default style
+        **kwargs
+    )
+    return response
+```
+
+GPT-Image-1 supports several configuration options in VT.ai:
+
+- **Image Size**: Control the dimensions of generated images
+  - `1024x1024` (square - default)
+  - `1536x1024` (landscape)
+  - `1024x1536` (portrait)
+
+- **Background Type**: Control transparency
+  - `auto` - Let the model decide (default)
+  - `transparent` - Create images with transparent backgrounds (for PNG format)
+  - `opaque` - Force an opaque background
+
+- **Output Format**: Select image format
+  - `jpeg` - Good for photographs (default)
+  - `png` - Best for images needing transparency
+  - `webp` - Optimized for web use with good compression
+
+- **Moderation Level**: Content filtering level
+  - `auto` - Standard moderation (default)
+  - `low` - Less restrictive moderation
+
+- **Compression Quality**: For JPEG and WebP formats
+  - Values from 0-100 (75 is default)
+  - Higher values produce better quality but larger files
+
 ## Error Handling
 
 VT.ai implements robust error handling for model calls:

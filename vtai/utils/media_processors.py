@@ -10,6 +10,7 @@ import base64
 import io
 import os
 import tempfile
+import time
 import wave
 from io import BytesIO
 from pathlib import Path
@@ -23,7 +24,7 @@ from PIL import Image
 
 # Update imports to use vtai namespace
 from vtai.utils import llm_providers_config as conf
-from vtai.utils.config import logger
+from vtai.utils.config import get_openai_client, logger
 from vtai.utils.user_session_helper import (
     get_setting,
     get_user_session_id,
@@ -872,118 +873,292 @@ async def handle_vision(
 
 async def handle_trigger_async_image_gen(query: str) -> None:
     """
-    Triggers asynchronous image generation using the default image generation model.
+    Triggers asynchronous image generation using GPT-Image-1.
 
     Args:
         query: Text prompt for image generation
     """
-    image_gen_model = conf.DEFAULT_IMAGE_GEN_MODEL
+    image_gen_model = "gpt-image-1"  # Only use GPT-Image-1
     update_message_history_from_assistant(query)
 
-    message = cl.Message(
-        content="Sure! I'll create an image based on your description. This might take a moment, please be patient.",
-        author=image_gen_model,
+    # Create a step to show progress instead of a message
+    step = cl.Step(
+        name="Image Generation",
+        type="generation",
+        show_input=False,
     )
-    await message.send()
 
-    style = get_setting(conf.SETTINGS_IMAGE_GEN_IMAGE_STYLE)
-    quality = get_setting(conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY)
-    try:
-        # Using wait_for to enforce a timeout
-        image_response = await asyncio.wait_for(
-            litellm.aimage_generation(
-                user=get_user_session_id(),
-                prompt=query,
-                model=image_gen_model,
-                style=style,
-                quality=quality,
-                timeout=45.0,  # Add a specific timeout
-            ),
-            timeout=60.0,  # Overall operation timeout
+    async with step:
+        step.input = f"Generating image using {image_gen_model}: {query}"
+        await step.update()
+
+        # Get the OpenAI client
+        openai_client = get_openai_client()
+
+        # Get GPT-Image-1 specific parameters from settings
+        size = get_setting(conf.SETTINGS_IMAGE_GEN_IMAGE_SIZE) or "auto"
+        quality = get_setting(conf.SETTINGS_IMAGE_GEN_IMAGE_QUALITY) or "auto"
+        background = (
+            get_setting(conf.SETTINGS_IMAGE_GEN_BACKGROUND)
+            or conf.DEFAULT_IMAGE_GEN_BACKGROUND
+        )
+        output_format = (
+            get_setting(conf.SETTINGS_IMAGE_GEN_OUTPUT_FORMAT)
+            or conf.DEFAULT_IMAGE_GEN_OUTPUT_FORMAT
+        )
+        moderation = (
+            get_setting(conf.SETTINGS_IMAGE_GEN_MODERATION)
+            or conf.DEFAULT_IMAGE_GEN_MODERATION
         )
 
-        image_gen_data = image_response["data"][0]
-        revised_prompt = image_gen_data.get("revised_prompt", query)
-        image_elements = []
+        # Image generation parameters for GPT-Image-1
+        generation_params = {
+            "model": image_gen_model,
+            "prompt": query,
+            "n": 1,  # Generate 1 image
+        }
 
-        # Check for URL or base64 JSON
-        if "url" in image_gen_data:
-            image_url = image_gen_data["url"]
-            logger.info(f"Image generated with URL: {image_url}")
-            image_elements.append(cl.Image(url=image_url, display="inline"))
-        elif "b64_json" in image_gen_data:
-            logger.info("Image generated as base64 JSON. Decoding and saving...")
-            try:
-                image_bytes = base64.b64decode(image_gen_data["b64_json"])
-                # Save to a temporary file
-                temp_image_path = os.path.join(
-                    tempfile.gettempdir(), "generated_image.png"
-                )
-                with open(temp_image_path, "wb") as f:
-                    f.write(image_bytes)
-                # Allow a small delay for file operations
-                await asyncio.sleep(0.1)
-                if os.path.exists(temp_image_path):
+        # Add optional parameters only if they're not set to auto
+        if size != "auto":
+            generation_params["size"] = size
+        if quality != "auto":
+            generation_params["quality"] = quality
+        if background != "auto":
+            generation_params["background"] = background
+
+        logger.info(
+            f"Using GPT-Image-1 with parameters: size={size}, quality={quality}, background={background}, format={output_format}"
+        )
+
+        try:
+            # Update step status
+            step.output = "Generating image..."
+            await step.update()
+
+            # Generate image
+            logger.info(f"Generating image with OpenAI client using GPT-Image-1")
+            image_response = openai_client.images.generate(**generation_params)
+
+            # Extract the generated image data
+            image_gen_data = image_response.data[0]
+            revised_prompt = getattr(image_gen_data, "revised_prompt", query)
+            image_elements = []
+
+            # GPT-Image-1 always returns b64_json
+            if hasattr(image_gen_data, "b64_json"):
+                logger.info("Image generated as base64 JSON. Decoding and saving...")
+                try:
+                    image_bytes = base64.b64decode(image_gen_data.b64_json)
+                    # Save to a temporary file with appropriate extension
+                    temp_image_path = os.path.join(
+                        tempfile.gettempdir(),
+                        f"generated_image_{int(time.time())}.{output_format}",
+                    )
+                    with open(temp_image_path, "wb") as f:
+                        f.write(image_bytes)
+                    # Allow a small delay for file operations
+                    await asyncio.sleep(0.1)
+                    if os.path.exists(temp_image_path):
+                        # Save the image to a permanent location
+                        # Create imgs directory if it doesn't exist
+                        imgs_dir = os.path.join(os.getcwd(), "imgs")
+                        os.makedirs(imgs_dir, exist_ok=True)
+
+                        # Save a copy of the image to the imgs directory with a timestamp
+                        img_filename = f"gpt_image_{int(time.time())}.{output_format}"
+                        permanent_path = os.path.join(imgs_dir, img_filename)
+
+                        try:
+                            # Use PIL to optimize the image based on format
+                            img = Image.open(temp_image_path)
+                            if output_format == "png" and background == "transparent":
+                                # Ensure transparency is preserved for PNG
+                                if img.mode != "RGBA":
+                                    img = img.convert("RGBA")
+                                img.save(permanent_path, format=output_format.upper())
+                                logger.info(
+                                    f"Saved transparent PNG image to {permanent_path}"
+                                )
+                            elif output_format == "webp":
+                                # WEBP with specified compression
+                                compression = int(
+                                    get_setting(
+                                        conf.SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION
+                                    )
+                                    or conf.DEFAULT_IMAGE_GEN_OUTPUT_COMPRESSION
+                                )
+                                img.save(
+                                    permanent_path,
+                                    format=output_format.upper(),
+                                    quality=compression,
+                                )
+                                logger.info(
+                                    f"Saved WEBP image with {compression}% quality to {permanent_path}"
+                                )
+                            elif output_format == "jpeg":
+                                # Convert to RGB for JPEG (no transparency)
+                                if img.mode != "RGB":
+                                    img = img.convert("RGB")
+                                compression = int(
+                                    get_setting(
+                                        conf.SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION
+                                    )
+                                    or conf.DEFAULT_IMAGE_GEN_OUTPUT_COMPRESSION
+                                )
+                                img.save(
+                                    permanent_path,
+                                    format="JPEG",
+                                    quality=compression,
+                                    optimize=True,
+                                )
+                                logger.info(
+                                    f"Saved JPEG image with {compression}% quality to {permanent_path}"
+                                )
+                            else:
+                                # Default save
+                                img.save(permanent_path, format=output_format.upper())
+                                logger.info(f"Saved image to {permanent_path}")
+
+                            # Add image to elements
+                            image_elements.append(
+                                cl.Image(path=permanent_path, display="inline")
+                            )
+
+                            # Create metadata text with all params
+                            metadata_text = f"Model: {image_gen_model}"
+                            metadata_text += f", Image format: {output_format.upper()}"
+                            metadata_text += f", Quality: {quality}"
+                            metadata_text += f", Size: {size}"
+                            metadata_text += f", Background: {background}"
+
+                            # Add metadata text separately with required parameters
+                            if metadata_text:
+                                image_elements.append(
+                                    cl.Text(
+                                        content=metadata_text,
+                                        name="Image Info",
+                                        display="inline",
+                                    )
+                                )
+                        except Exception as img_err:
+                            logger.error(
+                                f"Error saving permanent image copy: {img_err}"
+                            )
+                            # Fallback to simple file copy if PIL processing fails
+                            import shutil
+
+                            shutil.copy2(temp_image_path, permanent_path)
+                            # Still need to add the image to elements after fallback
+                            image_elements.append(
+                                cl.Image(path=permanent_path, display="inline")
+                            )
+                    else:
+                        logger.error(
+                            "Failed to save decoded base64 image to temporary file."
+                        )
+                        step.output = "Failed to process the generated image data."
+                        await step.update()
+                        return  # Exit if image processing failed
+                except Exception as decode_err:
+                    logger.error(f"Error decoding or saving base64 image: {decode_err}")
+                    step.output = f"Failed to decode image data: {str(decode_err)}"
+                    await step.update()
+                    return  # Exit if decoding failed
+            else:
+                logger.error("Image generation response did not contain 'b64_json'.")
+                step.output = "Received unexpected image data format from the API."
+                await step.update()
+                return  # Exit if format is unknown
+
+            # Add the text element after the image element(s) if we have an image
+            if image_elements:
+                # Add prompt text
+                if revised_prompt:
                     image_elements.append(
-                        cl.Image(path=temp_image_path, display="inline")
+                        cl.Text(
+                            content=revised_prompt,
+                            name=f"{image_gen_model} Description",
+                            display="inline",
+                        )
                     )
-                else:
-                    logger.error(
-                        "Failed to save decoded base64 image to temporary file."
-                    )
-                    await cl.Message(
-                        content="Failed to process the generated image data."
-                    ).send()
-                    return  # Exit if image processing failed
-            except Exception as decode_err:
-                logger.error(f"Error decoding or saving base64 image: {decode_err}")
+
+                # Add token usage information if available
+                if hasattr(image_response, "usage") and image_response.usage:
+                    usage_data = image_response.usage
+                    total_tokens = getattr(usage_data, "total_tokens", 0)
+
+                    if total_tokens > 0:
+                        usage_text = f"Usage: {total_tokens} total tokens"
+
+                        # If detailed token breakdown is available
+                        input_tokens = getattr(usage_data, "input_tokens", 0)
+                        output_tokens = getattr(usage_data, "output_tokens", 0)
+
+                        if input_tokens > 0 and output_tokens > 0:
+                            usage_text += (
+                                f" ({input_tokens} input, {output_tokens} output)"
+                            )
+
+                            # Even more detailed breakdown if available
+                            input_details = getattr(
+                                usage_data, "input_tokens_details", None
+                            )
+                            if input_details:
+                                text_tokens = getattr(input_details, "text_tokens", 0)
+                                image_tokens = getattr(input_details, "image_tokens", 0)
+                                if text_tokens > 0 or image_tokens > 0:
+                                    usage_text += f"\nInput breakdown: {text_tokens} text tokens, {image_tokens} image tokens"
+
+                        image_elements.append(
+                            cl.Text(
+                                content=usage_text,
+                                name="Token Usage",
+                                display="inline",
+                            )
+                        )
+
+                # Complete the step
+                step.output = "Image generation complete!"
+                await step.update()
+
+                # Now send the final message with all elements
                 await cl.Message(
-                    content=f"Failed to decode image data: {str(decode_err)}"
+                    author=image_gen_model,
+                    content="Here's the image I generated based on your description:",
+                    elements=image_elements,
+                    actions=[
+                        cl.Action(
+                            icon="speech",
+                            name="speak_chat_response_action",
+                            payload={"value": revised_prompt},
+                            tooltip="Speak description",
+                            label="Speak description",
+                        )
+                    ],
                 ).send()
-                return  # Exit if decoding failed
-        else:
-            logger.error(
-                "Image generation response did not contain 'url' or 'b64_json'."
-            )
+
+                update_message_history_from_assistant(revised_prompt)
+            else:
+                # If we somehow got here with no image elements, send a fallback message
+                step.output = "Failed to create image elements"
+                await step.update()
+                await cl.Message(
+                    content="I generated an image but encountered an issue displaying it. Please try again."
+                ).send()
+        except asyncio.TimeoutError:
+            logger.error("Image generation request timed out")
+            step.output = "Generation timed out"
+            await step.update()
             await cl.Message(
-                content="Received unexpected image data format from the API."
+                content="Image generation timed out. Please try a simpler description or try again later."
             ).send()
-            return  # Exit if format is unknown
-
-        # Add the text element after the image element(s)
-        image_elements.append(
-            cl.Text(
-                name=image_gen_model,
-                content=revised_prompt,
-                display="inline",
-            )
-        )
-
-        message = cl.Message(
-            author=image_gen_model,
-            content="Here's the image, along with a refined description based on your input:",
-            elements=image_elements,  # Use the constructed list of elements
-            actions=[
-                cl.Action(
-                    icon="speech",
-                    name="speak_chat_response_action",
-                    payload={"value": revised_prompt},
-                    tooltip="Speak response",
-                    label="Speak response",
-                )
-            ],
-        )
-
-        update_message_history_from_assistant(revised_prompt)
-        await message.send()
-    except asyncio.TimeoutError:
-        logger.error("Image generation request timed out")
-        await cl.Message(
-            content="Image generation timed out. Please try a simpler description or try again later."
-        ).send()
-    except asyncio.CancelledError:
-        logger.warning("Image generation was cancelled")
-        raise
-    except Exception as e:
-        logger.error(f"Error generating image: {e}")
-        await cl.Message(content=f"Failed to generate image: {str(e)}").send()
+        except asyncio.CancelledError:
+            logger.warning("Image generation was cancelled")
+            step.output = "Generation cancelled"
+            await step.update()
+            raise
+        except Exception as e:
+            logger.error(f"Error generating image: {e}")
+            step.output = f"Error: {str(e)}"
+            await step.update()
+            await cl.Message(content=f"Failed to generate image: {str(e)}").send()
