@@ -23,6 +23,7 @@ from vtai.utils.config import logger
 from vtai.utils.error_handlers import handle_exception, safe_execution
 from vtai.utils.media_processors import (
     handle_audio_transcribe,
+    handle_audio_understanding,
     handle_trigger_async_image_gen,
     handle_vision,
 )
@@ -295,8 +296,25 @@ async def handle_files_attachment(
                         ).send()
 
             elif "audio" in mime_type:
-                f = pathlib.Path(path)
-                await handle_audio_transcribe(path, f, async_openai_client)
+                # Check if a prompt was provided for audio understanding or just use transcription
+                if prompt and (
+                    "analyze" in prompt.lower()
+                    or "understand" in prompt.lower()
+                    or "explain" in prompt.lower()
+                ):
+                    logger.info(f"Using advanced audio understanding for file: {path}")
+                    # Use the new audio understanding with the user's prompt
+                    await handle_audio_understanding(path, prompt)
+                else:
+                    # For simple transcription or if no specific prompt, use the existing transcription
+                    f = pathlib.Path(path)
+                    await handle_audio_transcribe(path, f, async_openai_client)
+
+                    # If transcription completed but user might want more analysis, suggest it
+                    if not prompt:
+                        await cl.Message(
+                            content="I've transcribed your audio. If you'd like a more detailed analysis of its content, upload it again with a prompt like 'analyze this audio' or 'explain what's in this recording'."
+                        ).send()
 
             else:
                 logger.warning(f"Unsupported mime type: {mime_type}")
@@ -634,7 +652,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
 
             # Small delay to let the user see the completed step
             await asyncio.sleep(1)
-            
+
         # Get the response content
         response_content = search_result.get("response", "No search results available")
 

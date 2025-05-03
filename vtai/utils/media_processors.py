@@ -10,6 +10,7 @@ import os
 import tempfile
 from io import BytesIO
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 import chainlit as cl
 import litellm
@@ -24,6 +25,116 @@ from vtai.utils.user_session_helper import (
     get_user_session_id,
     update_message_history_from_assistant,
 )
+
+
+def check_audio_capabilities(model: str) -> Tuple[bool, bool]:
+    """
+    Checks if a model supports audio input and output capabilities.
+
+    Args:
+        model: The model identifier to check
+
+    Returns:
+        Tuple[bool, bool]: A tuple containing (supports_audio_input, supports_audio_output)
+    """
+    supports_input = litellm.supports_audio_input(model=model)
+    supports_output = litellm.supports_audio_output(model=model)
+
+    logger.info(
+        f"Model {model} audio capabilities - Input: {supports_input}, Output: {supports_output}"
+    )
+
+    return supports_input, supports_output
+
+
+def get_audio_capable_models() -> Dict[str, Dict[str, bool]]:
+    """
+    Returns a dictionary of models with their audio input/output capabilities.
+
+    Returns:
+        Dict[str, Dict[str, bool]]: Dictionary mapping model names to their audio capabilities
+    """
+    audio_models = {}
+
+    # Check common models
+    models_to_check = [
+        # OpenAI models
+        "gpt-4o",
+        "gpt-4-turbo",
+        "gpt-4o-mini",
+        # Gemini models
+        "gemini/gemini-2.0-pro",
+        "gemini/gemini-2.0-flash",
+        # Anthropic models
+        "claude-3-5-sonnet-20241022",
+        "claude-3-7-sonnet-20250219",
+        # Default models from config
+        conf.DEFAULT_AUDIO_UNDERSTANDING_MODEL,
+    ]
+
+    # Add any user-configured models from settings
+    vision_model = get_setting(conf.SETTINGS_VISION_MODEL)
+    if vision_model and vision_model not in models_to_check:
+        models_to_check.append(vision_model)
+
+    chat_model = get_setting(conf.SETTINGS_CHAT_MODEL)
+    if chat_model and chat_model not in models_to_check:
+        models_to_check.append(chat_model)
+
+    # Check capabilities for each model
+    for model in models_to_check:
+        input_capable, output_capable = check_audio_capabilities(model)
+        if input_capable or output_capable:
+            audio_models[model] = {"input": input_capable, "output": output_capable}
+
+    return audio_models
+
+
+def get_best_audio_model(
+    for_input: bool = True, for_output: bool = False
+) -> Optional[str]:
+    """
+    Returns the best available model for audio processing based on requested capabilities.
+
+    Args:
+        for_input: Whether audio input capability is required
+        for_output: Whether audio output capability is required
+
+    Returns:
+        Optional[str]: The best model that satisfies the requirements, or None if no suitable model is found
+    """
+    # Define priority order of models (higher quality models first)
+    model_priorities = [
+        "gpt-4o",
+        "gemini/gemini-2.0-pro",
+        "claude-3-7-sonnet-20250219",
+        "gpt-4-turbo",
+        "claude-3-5-sonnet-20241022",
+        "gemini/gemini-2.0-flash",
+        "gpt-4o-mini",
+    ]
+
+    # Get models with audio capabilities
+    audio_models = get_audio_capable_models()
+
+    # Filter models based on requirements
+    suitable_models = []
+    for model, capabilities in audio_models.items():
+        if (not for_input or capabilities["input"]) and (
+            not for_output or capabilities["output"]
+        ):
+            suitable_models.append(model)
+
+    if not suitable_models:
+        return None
+
+    # Sort by priority
+    for priority_model in model_priorities:
+        if priority_model in suitable_models:
+            return priority_model
+
+    # If no priority model found, return the first suitable model
+    return suitable_models[0]
 
 
 async def handle_tts_response(context: str, openai_client: OpenAI) -> None:
@@ -127,6 +238,347 @@ async def handle_audio_transcribe(
         logger.error(f"Error transcribing audio: {e}")
         await cl.Message(content=f"Failed to transcribe audio: {str(e)}").send()
         return ""
+
+
+async def handle_audio_understanding(path: str, prompt: str = None) -> None:
+    """
+    Analyzes and understands audio content using the best available AI model.
+    Goes beyond simple transcription to provide detailed analysis of the audio content.
+
+    Args:
+        path: Path to the audio file
+        prompt: Optional prompt to guide the audio understanding (default: None)
+    """
+    # Find the best model that supports audio input
+    model = get_best_audio_model(for_input=True)
+
+    # Fallback to the default model if no suitable model is found
+    if not model:
+        model = conf.DEFAULT_AUDIO_UNDERSTANDING_MODEL
+        logger.warning(
+            f"No models with audio input capability found. Using default model: {model}"
+        )
+
+    logger.info(f"Starting audio understanding with model: {model}")
+
+    # Create a message to show processing status
+    message = cl.Message(
+        content="Processing your audio file... This may take a moment."
+    )
+    await message.send()
+
+    try:
+        # Get file details for logging
+        file_size = os.path.getsize(path) / (1024 * 1024)  # Size in MB
+        logger.info(f"Audio file size: {file_size:.2f} MB")
+
+        # Determine file extension for format
+        audio_format = Path(path).suffix.lstrip(".").lower()
+        logger.info(f"Audio format detected: {audio_format}")
+
+        # Validate format
+        supported_formats = ["mp3", "mp4", "mpeg", "mpga", "m4a", "wav", "webm"]
+        if audio_format not in supported_formats:
+            logger.warning(
+                f"Unsupported audio format: {audio_format}, defaulting to wav"
+            )
+            audio_format = "wav"
+
+        # Prepare the default understanding prompt if none provided
+        if not prompt:
+            prompt = "What is contained in this audio recording? Please provide a detailed analysis."
+
+        logger.info(f"Using prompt: {prompt}")
+
+        # Get OpenAI client
+        from vtai.utils.config import get_openai_client
+
+        openai_client = get_openai_client()
+
+        # Check if the model supports direct audio input
+        supports_audio_input, _ = check_audio_capabilities(model)
+
+        # Store the results
+        analysis = ""
+        transcription = ""
+
+        if supports_audio_input:
+            # Try using direct audio input if supported
+            try:
+                logger.info(f"Attempting direct audio processing with {model}")
+                # Update message to show progress
+                message.content = "Analyzing audio directly with AI..."
+                await message.update()
+
+                # Read and encode audio file
+                with open(path, "rb") as audio_file:
+                    encoded_audio = base64.b64encode(audio_file.read()).decode("utf-8")
+
+                # Prepare message content for audio input
+                input_messages = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "input_audio",
+                                "input_audio": {
+                                    "data": encoded_audio,
+                                    "format": audio_format,
+                                },
+                            },
+                        ],
+                    }
+                ]
+
+                # Try with LiteLLM - ensure this is properly awaited
+                completion_coroutine = litellm.acompletion(
+                    user=get_user_session_id(),
+                    model=model,
+                    messages=input_messages,
+                    modalities=["text", "audio"],
+                    timeout=90.0,
+                )
+
+                response = await asyncio.wait_for(
+                    completion_coroutine,
+                    timeout=120.0,
+                )
+
+                # Extract analysis
+                analysis = response.choices[0].message.content
+
+                # Create full response
+                full_response = f"## Audio Analysis\n\n{analysis}"
+
+                # Update the message
+                message.content = "Audio analysis complete"
+                message.elements = [
+                    cl.Audio(path=path, display="inline"),
+                    cl.Text(
+                        name="Audio Analysis", content=full_response, display="inline"
+                    ),
+                ]
+                message.actions = [
+                    cl.Action(
+                        icon="speech",
+                        name="speak_chat_response_action",
+                        payload={"value": analysis},
+                        label="Speak analysis",
+                    )
+                ]
+                message.author = model
+
+                update_message_history_from_assistant(full_response)
+                await message.update()
+                logger.info("Direct audio analysis completed successfully")
+                return
+
+            except Exception as direct_audio_error:
+                # Log the error but continue to fallback approach
+                logger.error(
+                    f"Direct audio processing failed: {direct_audio_error}. Falling back to two-step approach."
+                )
+
+        # Fallback to two-step approach (transcribe then analyze)
+        # Step 1: Transcribe with Whisper
+        transcription = ""
+
+        # Update message for transcription phase
+        message.content = "Transcribing audio..."
+        await message.update()
+
+        # Transcribe with Whisper
+        logger.info("Transcribing audio with Whisper")
+        with open(path, "rb") as audio_file:
+            audio_file_io = BytesIO(audio_file.read())
+            audio_file_io.name = f"audio.{audio_format}"
+
+            # Perform transcription - ensure this is properly awaited
+            try:
+                # Check if the method is already awaitable (newer OpenAI SDK)
+                if hasattr(openai_client.audio.transcriptions, "acreate"):
+                    # Use the explicit async method if available
+                    transcription_coroutine = (
+                        openai_client.audio.transcriptions.acreate(
+                            model="whisper-1",
+                            file=audio_file_io,
+                            response_format="text",
+                        )
+                    )
+                else:
+                    # For newer versions where create() itself returns a coroutine
+                    transcription_coroutine = openai_client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file_io,
+                        response_format="text",
+                    )
+
+                # Ensure the coroutine is awaitable before awaiting it
+                if asyncio.iscoroutine(transcription_coroutine) or hasattr(
+                    transcription_coroutine, "__await__"
+                ):
+                    transcription_result = await asyncio.wait_for(
+                        transcription_coroutine,
+                        timeout=60.0,
+                    )
+                else:
+                    # Handle non-coroutine case (synchronous result)
+                    logger.warning(
+                        "Transcription method returned non-awaitable, handling synchronously"
+                    )
+                    transcription_result = transcription_coroutine
+
+                transcription = str(transcription_result)
+                logger.info(
+                    f"Transcription successful with {len(transcription)} characters"
+                )
+            except Exception as e:
+                logger.error(f"Error in transcription: {str(e)}")
+                transcription = f"[Transcription failed: {str(e)}]"
+
+        # Log the transcription for debugging
+        logger.info(f"Transcription complete: {len(transcription)} characters")
+
+        # Step 2: Analyze the transcription
+        analysis = ""
+
+        # Update message for analysis phase
+        message.content = "Analyzing transcription..."
+        await message.update()
+
+        # Create analysis prompt
+        analysis_prompt = f"""
+        I need you to analyze this audio transcription:
+
+        "{transcription}"
+
+        {prompt}
+
+        Provide a detailed analysis of the content, tone, speakers, context, and any other relevant information.
+        """
+
+        # Use the best model for text analysis
+        analysis_model = model
+
+        # Call the API to analyze the transcription - ensure all async calls are properly awaited
+        if "gemini" in model.lower():
+            # Use LiteLLM for Gemini models
+            gemini_completion_coroutine = litellm.acompletion(
+                user=get_user_session_id(),
+                model=analysis_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that analyzes audio transcriptions.",
+                    },
+                    {"role": "user", "content": analysis_prompt},
+                ],
+                temperature=0.3,
+            )
+
+            analysis_response = await asyncio.wait_for(
+                gemini_completion_coroutine,
+                timeout=60.0,
+            )
+            analysis = analysis_response.choices[0].message.content
+        else:
+            # Use OpenAI directly for OpenAI models
+            try:
+                # Check if we should use acreate or create for async
+                if hasattr(openai_client.chat.completions, "acreate"):
+                    # Use explicit async method
+                    openai_completion_coroutine = openai_client.chat.completions.acreate(
+                        model=analysis_model,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a helpful assistant that analyzes audio transcriptions.",
+                            },
+                            {"role": "user", "content": analysis_prompt},
+                        ],
+                        temperature=0.3,
+                    )
+                else:
+                    # Standard method
+                    openai_completion_coroutine = openai_client.chat.completions.create(
+                        model=analysis_model,
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are a helpful assistant that analyzes audio transcriptions.",
+                            },
+                            {"role": "user", "content": analysis_prompt},
+                        ],
+                        temperature=0.3,
+                    )
+
+                # Ensure we have an awaitable before awaiting
+                if asyncio.iscoroutine(openai_completion_coroutine) or hasattr(
+                    openai_completion_coroutine, "__await__"
+                ):
+                    analysis_response = await asyncio.wait_for(
+                        openai_completion_coroutine,
+                        timeout=60.0,
+                    )
+                else:
+                    # Handle non-coroutine case
+                    logger.warning(
+                        "Analysis completion method returned non-awaitable, handling synchronously"
+                    )
+                    analysis_response = openai_completion_coroutine
+
+                analysis = analysis_response.choices[0].message.content
+                logger.info(f"Analysis successful with {len(analysis)} characters")
+            except Exception as e:
+                logger.error(f"Error in analysis: {str(e)}")
+                analysis = f"[Analysis failed: {str(e)}]"
+
+        # Create a combined response with both transcription and analysis
+        full_response = (
+            f"## Audio Transcription\n\n{transcription}\n\n## Analysis\n\n{analysis}"
+        )
+
+        # Update the message with the audio and analysis (final result)
+        message.content = "Audio analysis complete"
+        message.elements = [
+            cl.Audio(path=path, display="inline"),
+            cl.Text(name="Audio Analysis", content=full_response, display="inline"),
+        ]
+        message.actions = [
+            cl.Action(
+                icon="speech",
+                name="speak_chat_response_action",
+                payload={"value": analysis},
+                label="Speak analysis",
+            )
+        ]
+        message.author = model
+
+        update_message_history_from_assistant(full_response)
+        await message.update()
+        logger.info("Audio analysis completed and sent to user")
+
+    except asyncio.TimeoutError:
+        logger.error("Audio processing request timed out")
+        message.content = "Audio analysis timed out. The audio file might be too long or complex. Please try with a shorter recording."
+        await message.update()
+    except asyncio.CancelledError:
+        logger.warning("Audio processing was cancelled")
+        raise
+    except Exception as e:
+        logger.error(f"Error processing audio: {str(e)}")
+        # Provide more informative error message with troubleshooting steps
+        error_message = (
+            f"Failed to analyze the audio: {str(e)}\n\n"
+            "Troubleshooting tips:\n"
+            "1. Try a different audio file format (MP3 or WAV files work best)\n"
+            "2. Ensure the audio file isn't too large (keep under 25MB)\n"
+            "3. Make sure your API keys have appropriate permissions\n"
+            "4. Try a shorter audio clip (under 2 minutes)"
+        )
+        message.content = error_message
+        await message.update()
 
 
 def encode_image_to_base64(image_path):
@@ -310,20 +762,66 @@ async def handle_trigger_async_image_gen(query: str) -> None:
         )
 
         image_gen_data = image_response["data"][0]
-        image_url = image_gen_data["url"]
         revised_prompt = image_gen_data.get("revised_prompt", query)
+        image_elements = []
+
+        # Check for URL or base64 JSON
+        if "url" in image_gen_data:
+            image_url = image_gen_data["url"]
+            logger.info(f"Image generated with URL: {image_url}")
+            image_elements.append(cl.Image(url=image_url, display="inline"))
+        elif "b64_json" in image_gen_data:
+            logger.info("Image generated as base64 JSON. Decoding and saving...")
+            try:
+                image_bytes = base64.b64decode(image_gen_data["b64_json"])
+                # Save to a temporary file
+                temp_image_path = os.path.join(
+                    tempfile.gettempdir(), "generated_image.png"
+                )
+                with open(temp_image_path, "wb") as f:
+                    f.write(image_bytes)
+                # Allow a small delay for file operations
+                await asyncio.sleep(0.1)
+                if os.path.exists(temp_image_path):
+                    image_elements.append(
+                        cl.Image(path=temp_image_path, display="inline")
+                    )
+                else:
+                    logger.error(
+                        "Failed to save decoded base64 image to temporary file."
+                    )
+                    await cl.Message(
+                        content="Failed to process the generated image data."
+                    ).send()
+                    return  # Exit if image processing failed
+            except Exception as decode_err:
+                logger.error(f"Error decoding or saving base64 image: {decode_err}")
+                await cl.Message(
+                    content=f"Failed to decode image data: {str(decode_err)}"
+                ).send()
+                return  # Exit if decoding failed
+        else:
+            logger.error(
+                "Image generation response did not contain 'url' or 'b64_json'."
+            )
+            await cl.Message(
+                content="Received unexpected image data format from the API."
+            ).send()
+            return  # Exit if format is unknown
+
+        # Add the text element after the image element(s)
+        image_elements.append(
+            cl.Text(
+                name=image_gen_model,
+                content=revised_prompt,
+                display="inline",
+            )
+        )
 
         message = cl.Message(
             author=image_gen_model,
             content="Here's the image, along with a refined description based on your input:",
-            elements=[
-                cl.Image(url=image_url, display="inline"),
-                cl.Text(
-                    name=image_gen_model,
-                    content=revised_prompt,
-                    display="inline",
-                ),
-            ],
+            elements=image_elements,  # Use the constructed list of elements
             actions=[
                 cl.Action(
                     icon="speech",

@@ -142,6 +142,20 @@ def create_openai_clients() -> Tuple[OpenAI, AsyncOpenAI]:
     return sync_client, async_client
 
 
+def get_openai_client() -> OpenAI:
+    """
+    Returns a synchronous OpenAI client with optimized connection settings.
+
+    This is a convenience function that returns the first element of the tuple
+    returned by create_openai_clients().
+
+    Returns:
+        OpenAI: A configured OpenAI client
+    """
+    sync_client, _ = create_openai_clients()
+    return sync_client
+
+
 def initialize_app() -> Tuple[RouteLayer, str, OpenAI, AsyncOpenAI]:
     """
     Initialize the application configuration.

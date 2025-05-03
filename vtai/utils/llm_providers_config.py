@@ -62,6 +62,7 @@ DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
 DEFAULT_TTS_MODEL: str = "gpt-4o-mini-tts"
 DEFAULT_TTS_PRESET: str = "nova"
 DEFAULT_WHISPER_MODEL: str = "whisper-1"
+DEFAULT_AUDIO_UNDERSTANDING_MODEL: str = "gpt-4o"
 
 # Default boolean settings
 SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE: bool = True
@@ -123,13 +124,14 @@ TTS_MODELS_MAP: Dict[str, str] = {
 
 IMAGE_GEN_MODELS_ALIAS_MAP: Dict[str, str] = {
     "OpenAI - DALL·E 3": "dall-e-3",
+    "OpenAI - GPT Image 1": "dall-e-3",  # Added alias for gpt-image-1
 }
 
 VISION_MODEL_MAP: Dict[str, str] = {
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
     "Google - Gemini 2.0 Flash": "gemini/gemini-2.0-flash",
-    "Google - Gemini 2.0 Pro": "gemini/gemini-2.0-pro",
+    "Google - Gemini 2.5 Pro": "gemini/gemini-2.5-pro",
     "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
 }
 
@@ -154,9 +156,9 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
     "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
     # Google models
-    "Google - Gemini 2.0 Pro": "gemini/gemini-2.0-pro",
+    "Google - Gemini 2.0 Pro": "gemini/gemini-2.5-pro",
     "Google - Gemini 2.0 Flash": "gemini/gemini-2.0-flash",
-    "Google - Gemini 2.0 Flash Exp": "gemini/gemini-2.0-flash-exp",
+    "Google - Gemini 2.0 Flash Exp": "gemini/gemini-2.5-flash-exp",
     # OpenRouter models
     "OpenRouter - DeepSeek R1 (free)": "openrouter/deepseek/deepseek-r1:free",
     "OpenRouter - DeepSeek R1": "openrouter/deepseek/deepseek-r1",
