@@ -35,7 +35,7 @@ python server.py
 Or use the provided shell script from the project root:
 
 ```bash
-./run_mcp_server.sh
+./scripts/run_mcp_server.sh
 ```
 
 ## Configuration

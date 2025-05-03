@@ -104,11 +104,11 @@ VT.ai also includes two convenient shell scripts in the root directory for runni
 
 ```bash
 # Run the VT.ai application with Chainlit interface
-./run_vtai_app.sh
+./scripts/run_vtai_app.sh
 
 # Run the VT.ai MCP (Model Context Protocol) server
 # Default: localhost:9393
-./run_vtai_server.sh
+./scripts/run_vtai_server.sh
 ```
 
 These scripts will:
@@ -123,7 +123,7 @@ You can customize the MCP server host and port by setting environment variables:
 # Set custom host and port for the MCP server
 export MCP_HOST="your-host"
 export MCP_PORT="your-port"
-./run_vtai_server.sh
+./scripts/run_vtai_server.sh
 ```
 
 ## Installation (Python)
