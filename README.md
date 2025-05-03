@@ -50,7 +50,23 @@ Integrated web search capabilities powered by OpenAI's web search or Tavily API 
 
 ### Voice Interaction
 
-WIP with speech-to-text and real-time conversation features. Currently, model response text-to-speech is implemented - please try it! Supports multiple voice models.
+VT.ai includes advanced voice interaction capabilities:
+
+- **Speech-to-Text**: Real-time voice transcription using OpenAI's Whisper model
+  - Smart silence detection to automatically detect when you've finished speaking
+  - High-accuracy transcription for natural conversation flow
+  - Seamless integration with conversation routing for appropriate responses
+
+- **Text-to-Speech**: Listen to AI responses with natural-sounding voices
+  - Multiple voice options (alloy, echo, fable, onyx, nova, shimmer)
+  - Toggle TTS on/off in settings for flexibility
+  - High-quality voice synthesis using OpenAI's Audio API
+  - Speak response action appears on all messages
+
+- **Audio Understanding**: Analyze and understand audio content beyond simple transcription
+  - Upload audio files for detailed analysis
+  - Get both transcription and contextual understanding
+  - Support for various audio formats (MP3, WAV, M4A, etc.)
 
 ### Thinking Mode
 
