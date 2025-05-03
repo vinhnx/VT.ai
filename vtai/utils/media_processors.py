@@ -5,15 +5,19 @@ Handles image, audio, and text-to-speech processing.
 """
 
 import asyncio
+import audioop
 import base64
+import io
 import os
 import tempfile
+import wave
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, BinaryIO, Dict, List, Optional, Tuple
 
 import chainlit as cl
 import litellm
+import numpy as np
 from openai import OpenAI
 from PIL import Image
 
@@ -25,6 +29,10 @@ from vtai.utils.user_session_helper import (
     get_user_session_id,
     update_message_history_from_assistant,
 )
+
+# Speech-to-text settings
+SILENCE_THRESHOLD = 3500  # Adjust based on your audio level (lower for quieter audio)
+SILENCE_TIMEOUT = 1300.0  # Milliseconds of silence to consider the turn finished
 
 
 def check_audio_capabilities(model: str) -> Tuple[bool, bool]:
@@ -579,6 +587,139 @@ async def handle_audio_understanding(path: str, prompt: str = None) -> None:
         )
         message.content = error_message
         await message.update()
+
+
+async def speech_to_text(audio_file: BinaryIO) -> str:
+    """
+    Transcribe speech to text using OpenAI's Whisper model.
+
+    Args:
+        audio_file: Audio file to transcribe
+
+    Returns:
+        Transcribed text from the audio
+    """
+    from vtai.utils.config import get_openai_client
+
+    openai_client = get_openai_client()
+
+    try:
+        # In newer OpenAI SDK versions, create() may not be a coroutine
+        logger.info("Using create for transcription (synchronous call)")
+        response = openai_client.audio.transcriptions.create(
+            model="whisper-1", file=audio_file
+        )
+
+        # Log success and return text
+        logger.info(f"Transcription successful with text: {response.text[:50]}...")
+        return response.text
+    except Exception as e:
+        logger.error(f"Error in speech-to-text transcription: {e}", exc_info=True)
+        raise e
+
+
+async def process_audio() -> None:
+    """
+    Process the complete audio recording after silence detection.
+
+    This function concatenates the audio chunks, creates a WAV file,
+    transcribes it using Whisper, and processes the transcription.
+    """
+    # Get the audio buffer from the session
+    audio_chunks = cl.user_session.get("audio_chunks")
+    if not audio_chunks or len(audio_chunks) == 0:
+        logger.warning("No audio chunks to process.")
+        return
+
+    logger.info(f"Processing {len(audio_chunks)} audio chunks")
+
+    try:
+        # Concatenate all chunks
+        concatenated = np.concatenate(list(audio_chunks))
+        logger.info(f"Concatenated audio length: {len(concatenated)} samples")
+
+        # Create an in-memory binary stream
+        wav_buffer = io.BytesIO()
+
+        # Create WAV file with proper parameters
+        with wave.open(wav_buffer, "wb") as wav_file:
+            wav_file.setnchannels(1)  # mono
+            wav_file.setsampwidth(2)  # 2 bytes per sample (16-bit)
+            wav_file.setframerate(24000)  # sample rate (24kHz PCM)
+            wav_file.writeframes(concatenated.tobytes())
+            logger.info(f"Created WAV file with {wav_file.getnframes()} frames")
+
+        # Reset buffer position
+        wav_buffer.seek(0)
+
+        # Get frames and rate info by reopening the buffer
+        with wave.open(wav_buffer, "rb") as wav_info:
+            frames = wav_info.getnframes()
+            rate = wav_info.getframerate()
+            duration = frames / float(rate)
+            logger.info(f"Audio duration: {duration:.2f} seconds")
+
+        # Reset the buffer position again for reading
+        wav_buffer.seek(0)
+
+        # Check if audio is too short
+        if duration <= 1.7:
+            logger.warning(
+                f"The audio is too short (duration: {duration:.2f}s), discarding."
+            )
+            return
+
+        audio_buffer = wav_buffer.getvalue()
+        logger.info(f"Audio buffer size: {len(audio_buffer)} bytes")
+
+        whisper_input = ("audio.wav", audio_buffer, "audio/wav")
+
+        # Create audio element for displaying in the UI
+        input_audio_el = cl.Audio(content=audio_buffer, mime="audio/wav")
+
+        # Transcribe the audio
+        logger.info("Sending audio to Whisper for transcription...")
+        transcription = await speech_to_text(whisper_input)
+        logger.info(f"Transcription result: '{transcription}'")
+
+        # If transcription is empty, log and return
+        if not transcription or transcription.strip() == "":
+            logger.warning("Received empty transcription from Whisper")
+            await cl.Message(
+                content="I couldn't detect any speech in your audio. Please try speaking again."
+            ).send()
+            return
+
+        # Get message history
+        messages = cl.user_session.get("message_history") or []
+
+        # Send the user message with transcription
+        logger.info("Sending transcription as user message")
+        await cl.Message(
+            author="You",
+            type="user_message",
+            content=transcription,
+            elements=[input_audio_el],
+        ).send()
+
+        # Add transcription to message history
+        messages.append({"role": "user", "content": transcription})
+        cl.user_session.set("message_history", messages)
+
+        # Get the current conversation handler based on settings
+        from vtai.utils.conversation_handlers import handle_conversation
+
+        # Create a message object for processing
+        temp_message = cl.Message(content=transcription)
+
+        # Process the transcription using the existing conversation handler
+        logger.info("Handling conversation with transcription")
+        await handle_conversation(temp_message, messages, None)
+        logger.info("Conversation handling complete")
+
+    except Exception as e:
+        logger.error(f"Error processing audio: {e}", exc_info=True)
+        await cl.Message(content=f"Error processing your speech: {str(e)}").send()
 
 
 def encode_image_to_base64(image_path):

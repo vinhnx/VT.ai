@@ -6,6 +6,7 @@ A multimodal AI chat application with dynamic conversation routing.
 
 import argparse
 import asyncio
+import audioop
 import json
 import os
 import shutil
@@ -17,6 +18,7 @@ from typing import Any, Dict, List, Optional
 
 import chainlit as cl
 import dotenv
+import numpy as np
 from chainlit.types import ChatProfile
 
 # Import modules
@@ -781,6 +783,108 @@ async def on_speak_chat_response(action: cl.Action) -> None:
     except Exception as e:
         logger.error("Error handling TTS response: %s", e)
         await cl.Message(content="Failed to generate speech. Please try again.").send()
+
+
+@cl.on_audio_start
+async def on_audio_start() -> bool:
+    """
+    Initialize audio recording session when the user starts speaking.
+
+    This function sets up the necessary state variables for tracking speech
+    and silence during audio recording.
+
+    Returns:
+        True to allow audio recording
+    """
+    cl.user_session.set("silent_duration_ms", 0)
+    cl.user_session.set("is_speaking", False)
+    cl.user_session.set("audio_chunks", [])
+    return True
+
+
+@cl.on_audio_chunk
+async def on_audio_chunk(chunk: cl.InputAudioChunk) -> None:
+    """
+    Process each audio chunk as it arrives, detecting silence for turn-taking.
+
+    This function analyzes incoming audio chunks, measures silence duration,
+    and triggers processing when the user stops speaking.
+
+    Args:
+        chunk: Audio chunk from the user
+    """
+    from vtai.utils.media_processors import (
+        SILENCE_THRESHOLD,
+        SILENCE_TIMEOUT,
+        process_audio,
+    )
+
+    # Get audio chunks from user session
+    audio_chunks = cl.user_session.get("audio_chunks")
+
+    # If this is the first chunk, initialize timers and state
+    if chunk.isStart:
+        logger.info("Starting new audio recording session")
+        cl.user_session.set("last_elapsed_time", chunk.elapsedTime)
+        cl.user_session.set("is_speaking", True)
+        cl.user_session.set("silent_duration_ms", 0)
+
+        # Ensure audio_chunks is initialized
+        if audio_chunks is None:
+            audio_chunks = []
+            cl.user_session.set("audio_chunks", audio_chunks)
+        return
+
+    # Safety check - ensure audio_chunks exists
+    if audio_chunks is None:
+        logger.warning("audio_chunks is None, reinitializing")
+        audio_chunks = []
+        cl.user_session.set("audio_chunks", audio_chunks)
+
+    # Process the audio chunk
+    audio_chunk = np.frombuffer(chunk.data, dtype=np.int16)
+    audio_chunks.append(audio_chunk)
+
+    # Get session variables with safety defaults
+    last_elapsed_time = cl.user_session.get("last_elapsed_time")
+    silent_duration_ms = cl.user_session.get("silent_duration_ms", 0)
+    is_speaking = cl.user_session.get("is_speaking", True)
+
+    # Safety check for last_elapsed_time
+    if last_elapsed_time is None:
+        logger.warning("last_elapsed_time is None, resetting to current time")
+        last_elapsed_time = chunk.elapsedTime
+        cl.user_session.set("last_elapsed_time", last_elapsed_time)
+        # Skip time diff calculation for this iteration
+        time_diff_ms = 0
+    else:
+        # Calculate the time difference between this chunk and the previous one
+        time_diff_ms = chunk.elapsedTime - last_elapsed_time
+
+    # Update the last elapsed time for the next iteration
+    cl.user_session.set("last_elapsed_time", chunk.elapsedTime)
+
+    # Compute the RMS (root mean square) energy of the audio chunk
+    audio_energy = audioop.rms(
+        chunk.data, 2
+    )  # Assumes 16-bit audio (2 bytes per sample)
+
+    logger.debug(f"Audio energy: {audio_energy}, Silent duration: {silent_duration_ms}ms")
+
+    if audio_energy < SILENCE_THRESHOLD:
+        # Audio is considered silent
+        silent_duration_ms += time_diff_ms
+        cl.user_session.set("silent_duration_ms", silent_duration_ms)
+        if silent_duration_ms >= SILENCE_TIMEOUT and is_speaking:
+            logger.info(f"Silence detected for {silent_duration_ms}ms, processing audio")
+            cl.user_session.set("is_speaking", False)
+            await process_audio()
+    else:
+        # Audio is not silent, reset silence timer and mark as speaking
+        cl.user_session.set("silent_duration_ms", 0)
+        if not is_speaking:
+            logger.info("Speech resumed after silence")
+            cl.user_session.set("is_speaking", True)
 
 
 def copy_if_newer(src: Path, dst: Path, log_msg: str = None) -> bool:
