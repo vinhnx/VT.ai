@@ -175,6 +175,7 @@ pyrightconfig.json
 
 .files/
 .files/*
+imgs/*
 
 # uv
 uv.lock
