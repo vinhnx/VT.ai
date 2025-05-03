@@ -128,49 +128,75 @@ async def generate_speech(text, model="tts-1", voice="alloy"):
 
 ### Image Generation Models
 
-VT.ai now uses GPT-Image-1 for image generation with advanced configuration options:
+VT.ai supports advanced image generation capabilities with multiple models:
 
 ```python
 # Example image generation call
 async def generate_image(prompt, **kwargs):
-    # GPT-Image-1 is now the default image generation model
-    response = await client.images.generate(
-        model="gpt-image-1",
-        prompt=prompt,
-        n=1,
-        size=settings.get(SETTINGS_IMAGE_GEN_IMAGE_SIZE),  # 1024x1024, 1536x1024, etc.
-        background=settings.get(SETTINGS_IMAGE_GEN_BACKGROUND),  # "auto", "transparent", "opaque"
-        quality=settings.get(SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION),  # 0-100
-        style="vivid",  # Default style
-        **kwargs
-    )
-    return response
+	# Configure settings for image generation
+	image_size = settings.get(SETTINGS_IMAGE_GEN_IMAGE_SIZE)  # 1024x1024, 1536x1024, etc.
+	image_quality = settings.get(SETTINGS_IMAGE_GEN_IMAGE_QUALITY)  # "standard", "high"
+	background = settings.get(SETTINGS_IMAGE_GEN_BACKGROUND)  # "auto", "transparent"
+	output_format = settings.get(SETTINGS_IMAGE_GEN_OUTPUT_FORMAT)  # "png", "jpeg"
+	compression = settings.get(SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION)  # 0-100
+	
+	# GPT-Image-1 is now the default image generation model
+	response = await client.images.generate(
+		model="gpt-image-1",
+		prompt=prompt,
+		n=1,
+		size=image_size,
+		quality=image_quality,
+		background=background,
+		output_format=output_format,
+		output_compression=compression,
+		**kwargs
+	)
+	return response
 ```
+
+#### GPT-Image-1 Configuration
 
 GPT-Image-1 supports several configuration options in VT.ai:
 
 - **Image Size**: Control the dimensions of generated images
-  - `1024x1024` (square - default)
-  - `1536x1024` (landscape)
-  - `1024x1536` (portrait)
+	- `1024x1024` (square - default)
+	- `1536x1024` (landscape)
+	- `1024x1536` (portrait)
+
+- **Image Quality**: Control the rendering quality
+	- `standard` - Regular quality (default)
+	- `high` - Enhanced quality for detailed images
 
 - **Background Type**: Control transparency
-  - `auto` - Let the model decide (default)
-  - `transparent` - Create images with transparent backgrounds (for PNG format)
-  - `opaque` - Force an opaque background
+	- `auto` - Let the model decide (default)
+	- `transparent` - Create images with transparent backgrounds (for PNG format)
+	- `opaque` - Force an opaque background
 
 - **Output Format**: Select image format
-  - `jpeg` - Good for photographs (default)
-  - `png` - Best for images needing transparency
-  - `webp` - Optimized for web use with good compression
+	- `jpeg` - Good for photographs (default)
+	- `png` - Best for images needing transparency
+	- `webp` - Optimized for web use with good compression
 
 - **Moderation Level**: Content filtering level
-  - `auto` - Standard moderation (default)
-  - `low` - Less restrictive moderation
+	- `auto` - Standard moderation (default)
+	- `low` - Less restrictive moderation
 
 - **Compression Quality**: For JPEG and WebP formats
-  - Values from 0-100 (75 is default)
-  - Higher values produce better quality but larger files
+	- Values from 0-100 (75 is default)
+	- Higher values produce better quality but larger files
+
+All these settings can be configured through environment variables:
+
+```bash
+# Example configuration
+export VT_SETTINGS_IMAGE_GEN_IMAGE_SIZE="1536x1024"
+export VT_SETTINGS_IMAGE_GEN_IMAGE_QUALITY="high"
+export VT_SETTINGS_IMAGE_GEN_BACKGROUND="transparent"
+export VT_SETTINGS_IMAGE_GEN_OUTPUT_FORMAT="png"
+export VT_SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION="90"
+export VT_SETTINGS_IMAGE_GEN_MODERATION="auto"
+```
 
 ## Error Handling
 

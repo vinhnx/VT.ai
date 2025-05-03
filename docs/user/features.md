@@ -108,17 +108,29 @@ Example queries:
 
 ### Image Generation
 
-Generate images based on text descriptions using DALL-E 3:
+Generate images based on text descriptions:
 
-- Create custom images from detailed prompts
-- Control style and quality parameters
-- Visualize concepts and ideas
+- **DALL-E 3**: Create custom images from detailed prompts
+- **GPT-Image-1**: Advanced image generation with extensive customization options
+  - Transparent backgrounds for logos and graphics
+  - Multiple output formats (PNG, JPEG)
+  - Customizable dimensions (square, landscape, portrait)
+  - Variable quality and compression settings
+  - Moderation controls
 
 To generate an image:
 
 1. Type a prompt like "Generate an image of a futuristic city with flying cars"
 2. The system will recognize the image generation intent
-3. DALL-E 3 will create and display the image based on your description
+3. The appropriate image generation model will create and display the image based on your description
+
+For advanced GPT-Image-1 options, you can configure:
+
+- Image size: Set with `VT_SETTINGS_IMAGE_GEN_IMAGE_SIZE` (e.g., "1024x1024", "1536x1024", "1024x1536")
+- Quality: Set with `VT_SETTINGS_IMAGE_GEN_IMAGE_QUALITY` (e.g., "standard", "high")
+- Background: Set with `VT_SETTINGS_IMAGE_GEN_BACKGROUND` (e.g., "auto", "transparent")
+- Output format: Set with `VT_SETTINGS_IMAGE_GEN_OUTPUT_FORMAT` (e.g., "png", "jpeg")
+- Compression: Set with `VT_SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION` (e.g., "90", "100")
 
 ### Voice Interaction
 

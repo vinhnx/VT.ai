@@ -76,7 +76,13 @@ For text-to-speech generation:
 
 For creating images from text descriptions:
 
-- DALL-E 3
+- **DALL-E 3**: OpenAI's image generation model
+- **GPT-Image-1**: Advanced image generation model with customizable settings
+  - Supports transparent backgrounds
+  - Multiple output formats (PNG, JPEG)
+  - Customizable dimensions (square, landscape, portrait)
+  - Quality settings (standard, high)
+  - Advanced compression options
 
 ## Performance Considerations
 
