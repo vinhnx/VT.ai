@@ -1,0 +1,94 @@
+site_name: VT.ai Documentation
+site_description: Documentation for VT.ai - Minimal Multimodal AI Chat App with Dynamic Routing
+site_author: vinhnx
+repo_url: https://github.com/vinhnx/VT.ai
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: ../public/logo_dark.png
+  favicon: ../public/favicon.ico
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - content.code.copy
+    - search.highlight
+    - search.share
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed
+  - pymdownx.snippets
+  - pymdownx.tasklist
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - User Guide:
+    - Getting Started: user/getting-started.md
+    - Features: user/features.md
+    - Configuration: user/configuration.md
+    - Models: user/models.md
+    - Troubleshooting: user/troubleshooting.md
+  - Developer Guide:
+    - Architecture: developer/architecture.md
+    - Extending VT.ai: developer/extending.md
+    - Semantic Routing: developer/routing.md
+    - Models Integration: developer/models.md
+    - Assistant Tools: developer/tools.md
+  - API Reference:
+    - Overview: api/index.md
+    - App: api/app.md
+    - Router: api/router.md
+    - Utils: api/utils.md
+    - Assistants: api/assistants.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          selection:
+            docstring_style: google
+          rendering:
+            show_source: true
+            show_if_no_docstring: false
+  - llmstxt:
+      files:
+        - output: llms.txt
+          title: "VT.ai - Minimal Multimodal AI Chat App"
+          summary: "Documentation for VT.ai, a minimal multimodal AI chat application with dynamic routing capabilities."
+          description: |
+            This is the official documentation for VT.ai, a Python-based AI chat application that supports multiple
+            AI providers including OpenAI, Anthropic Claude, Google Gemini, and local models via Ollama. The app
+            features semantic-based routing, multimodal capabilities (text, image, audio), vision analysis, and
+            dynamic response generation.
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/vinhnx/VT.ai
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/vtai/

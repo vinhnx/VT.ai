@@ -1,0 +1,25 @@
+# VT.ai
+
+> VT.ai is a minimal multimodal AI chat application with dynamic routing capabilities that supports multiple AI providers including OpenAI, Anthropic Claude, Google Gemini, and local models via Ollama.
+
+VT.ai is a Python-based AI chat application featuring semantic-based routing, multimodal capabilities (text, image, audio), vision analysis, and dynamic response generation. The app supports multiple AI providers and offers a user-friendly interface for interacting with various AI models.
+
+## Documentation
+
+- [Getting Started](https://vinhnx.github.io/VT.ai/user/getting-started/) : Quick guide to install and configure VT.ai
+- [Features](https://vinhnx.github.io/VT.ai/user/features/) : Overview of VT.ai's capabilities and functionalities
+- [Models](https://vinhnx.github.io/VT.ai/user/models/) : Information about supported AI models and providers
+- [Configuration](https://vinhnx.github.io/VT.ai/user/configuration/) : Configuration options and customization settings
+
+## Developer Resources
+
+- [Architecture](https://vinhnx.github.io/VT.ai/developer/architecture/) : Overview of VT.ai's technical architecture
+- [Extending VT.ai](https://vinhnx.github.io/VT.ai/developer/extending/) : Guide to extending the application with custom features
+- [Semantic Routing](https://vinhnx.github.io/VT.ai/developer/routing/) : Documentation on VT.ai's intelligent routing system
+- [API Reference](https://vinhnx.github.io/VT.ai/api/) : Complete reference for VT.ai's API
+
+## Optional
+
+- [Troubleshooting](https://vinhnx.github.io/VT.ai/user/troubleshooting/) : Common issues and their solutions
+- [Models Integration](https://vinhnx.github.io/VT.ai/developer/models/) : Detailed guide on integrating new AI models
+- [Assistant Tools](https://vinhnx.github.io/VT.ai/developer/tools/) : Information about tools available to assistants
