@@ -9,29 +9,28 @@ import contextlib
 from typing import Any, Callable, Optional
 
 import chainlit as cl
-
-from vtai.utils.config import logger
-from vtai.utils.error_handlers import handle_exception
+from utils.config import logger
+from utils.error_handlers import handle_exception
 
 
 @contextlib.asynccontextmanager
 async def safe_execution(
-    operation_name: str, 
+    operation_name: str,
     timeout_message: str = "The operation timed out. Please try again with a simpler query.",
     cancelled_message: str = "The operation was cancelled. Please try again.",
     on_timeout: Optional[Callable] = None,
-    on_cancel: Optional[Callable] = None
+    on_cancel: Optional[Callable] = None,
 ):
     """
     Context manager for safely executing asynchronous operations with standardized error handling.
-    
+
     Args:
         operation_name: Name of the operation for logging purposes
         timeout_message: Message to display on timeout
         cancelled_message: Message to display when operation is cancelled
         on_timeout: Optional function to call on timeout
         on_cancel: Optional function to call when cancelled
-        
+
     Yields:
         None
     """

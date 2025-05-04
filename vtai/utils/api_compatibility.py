@@ -13,8 +13,7 @@ from litellm.exceptions import (
     BadRequestError,
     ServiceUnavailableError,
 )
-
-from vtai.utils.config import logger
+from utils.config import logger
 
 
 def is_openai_model(model: str) -> bool:

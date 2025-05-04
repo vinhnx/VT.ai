@@ -75,7 +75,7 @@ The Web Search tool enables querying the web for current information:
 - **Usage Example**:
 
   ```python
-  from vtai.tools import WebSearchTool, WebSearchOptions
+  from tools import WebSearchTool, WebSearchOptions
 
   # Initialize the search tool with API keys
   search_tool = WebSearchTool(

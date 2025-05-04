@@ -21,8 +21,8 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 
 # Update imports to use vtai namespace
-from vtai.router.constants import RouteLayer
-from vtai.utils import constants as const
+from router.constants import RouteLayer
+from utils import constants as const
 
 # Configure logging
 logging.basicConfig(

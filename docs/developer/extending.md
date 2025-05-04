@@ -190,7 +190,7 @@ You can extend VT.ai with new assistant tools for specialized capabilities.
    ```python
    # Add to the process_function_tool logic to handle your tool
    if function_name == "my_new_tool":
-       from vtai.tools.my_new_tool import my_new_tool_function
+       from tools.my_new_tool import my_new_tool_function
        result = await my_new_tool_function(function_args)
        return {
            "output": result,

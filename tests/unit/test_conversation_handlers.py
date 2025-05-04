@@ -6,8 +6,7 @@ from contextlib import contextmanager
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
-
-from vtai.utils.conversation_handlers import handle_conversation
+from utils.conversation_handlers import handle_conversation
 
 
 # Mock the Chainlit context
@@ -132,7 +131,7 @@ async def test_handle_web_search_with_summarization(
                         return_value=[],
                     ):
                         # Call the web search handler
-                        from vtai.utils.conversation_handlers import handle_web_search
+                        from utils.conversation_handlers import handle_web_search
 
                         await handle_web_search(query, mock_message_instance)
 
@@ -225,7 +224,7 @@ async def test_handle_web_search_without_summarization(
                         return_value=[],
                     ):
                         # Call the web search handler
-                        from vtai.utils.conversation_handlers import handle_web_search
+                        from utils.conversation_handlers import handle_web_search
 
                         await handle_web_search(query, mock_message_instance)
 

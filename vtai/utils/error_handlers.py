@@ -10,8 +10,7 @@ from typing import Any, Callable, Optional
 
 import chainlit as cl
 from litellm.exceptions import BadRequestError, RateLimitError, ServiceUnavailableError
-
-from vtai.utils.config import logger
+from utils.config import logger
 
 
 async def handle_exception(e: Exception) -> None:

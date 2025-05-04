@@ -19,28 +19,28 @@ from typing import Any, Dict, List, Optional
 import chainlit as cl
 import dotenv
 import numpy as np
-from chainlit.types import ChatProfile
 
 # Import modules
-from vtai.assistants.manager import get_or_create_assistant
-from vtai.utils import constants as const
-from vtai.utils import llm_providers_config as conf
-from vtai.utils.assistant_tools import process_thread_message, process_tool_call
-from vtai.utils.config import initialize_app, logger
-from vtai.utils.conversation_handlers import (
+from assistants.manager import get_or_create_assistant
+from chainlit.types import ChatProfile
+from utils import constants as const
+from utils import llm_providers_config as conf
+from utils.assistant_tools import process_thread_message, process_tool_call
+from utils.config import initialize_app, logger
+from utils.conversation_handlers import (
     config_chat_session,
     handle_conversation,
     handle_files_attachment,
     handle_thinking_conversation,
 )
-from vtai.utils.dict_to_object import DictToObject
-from vtai.utils.error_handlers import handle_exception
-from vtai.utils.file_handlers import process_files
-from vtai.utils.llm_profile_builder import build_llm_profile
-from vtai.utils.media_processors import handle_tts_response
-from vtai.utils.safe_execution import safe_execution
-from vtai.utils.settings_builder import build_settings
-from vtai.utils.user_session_helper import get_setting, is_in_assistant_profile
+from utils.dict_to_object import DictToObject
+from utils.error_handlers import handle_exception
+from utils.file_handlers import process_files
+from utils.llm_profile_builder import build_llm_profile
+from utils.media_processors import handle_tts_response
+from utils.safe_execution import safe_execution
+from utils.settings_builder import build_settings
+from utils.user_session_helper import get_setting, is_in_assistant_profile
 
 # Initialize the application with improved client configuration
 route_layer, assistant_id, openai_client, async_openai_client = initialize_app()
@@ -243,11 +243,7 @@ async def process_function_tool(
 
     # Handle the web search tool specifically
     if function_name == "web_search":
-        from vtai.tools.search import (
-            WebSearchOptions,
-            WebSearchParameters,
-            WebSearchTool,
-        )
+        from tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
 
         # Get API keys from environment
         openai_api_key = os.environ.get("OPENAI_API_KEY") or None
@@ -813,11 +809,7 @@ async def on_audio_chunk(chunk: cl.InputAudioChunk) -> None:
     Args:
         chunk: Audio chunk from the user
     """
-    from vtai.utils.media_processors import (
-        SILENCE_THRESHOLD,
-        SILENCE_TIMEOUT,
-        process_audio,
-    )
+    from utils.media_processors import SILENCE_THRESHOLD, SILENCE_TIMEOUT, process_audio
 
     # Get audio chunks from user session
     audio_chunks = cl.user_session.get("audio_chunks")

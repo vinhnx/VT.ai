@@ -3,8 +3,7 @@ import os
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.beta import Assistant
-
-from vtai.utils import constants
+from utils import constants
 
 # Assistant (beta)
 # ref: https://platform.openai.com/docs/assistants/tools/code-interpreter/how-it-works

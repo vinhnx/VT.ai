@@ -9,10 +9,10 @@ import asyncio
 import os
 from pathlib import Path
 
-from vtai.utils import constants as const
-from vtai.utils import llm_providers_config as conf
-from vtai.utils.config import get_openai_client, logger
-from vtai.utils.media_processors import handle_trigger_async_image_gen
+from utils import constants as const
+from utils import llm_providers_config as conf
+from utils.config import get_openai_client, logger
+from utils.media_processors import handle_trigger_async_image_gen
 
 
 async def generate_example_images():

@@ -186,7 +186,7 @@ if __name__ == "__main__":
 
 ```python
 # Example of customizing the initialization
-from vtai.app import setup_chainlit_config, initialize_app
+from app import setup_chainlit_config, initialize_app
 
 # Setup custom configuration
 config_dir = setup_chainlit_config()

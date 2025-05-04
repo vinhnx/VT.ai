@@ -9,7 +9,7 @@ from typing import Any
 import chainlit as cl
 
 # Update imports to use vtai namespace
-from vtai.utils.chat_profile import AppChatProfileType
+from utils.chat_profile import AppChatProfileType
 
 
 def update_message_history_from_user(context: str) -> None:

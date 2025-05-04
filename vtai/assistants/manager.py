@@ -7,11 +7,10 @@ This module provides functions to create, update, and manage OpenAI Assistants.
 import os
 from typing import List, Optional
 
+from assistants.tools import ASSISTANT_TOOLS
 from openai import AsyncOpenAI
 from openai.types.beta import Assistant
-
-from vtai.assistants.tools import ASSISTANT_TOOLS
-from vtai.utils import constants as const
+from utils import constants as const
 
 
 async def create_assistant(

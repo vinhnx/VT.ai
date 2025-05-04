@@ -5,7 +5,7 @@ Defines available tools for OpenAI Assistant API integration.
 """
 
 # Import individual tool definitions
-from vtai.assistants.tools.web_search import WEB_SEARCH_TOOL
+from assistants.tools.web_search import WEB_SEARCH_TOOL
 
 # List of available assistant tools
 ASSISTANT_TOOLS = [

@@ -19,7 +19,7 @@ def build_llm_profile(
         List of chat profiles for all models
     """
     # Import model names and IDs here to avoid circular import
-    from vtai.utils.llm_providers_config import MODEL_ALIAS_MAP, MODELS, NAMES
+    from utils.llm_providers_config import MODEL_ALIAS_MAP, MODELS, NAMES
 
     profiles = []
 

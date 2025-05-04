@@ -8,11 +8,10 @@ from typing import Dict, List
 
 import chainlit as cl
 from pydantic import BaseModel
-
-from vtai.router.trainer import create_routes
+from router.trainer import create_routes
 
 # Update imports to use vtai namespace
-from vtai.utils.chat_profile import AppChatProfileType
+from utils.chat_profile import AppChatProfileType
 
 
 # Define AppChatProfileModel class
@@ -61,8 +60,8 @@ SETTINGS_USE_THINKING_MODEL: str = "settings_use_thinking_model"
 # Default values
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
-DEFAULT_MODEL: str = "gpt-4o-mini"
-DEFAULT_IMAGE_GEN_MODEL: str = "gpt-image-1"  # Updated from "dall-e-3" to "gpt-image-1"
+DEFAULT_MODEL: str = "gemini/gemini-2.0-flash"
+DEFAULT_IMAGE_GEN_MODEL: str = "gpt-image-1"
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
 DEFAULT_TTS_MODEL: str = "gpt-4o-mini-tts"
 DEFAULT_TTS_PRESET: str = "nova"
@@ -159,10 +158,6 @@ VISION_MODEL_MAP: Dict[str, str] = {
 }
 
 MODEL_ALIAS_MAP: Dict[str, str] = {
-    # DeepSeek models
-    "DeepSeek R1": "deepseek/deepseek-reasoner",
-    "DeepSeek V3": "deepseek/deepseek-chat",
-    "DeepSeek Coder": "deepseek/deepseek-coder",
     # OpenAI models
     "OpenAI - GPT-4.1": "gpt-4.1",
     "OpenAI - GPT-4.1 Mini": "gpt-4.1-mini",
@@ -179,30 +174,27 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
     "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
     # Google models
-    "Google - Gemini 2.0 Pro": "gemini/gemini-2.5-pro",
+    "Google - Gemini 2.5 Pro": "gemini/gemini-2.5-pro-exp-03-25",
     "Google - Gemini 2.0 Flash": "gemini/gemini-2.0-flash",
-    "Google - Gemini 2.0 Flash Exp": "gemini/gemini-2.5-flash-exp",
+    "Google - Gemini 2.0 Flash-Lite": "gemini/gemini-2.0-flash-lite",
+    "Google - Gemini 2.5 Flash Preview": "gemini/gemini-2.5-flash-preview-04-17",
+    # DeepSeek models
+    "DeepSeek R1": "deepseek/deepseek-reasoner",
+    "DeepSeek V3": "deepseek/deepseek-chat",
+    "DeepSeek Coder": "deepseek/deepseek-coder",
     # OpenRouter models
+    "OpenRouter - Qwen: Qwen3 0.6B (free)": "openrouter/qwen/qwen3-0.6b-04-28:free",
     "OpenRouter - DeepSeek R1 (free)": "openrouter/deepseek/deepseek-r1:free",
     "OpenRouter - DeepSeek R1": "openrouter/deepseek/deepseek-r1",
     "OpenRouter - DeepSeek V3 0324 (free)": "openrouter/deepseek/deepseek-chat-v3-0324:free",
     "OpenRouter - DeepSeek V3 0324": "openrouter/deepseek/deepseek-chat-v3-0324",
     "OpenRouter - Anthropic: Claude 3.7 Sonnet (thinking)": "openrouter/anthropic/claude-3.7-sonnet:thinking",
     "OpenRouter - Anthropic: Claude 3.7 Sonnet": "openrouter/anthropic/claude-3.7-sonnet",
-    "OpenRouter - Google: Gemini 2.5 Pro Experimental (free)": "openrouter/google/gemini-2.5-pro-exp-03-25:free",
     "OpenRouter - Google: Gemini 2.5 Pro Preview": "openrouter/google/gemini-2.5-pro-preview-03-25",
-    "OpenRouter - Google: Gemini 2.0 Flash Thinking Experimental (free)": "openrouter/google/gemini-2.0-flash-thinking-exp:free",
-    "OpenRouter - Google: Gemini 2.0 Flash Experimental (free)": "openrouter/google/gemini-2.0-flash-exp:free",
-    "OpenRouter - Google: Gemma 3 27B (free)": "openrouter/google/gemma-3-27b-it:free",
-    "OpenRouter - Meta: Llama 4 Maverick (free)": "openrouter/meta-llama/llama-4-maverick:free",
     "OpenRouter - Meta: Llama 4 Maverick": "openrouter/meta-llama/llama-4-maverick",
-    "OpenRouter - Meta: Llama 4 Scout (free)": "openrouter/meta-llama/llama-4-scout:free",
     "OpenRouter - Meta: Llama 4 Scout": "openrouter/meta-llama/llama-4-scout",
-    "OpenRouter - Qwen QWQ 32B (free)": "openrouter/qwen/qwq-32b:free",
     "OpenRouter - Qwen QWQ 32B": "openrouter/qwen/qwq-32b",
-    "OpenRouter - Qwen 2.5 VL 32B (free)": "openrouter/qwen/qwen2.5-vl-32b-instruct:free",
     "OpenRouter - Qwen 2.5 Coder 32B": "openrouter/qwen/qwen-2.5-coder-32b-instruct",
-    "OpenRouter - Mistral: Mistral Small 3.1 24B (free)": "openrouter/mistralai/mistral-small-3.1-24b-instruct:free",
     "OpenRouter - Mistral: Mistral Small 3.1 24B": "openrouter/mistralai/mistral-small-3.1-24b-instruct",
     # Ollama models
     "Ollama - Deepseek R1 1.5B": "ollama/deepseek-r1:1.5b",

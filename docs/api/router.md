@@ -100,7 +100,7 @@ The router configuration is defined in `vtai/router/layers.json`, which contains
 
 ```python
 # Import the router module
-from vtai.router import SemanticRouter, Route
+from router import SemanticRouter, Route
 
 # Define route handlers
 async def handle_general(message, context):
@@ -142,7 +142,7 @@ The router module includes a trainer for updating embeddings:
 
 ```python
 # Import the trainer
-from vtai.router.trainer import train_router
+from router.trainer import train_router
 
 # Train the router with new examples
 train_router(

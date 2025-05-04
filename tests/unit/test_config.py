@@ -4,7 +4,7 @@ Unit tests for VT.ai config utilities.
 import os
 from unittest.mock import MagicMock, patch
 
-from vtai.utils.config import initialize_app, load_api_keys
+from utils.config import initialize_app, load_api_keys
 
 
 @patch("vtai.utils.config.dotenv.find_dotenv")
