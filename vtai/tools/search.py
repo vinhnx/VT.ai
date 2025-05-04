@@ -41,7 +41,8 @@ class WebSearchParameters(BaseModel):
 
     query: str = Field(..., description="The query to search for")
     model: str = Field(
-        default="gemini/gemini-2.0-flash-lite", description="The model to use for search"
+        default="gemini/gemini-2.0-flash-lite",
+        description="The model to use for search",
     )
     max_results: Optional[int] = Field(
         default=None, description="Maximum number of search results to return"
