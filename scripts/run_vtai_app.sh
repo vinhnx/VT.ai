@@ -13,10 +13,15 @@ if [ -f .env ]; then
   set +a
 fi
 
-# Install dependencies from requirements.txt using uv
-echo "Installing dependencies from requirements.txt..."
-uvx pip install -r requirements.txt
+# Only check dependencies if --check-deps flag is provided
+if [[ "$*" == *"--check-deps"* ]]; then
+  echo "Checking dependencies from requirements.txt..."
+  uvx pip install -r requirements.txt
+else
+  echo "Skipping dependency check. Use --check-deps flag to verify all dependencies."
+fi
 
 # Run the VT.ai application using chainlit
 echo "Starting VT.ai application..."
+export VT_FAST_START=1
 chainlit run vtai/app.py "$@"

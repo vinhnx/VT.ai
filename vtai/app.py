@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -26,7 +27,7 @@ from chainlit.types import ChatProfile
 from utils import constants as const
 from utils import llm_providers_config as conf
 from utils.assistant_tools import process_thread_message, process_tool_call
-from utils.config import initialize_app, logger
+from utils.config import initialize_app, load_model_prices, logger
 from utils.conversation_handlers import (
     config_chat_session,
     handle_conversation,
@@ -43,20 +44,43 @@ from utils.settings_builder import build_settings
 from utils.starter_prompts import get_command_route, get_command_template, set_commands
 from utils.user_session_helper import get_setting, is_in_assistant_profile
 
+# Flag to track if we're in fast mode
+fast_mode = os.environ.get("VT_FAST_START") == "1"
+if fast_mode:
+    logger.info("Starting in fast mode - optimizing startup time")
+    start_time = time.time()
+
 # Initialize the application with improved client configuration
 route_layer, assistant_id, openai_client, async_openai_client = initialize_app()
-# Removed the debugging code for printing python executable and pip list
 
-# Initialize or retrieve the assistant (with web search capabilities)
-import os
+if fast_mode:
+    logger.info(
+        f"App initialization completed in {time.time() - start_time:.2f} seconds"
+    )
+
+# Support for deferred model prices loading
+_model_prices_loaded = False
+
+
+# Prepare model prices in background
+def ensure_model_prices():
+    """Ensure model prices are loaded when needed"""
+    global _model_prices_loaded
+    if not _model_prices_loaded:
+        # Load model prices in the background when first needed
+        load_model_prices()
+        _model_prices_loaded = True
 
 
 async def init_assistant():
     """Initialize or retrieve the OpenAI assistant with web search enabled."""
     global assistant_id  # Moved to the beginning of the function
 
-    # Print all environment variables
-    print("All environment variables:", os.environ)
+    # Skip printing all environment variables in fast mode
+    if not fast_mode:
+        # Print all environment variables - only in debug mode
+        if os.environ.get("VT_DEBUG") == "1":
+            print("All environment variables:", os.environ)
 
     try:
         # Get or create the assistant with web search capabilities
@@ -101,6 +125,8 @@ async def start_chat():
     """
     Initialize the chat session with settings and system message.
     """
+    start_time = time.time()
+
     # Initialize default settings
     cl.user_session.set(conf.SETTINGS_CHAT_MODEL, conf.DEFAULT_MODEL)
     # Set default value for web search model
@@ -139,6 +165,13 @@ async def start_chat():
         except Exception as e:
             logger.error("Unexpected error creating thread: %s", repr(e))
             await handle_exception(e)
+
+    # Ensure model prices are loaded at this point
+    ensure_model_prices()
+
+    logger.debug(
+        f"Chat session initialization completed in {time.time() - start_time:.2f} seconds"
+    )
 
 
 @asynccontextmanager
@@ -1175,11 +1208,6 @@ def main():
         cmd = f"chainlit {' '.join(remaining_args)} {os.path.realpath(__file__)}"
 
     print(f"Starting VT.ai: {cmd}")
-    os.system(cmd)
-
-
-if __name__ == "__main__":
-    main()
     os.system(cmd)
 
 
