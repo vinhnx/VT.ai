@@ -1225,7 +1225,7 @@
 <h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
 <h3 id="basic-routing">Basic Routing<a class="headerlink" href="#basic-routing" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Import the router module</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">vtai.router</span><span class="w"> </span><span class="kn">import</span> <span class="n">SemanticRouter</span><span class="p">,</span> <span class="n">Route</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">router</span><span class="w"> </span><span class="kn">import</span> <span class="n">SemanticRouter</span><span class="p">,</span> <span class="n">Route</span>
 
 <span class="c1"># Define route handlers</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_general</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
@@ -1260,7 +1260,7 @@
 <h2 id="router-trainer">Router Trainer<a class="headerlink" href="#router-trainer" title="Permanent link">&para;</a></h2>
 <p>The router module includes a trainer for updating embeddings:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Import the trainer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">vtai.router.trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_router</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">router.trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_router</span>
 
 <span class="c1"># Train the router with new examples</span>
 <span class="n">train_router</span><span class="p">(</span>

@@ -1138,7 +1138,7 @@ python<span class="w"> </span>server.py
 <h2 id="using-mcp-in-your-applications">Using MCP in Your Applications<a class="headerlink" href="#using-mcp-in-your-applications" title="Permanent link">&para;</a></h2>
 <h3 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h3>
 <p>You can use MCP in your VT.ai applications by importing the necessary components:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_mcp_completion</span><span class="p">,</span> <span class="n">initialize_mcp</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_mcp_completion</span><span class="p">,</span> <span class="n">initialize_mcp</span>
 
 <span class="c1"># Initialize MCP configuration</span>
 <span class="n">mcp_config</span> <span class="o">=</span> <span class="n">initialize_mcp</span><span class="p">()</span>
@@ -1160,7 +1160,7 @@ python<span class="w"> </span>server.py
 </code></pre></div>
 <h3 id="streaming-responses">Streaming Responses<a class="headerlink" href="#streaming-responses" title="Permanent link">&para;</a></h3>
 <p>MCP supports streaming responses for a better user experience:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_mcp_completion</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_mcp_completion</span>
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">example_streaming</span><span class="p">():</span>
     <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
@@ -1188,7 +1188,7 @@ python<span class="w"> </span>server.py
 <h3 id="using-with-chainlit">Using with Chainlit<a class="headerlink" href="#using-with-chainlit" title="Permanent link">&para;</a></h3>
 <p>VT.ai includes a dedicated handler for using MCP with Chainlit:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">chainlit</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cl</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChainlitMCPHandler</span><span class="p">,</span> <span class="n">initialize_mcp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChainlitMCPHandler</span><span class="p">,</span> <span class="n">initialize_mcp</span>
 
 <span class="c1"># Initialize MCP handler</span>
 <span class="n">mcp_handler</span> <span class="o">=</span> <span class="n">ChainlitMCPHandler</span><span class="p">()</span>
@@ -1242,7 +1242,7 @@ python<span class="w"> </span>server.py
 <h2 id="advanced-usage">Advanced Usage<a class="headerlink" href="#advanced-usage" title="Permanent link">&para;</a></h2>
 <h3 id="custom-model-mappings">Custom Model Mappings<a class="headerlink" href="#custom-model-mappings" title="Permanent link">&para;</a></h3>
 <p>You can create custom model mappings:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_mcp</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">initialize_mcp</span>
 
 <span class="n">custom_model_map</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;my-fast-model&quot;</span><span class="p">:</span> <span class="s2">&quot;o3-mini&quot;</span><span class="p">,</span>
@@ -1254,7 +1254,7 @@ python<span class="w"> </span>server.py
 </code></pre></div>
 <h3 id="direct-api-calls">Direct API Calls<a class="headerlink" href="#direct-api-calls" title="Permanent link">&para;</a></h3>
 <p>You can call the MCP API directly:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">call_mcp_api</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">call_mcp_api</span>
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">direct_call</span><span class="p">():</span>
     <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
@@ -1271,7 +1271,7 @@ python<span class="w"> </span>server.py
 </code></pre></div>
 <h3 id="multimodal-support">Multimodal Support<a class="headerlink" href="#multimodal-support" title="Permanent link">&para;</a></h3>
 <p>MCP supports multimodal inputs including images:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_mcp_completion</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.mcp_integration</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_mcp_completion</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">image_analysis</span><span class="p">():</span>

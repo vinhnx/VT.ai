@@ -1396,7 +1396,7 @@
 <p>Add a tool processor in <code>vtai/app.py</code> to handle the tool execution:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Add to the process_function_tool logic to handle your tool</span>
 <span class="k">if</span> <span class="n">function_name</span> <span class="o">==</span> <span class="s2">&quot;my_new_tool&quot;</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">vtai.tools.my_new_tool</span><span class="w"> </span><span class="kn">import</span> <span class="n">my_new_tool_function</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">tools.my_new_tool</span><span class="w"> </span><span class="kn">import</span> <span class="n">my_new_tool_function</span>
     <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">my_new_tool_function</span><span class="p">(</span><span class="n">function_args</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span>

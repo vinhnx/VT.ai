@@ -1353,14 +1353,12 @@
 <h4 id="using-thinking-mode">Using Thinking Mode<a class="headerlink" href="#using-thinking-mode" title="Permanent link">&para;</a></h4>
 <p>There are two ways to activate thinking mode:</p>
 <ol>
-<li>
-<p><strong>Manual Activation</strong>: Add the <code>&lt;think&gt;</code> tag at the beginning of your message
-   <div class="highlight"><pre><span></span><code>&lt;think&gt;What are the key factors that contributed to the Industrial Revolution?
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Automatic Activation</strong>: Enable "Use Thinking Mode For Reasoning Models" in settings</p>
-</li>
+<li><strong>Manual Activation</strong>: Add the <code>&lt;think&gt;</code> tag at the beginning of your message</li>
+</ol>
+<div class="highlight"><pre><span></span><code>&lt;think&gt;What are the key factors that contributed to the Industrial Revolution?
+</code></pre></div>
+<ol>
+<li><strong>Automatic Activation</strong>: Enable "Use Thinking Mode For Reasoning Models" in settings</li>
 <li>When enabled, VT.ai will automatically use thinking mode for models in the reasoning-enhanced list</li>
 <li>This includes models like DeepSeek Reasoner, DeepSeek R1 series, Qwen 2.5, Claude 3, and GPT-4o</li>
 </ol>
@@ -1443,30 +1441,30 @@ def mystery_function(arr):
 <h4 id="advanced-image-generation-settings">Advanced Image Generation Settings<a class="headerlink" href="#advanced-image-generation-settings" title="Permanent link">&para;</a></h4>
 <p>For advanced GPT-Image-1 options, you can configure:</p>
 <ul>
-<li><strong>Image size</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_SIZE</code> </li>
+<li><strong>Image size</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_SIZE</code></li>
 <li>
 <p>Options: "1024x1024" (square), "1792x1024" (landscape), "1024x1792" (portrait), "1536x1536" (large square)</p>
 </li>
 <li>
-<p><strong>Quality</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_QUALITY</code> </p>
+<p><strong>Quality</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_IMAGE_QUALITY</code></p>
 </li>
 <li>
 <p>Options: "standard" (faster), "hd" (higher quality)</p>
 </li>
 <li>
-<p><strong>Background</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_BACKGROUND</code> </p>
+<p><strong>Background</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_BACKGROUND</code></p>
 </li>
 <li>
 <p>Options: "auto" (context-dependent), "transparent" (for PNG format)</p>
 </li>
 <li>
-<p><strong>Output format</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_FORMAT</code> </p>
+<p><strong>Output format</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_FORMAT</code></p>
 </li>
 <li>
 <p>Options: "png" (lossless, supports transparency), "jpeg" (smaller file size), "webp" (best compression)</p>
 </li>
 <li>
-<p><strong>Compression</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION</code> </p>
+<p><strong>Compression</strong>: Set with <code>VT_SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION</code></p>
 </li>
 <li>Range: 0-100, where 100 is maximum quality (webp/jpeg only)</li>
 </ul>
@@ -1479,9 +1477,9 @@ def mystery_function(arr):
 <li><strong>Mention lighting conditions</strong>: Natural light, studio lighting, dramatic shadows</li>
 <li><strong>Reference time period or era</strong>: Victorian, futuristic, 1980s, etc.</li>
 </ul>
-<p>Example of a detailed prompt:
+<p>Example of a detailed prompt:</p>
 <div class="highlight"><pre><span></span><code>Generate an image of a serene Japanese garden at sunset, with a small wooden bridge crossing a koi pond. Cherry blossom trees frame the scene, with soft pink petals falling onto the water&#39;s surface. The lighting is warm and golden, creating long shadows. Style: watercolor painting with fine details.
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="voice-interaction">Voice Interaction<a class="headerlink" href="#voice-interaction" title="Permanent link">&para;</a></h3>
 <p>VT.ai supports comprehensive voice-based interaction:</p>
 <ul>

@@ -1744,8 +1744,8 @@
 </code></pre></div>
 <h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
 <h3 id="configuration-example">Configuration Example<a class="headerlink" href="#configuration-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">config</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.llm_providers_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_available_models</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.llm_providers_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_available_models</span>
 
 <span class="c1"># Get application logger</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span>
@@ -1758,7 +1758,7 @@
 <span class="n">route_layer</span><span class="p">,</span> <span class="n">assistant_id</span><span class="p">,</span> <span class="n">openai_client</span><span class="p">,</span> <span class="n">async_openai_client</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">initialize_app</span><span class="p">()</span>
 </code></pre></div>
 <h3 id="conversation-handling-example">Conversation Handling Example<a class="headerlink" href="#conversation-handling-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.conversation_handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">handle_conversation</span><span class="p">,</span> <span class="n">handle_thinking_conversation</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.conversation_handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">handle_conversation</span><span class="p">,</span> <span class="n">handle_thinking_conversation</span>
 
 <span class="c1"># Handle standard query</span>
 <span class="k">await</span> <span class="n">handle_conversation</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">message_history</span><span class="p">,</span> <span class="n">route_layer</span><span class="p">)</span>
@@ -1768,7 +1768,7 @@
     <span class="k">await</span> <span class="n">handle_thinking_conversation</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">message_history</span><span class="p">,</span> <span class="n">route_layer</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="media-processing-example">Media Processing Example<a class="headerlink" href="#media-processing-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">vtai.utils.media_processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">handle_vision</span><span class="p">,</span> <span class="n">handle_tts_response</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">utils.media_processors</span><span class="w"> </span><span class="kn">import</span> <span class="n">handle_vision</span><span class="p">,</span> <span class="n">handle_tts_response</span>
 
 <span class="c1"># Process an image</span>
 <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">elements</span> <span class="ow">and</span> <span class="n">message</span><span class="o">.</span><span class="n">elements</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;image&quot;</span><span class="p">:</span>
