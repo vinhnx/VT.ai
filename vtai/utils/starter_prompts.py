@@ -1,18 +1,18 @@
 """
-Starter prompt utilities for VT.ai application.
+Starter prompt and command utilities for VT.ai application.
 
-This module provides a collection of high-quality hardcoded starter prompts
-and functions to randomly select from them. It also includes the ability to
-generate route-based starter prompts as an alternative approach.
+This module provides a collection of high-quality hardcoded starter prompts, commands,
+and functions to manage them. It includes the ability to generate route-based
+starter prompts and commands as alternative approaches.
 """
 
 import random
 from random import choice, shuffle
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import chainlit as cl
-
-from vtai.router.trainer import create_routes
+from router.constants import SemanticRouterType
+from router.trainer import create_routes
 
 # Comprehensive set of hardcoded starter prompts covering various use cases
 STARTER_PROMPTS = [
@@ -208,185 +208,338 @@ STARTER_PROMPTS = [
     },
 ]
 
+# Command definitions with corresponding icons and descriptions
+# Each command maps to a specific router intent for semantic routing
+COMMANDS = [
+    {
+        "id": "Code",
+        "icon": "code",
+        "description": "Get programming assistance",
+        "button": True,
+        "persistent": False,
+        "route": SemanticRouterType.TEXT_PROCESSING,  # Maps to text-processing for now
+    },
+    {
+        "id": "Image",
+        "icon": "image",
+        "description": "Generate or analyze images",
+        "button": True,
+        "persistent": False,
+        "route": SemanticRouterType.IMAGE_GENERATION,  # Maps to image-generation
+    },
+    {
+        "id": "Search",
+        "icon": "search",
+        "description": "Search the web for information",
+        "button": True,
+        "persistent": False,
+        "route": SemanticRouterType.WEB_SEARCH,  # Maps to web-search
+    },
+]
 
-def generate_random_prompt() -> Dict[str, str]:
+# Command templates - Example messages that will be inserted when a command is selected
+COMMAND_TEMPLATES = {
+    "Code": [
+        "Help me implement a function that {goal} in {language}.",
+        "Review this code and suggest improvements: ```{language}\n{code}\n```",
+        "Explain how to properly implement {feature} in {language}.",
+        "What's the best way to structure a {project_type} project in {language}?",
+        "Show me how to create a {component} for my {framework} application.",
+    ],
+    "Image": [
+        "Generate an image of {subject} with {style} style.",
+        "Create a photorealistic image of {subject} with high detail.",
+        "Generate an artistic rendering of {scene} in the style of {artist}.",
+        "Create a logo for {company_name} that represents {values}.",
+        "Design a user interface for a {app_type} application with {theme} theme.",
+    ],
+    "Explain": [
+        "Explain {concept} in simple terms.",
+        "What is {topic} and how does it work?",
+        "Compare {thing1} and {thing2}, highlighting key differences.",
+        "I want to learn about {subject}. Where should I start?",
+        "What are the main principles behind {field}?",
+    ],
+    "Data": [
+        "Help me analyze this dataset: {data}",
+        "What statistical methods should I use to {goal}?",
+        "How can I visualize {data_type} data effectively?",
+        "Help me interpret these results: {results}",
+        "What's the best machine learning approach for {problem}?",
+    ],
+    "Write": [
+        "Help me write a {document_type} about {topic}.",
+        "Create an outline for a {content_type} on {subject}.",
+        "Suggest improvements for this text: {text}",
+        "Write a {tone} email to {recipient} regarding {subject}.",
+        "Help me create compelling content for my {platform} about {topic}.",
+    ],
+    "Plan": [
+        "Create a roadmap for {project} with key milestones.",
+        "Help me organize a {event_type} with {participants} participants.",
+        "What's a good project management approach for {project_type}?",
+        "Break down this goal into actionable steps: {goal}",
+        "Create a schedule for {activity} over the next {time_period}.",
+    ],
+    "Debug": [
+        "I'm getting this error: {error}. How can I fix it?",
+        "My {software} is {problem}. What could be causing this?",
+        "Help me troubleshoot this issue: {issue}",
+        "What are common reasons for {symptom} in {system}?",
+        "Debug this code: ```{language}\n{code}\n```",
+    ],
+    "Design": [
+        "Help me design a {component} that achieves {goal}.",
+        "What's a good design pattern for {situation}?",
+        "Suggest a color scheme for a {project_type} with a {mood} feel.",
+        "How should I structure the information architecture for a {website_type}?",
+        "Create a wireframe concept for a {page_type} page.",
+    ],
+    "Chat": [
+        "How's your day going?",
+        "Tell me something interesting that happened recently.",
+        "What's your opinion on {topic}?",
+        "If you could visit any place, where would you go and why?",
+        "Do you have any recommendations for good {media_type} about {subject}?",
+    ],
+    "Search": [
+        "Search for the latest information about {topic}.",
+        "Find recent news on {event}.",
+        "What are the current developments in {field}?",
+        "Search for up-to-date information on {subject}.",
+        "What does the internet say about {topic} right now?",
+    ],
+    "SeeImage": [
+        "Analyze this image and tell me what you see: [image]",
+        "Describe what's happening in this picture: [image]",
+        "What can you tell me about this image? [image]",
+        "Identify the objects and elements in this image: [image]",
+        "Can you explain what's shown in this visual? [image]",
+    ],
+}
+
+
+async def set_commands(
+    use_all: bool = True, custom_commands: List[Dict] = None
+) -> None:
     """
-    Select a random prompt from the hardcoded STARTER_PROMPTS list.
-
-    Returns:
-        Dict[str, str]: A dictionary containing a label and message for a prompt
-    """
-    return choice(STARTER_PROMPTS)
-
-
-# Route-based starter prompts
-def build_starters_from_routes(max_count: int = 5) -> List[cl.Starter]:
-    """
-    Build starter prompts from the router routes.
-    Each route category will be converted into a starter prompt with a short label and verbose message.
+    Set available commands in the Chainlit UI.
 
     Args:
-        max_count: Maximum number of starters to return
+            use_all: Whether to use all predefined commands or not
+            custom_commands: Optional list of custom command dictionaries to use instead
+    """
+    commands_to_set = []
+
+    if custom_commands:
+        commands_to_set = custom_commands
+    elif use_all:
+        # Use a cleaned version of commands (without the route attribute which is for internal use)
+        commands_to_set = [
+            {k: v for k, v in cmd.items() if k != "route"} for cmd in COMMANDS
+        ]
+    else:
+        # Use a subset of commands if not using all
+        available_commands = COMMANDS.copy()
+        shuffle(available_commands)
+        subset = available_commands[:4]  # Limit to 4 random commands
+        commands_to_set = [
+            {k: v for k, v in cmd.items() if k != "route"} for cmd in subset
+        ]
+
+    await cl.context.emitter.set_commands(commands_to_set)
+
+
+def get_command_template(command_id: str) -> Optional[str]:
+    """
+    Get a random template for the specified command.
+
+    Args:
+            command_id: The ID of the command
 
     Returns:
-        List[cl.Starter]: List of cl.Starter objects
+            Optional[str]: A template string or None if command_id is not found
+    """
+    templates = COMMAND_TEMPLATES.get(command_id)
+    if not templates:
+        return None
+
+    return choice(templates)
+
+
+def get_command_route(command_id: str) -> Optional[str]:
+    """
+    Get the router route associated with a command.
+
+    Args:
+            command_id: The ID of the command
+
+    Returns:
+            Optional[str]: The route name or None if command_id is not found
+    """
+    for command in COMMANDS:
+        if command["id"] == command_id:
+            return command.get("route")
+    return None
+
+
+# Route-based command generation
+def build_commands_from_routes(max_count: int = 5) -> List[Dict]:
+    """
+    Build commands from router routes.
+
+    Args:
+            max_count: Maximum number of commands to return
+
+    Returns:
+            List[Dict]: List of command dictionaries
     """
     # Get all routes from the router
     routes = create_routes()
 
-    # Create mapping of short labels for each route
-    route_labels = {
-        "text-processing": "Text Analysis",
-        "vision-image-processing": "Analyze Image",
-        "casual-conversation": "Chat",
-        "image-generation": "Create Image",
-        "curious": "Tell Me About",
-        "code-assistance": "Code Help",
-        "data-analysis": "Analyze Data",
-        "creative-writing": "Write Something",
-        "planning-organization": "Plan This",
-        "troubleshooting": "Fix My Issue",
+    # Create mapping for route commands
+    route_commands = {
+        "text-processing": {
+            "id": "Analyze",
+            "icon": "file-text",
+            "description": "Analyze text content",
+            "route": SemanticRouterType.TEXT_PROCESSING,
+        },
+        "vision-image-processing": {
+            "id": "SeeImage",
+            "icon": "eye",
+            "description": "Analyze images",
+            "route": SemanticRouterType.VISION_IMAGE_PROCESSING,
+        },
+        "casual-conversation": {
+            "id": "Chat",
+            "icon": "message-circle",
+            "description": "Have a conversation",
+            "route": SemanticRouterType.CASUAL_CONVERSATION,
+        },
+        "image-generation": {
+            "id": "CreateImage",
+            "icon": "image-plus",
+            "description": "Generate images",
+            "route": SemanticRouterType.IMAGE_GENERATION,
+        },
+        "curious": {
+            "id": "Learn",
+            "icon": "book-open",
+            "description": "Learn about a topic",
+            "route": SemanticRouterType.CURIOUS,
+        },
+        "web-search": {
+            "id": "Search",
+            "icon": "search",
+            "description": "Search the web",
+            "route": SemanticRouterType.WEB_SEARCH,
+        },
     }
 
-    # Create expanded messages for each route
-    route_messages = {}
-    for route in routes:
-        if route.name in route_labels:
-            # Select a random utterance from the route
-            utterance = random.choice(route.utterances)
-
-            # Expand the utterance into a more verbose message
-            if route.name == "image-generation":
-                route_messages[route.name] = (
-                    f"I'd like you to {utterance}. Please make it highly detailed with vibrant colors and an interesting composition."
-                )
-
-            elif route.name == "code-assistance":
-                route_messages[route.name] = (
-                    f"{utterance}. I'm looking for clean, efficient code with good documentation. Please explain your reasoning and any best practices you're applying."
-                )
-
-            elif route.name == "data-analysis":
-                route_messages[route.name] = (
-                    f"{utterance}. I'm interested in both the statistical significance and practical implications of the findings. Please include visual representation suggestions if appropriate."
-                )
-
-            elif route.name == "creative-writing":
-                route_messages[route.name] = (
-                    f"{utterance}. I'd like something unique with vivid imagery and compelling character development. Feel free to explore unexpected directions."
-                )
-
-            elif route.name == "planning-organization":
-                route_messages[route.name] = (
-                    f"{utterance}. I'm looking for a comprehensive approach that considers potential obstacles and includes contingency plans. Please make it practical and implementable."
-                )
-
-            elif route.name == "troubleshooting":
-                route_messages[route.name] = (
-                    f"{utterance}. I've already tried restarting and checking basic connectivity. Please provide a step-by-step diagnostic process and potential solutions ranked by likelihood."
-                )
-
-            elif route.name == "vision-image-processing":
-                route_messages[route.name] = (
-                    f"{utterance}. Please provide details about the key elements, composition, color scheme, and any text or symbols present. Also share any insights about the context or purpose of the image."
-                )
-
-            elif route.name == "text-processing":
-                route_messages[route.name] = (
-                    f"{utterance}. I'd like a thorough analysis that covers tone, key arguments, implicit assumptions, and overall effectiveness. Please suggest improvements where appropriate."
-                )
-
-            elif route.name == "casual-conversation":
-                route_messages[route.name] = (
-                    f"{utterance} I'd love to hear your thoughts on this in a conversational way, as if we're just chatting casually."
-                )
-
-            elif route.name == "curious":
-                route_messages[route.name] = (
-                    f"{utterance} Please provide a comprehensive explanation with interesting facts, historical context, and current developments. I'm particularly interested in aspects that might surprise someone new to the topic."
-                )
-
-    # Create starters from routes
-    all_starters = []
-    route_names = list(route_labels.keys())
-    # Shuffle to get random selection each time
+    # Create commands from routes
+    all_commands = []
+    route_names = list(route_commands.keys())
     random.shuffle(route_names)
 
     # Select up to max_count routes
     selected_routes = route_names[:max_count]
 
     for route_name in selected_routes:
-        label = route_labels.get(route_name)
-        message = route_messages.get(route_name)
+        command = route_commands.get(route_name)
+        if command:
+            # Add button and persistent attributes
+            command["button"] = True
+            command["persistent"] = False
+            # Clone the command and remove the route for external use
+            display_command = {k: v for k, v in command.items() if k != "route"}
+            all_commands.append(display_command)
 
-        if label and message:
-            all_starters.append({"label": label, "message": message})
+    return all_commands
 
-    # Convert to Chainlit Starter objects
-    return [
-        cl.Starter(label=item["label"], message=item["message"])
-        for item in all_starters
-    ]
+
+def generate_random_prompt() -> Dict[str, str]:
+    """
+    Generate a random starter prompt.
+
+    Returns:
+        Dict[str, str]: Dictionary with label and message
+    """
+    # Use a random prompt from the hardcoded list
+    if STARTER_PROMPTS:
+        return random.choice(STARTER_PROMPTS)
+
+    # Fallback prompt if no hardcoded prompts are available
+    return {
+        "label": "Default Question",
+        "message": "Hello! I'd like to learn more about how large language models work. Can you explain the basic concepts?",
+    }
 
 
 def get_starter_prompts(
     max_count: int = 5, use_llm: bool = False, refresh_cache: bool = False
 ) -> List[Dict[str, str]]:
     """
-    Get starter prompts using the preferred method.
-    The use_llm parameter is kept for API compatibility but ignored since we're using hardcoded prompts.
+    Get a list of starter prompts.
 
     Args:
-        max_count: Maximum number of prompts to return (minimum 5)
-        use_llm: Ignored parameter (kept for API compatibility)
-        refresh_cache: Ignored parameter (kept for API compatibility)
+        max_count: Maximum number of prompts to return
+        use_llm: Whether to use LLM-generated prompts (currently not implemented)
+        refresh_cache: Whether to refresh any cached prompts
 
     Returns:
-        List[Dict[str, str]]: List of prompt dictionaries with 'label' and 'message' keys
+        List[Dict[str, str]]: List of prompt dictionaries with label and message
     """
-    # Ensure at least 5 starter prompts are shown
-    max_count = max(5, max_count)
+    # For now, just use the hardcoded prompts
+    # The use_llm and refresh_cache params are for future extension
+    prompts = STARTER_PROMPTS.copy()
 
-    # Randomly decide whether to use route-based or hardcoded prompts
-    use_route_based = random.choice([True, False])
+    # Shuffle the prompts
+    random.shuffle(prompts)
 
-    if use_route_based:
-        return [
-            {"label": starter.label, "message": starter.message}
-            for starter in build_starters_from_routes(max_count=max_count)
-        ]
-    else:
-        # Use hardcoded prompts
-        starter_list = STARTER_PROMPTS.copy()
-        shuffle(starter_list)
-        return starter_list[:max_count]
+    # Return up to max_count prompts
+    return prompts[:max_count]
 
 
 def get_shuffled_starters(
     max_count: int = 5, use_llm: bool = False, use_random: bool = False
 ) -> List[cl.Starter]:
     """
-    Get shuffled starters for chat profiles.
-    The use_llm parameter is kept for API compatibility but ignored since we're using hardcoded prompts.
+    Get a shuffled list of starter prompts.
 
     Args:
-        max_count: Maximum number of starters to return (minimum 5)
-        use_llm: Ignored parameter (kept for API compatibility)
-        use_random: Whether to use route-based starters
+        max_count: Maximum number of starters to return
+        use_llm: Whether to use LLM-generated starters
+        use_random: Whether to use a single random starter instead of multiple
 
     Returns:
-        List[cl.Starter]: List of cl.Starter objects
+        List[cl.Starter]: List of Chainlit Starter objects
     """
-    # Ensure at least 5 starter prompts are shown
-    max_count = max(5, max_count)
-
     if use_random:
-        # Use dynamic route-based starters
-        return build_starters_from_routes(max_count=max_count)
-    else:
-        # Use hardcoded starters
-        starters_data = get_starter_prompts(max_count=max_count, use_llm=False)
-        return [
-            cl.Starter(label=item["label"], message=item["message"])
-            for item in starters_data
-        ]
+        # Return a single random starter
+        all_prompts = get_starter_prompts(
+            max_count=1, use_llm=use_llm, refresh_cache=False
+        )
+        starter = (
+            all_prompts[0]
+            if all_prompts
+            else {"label": "Default", "message": "Hello! How can I help you today?"}
+        )
+        return [cl.Starter(label=starter["label"], message=starter["message"])]
+
+    # Get all available starters
+    all_prompts = get_starter_prompts(
+        max_count=max_count, use_llm=use_llm, refresh_cache=False
+    )
+
+    # Shuffle the starters
+    random.shuffle(all_prompts)
+
+    # Limit to max_count
+    selected_prompts = all_prompts[:max_count]
+
+    # Convert to Chainlit Starter objects
+    return [
+        cl.Starter(label=item["label"], message=item["message"])
+        for item in selected_prompts
+    ]

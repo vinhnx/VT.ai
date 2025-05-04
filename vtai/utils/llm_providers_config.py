@@ -13,10 +13,9 @@ from typing import Dict, List, Optional
 import chainlit as cl
 from litellm import completion
 from pydantic import BaseModel
-
-from vtai.router.trainer import create_routes
-from vtai.utils.chat_profile import AppChatProfileType
-from vtai.utils.starter_prompts import get_shuffled_starters
+from router.trainer import create_routes
+from utils.chat_profile import AppChatProfileType
+from utils.starter_prompts import get_shuffled_starters
 
 
 # Define AppChatProfileModel class

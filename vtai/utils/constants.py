@@ -40,3 +40,38 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     # Common models
     "default_model_name": "gpt-4o-mini",
 }
+
+# Settings constants
+SETTINGS_CHAT_MODEL = "chat_model"
+SETTINGS_TEMPERATURE = "temperature"
+SETTINGS_TOP_P = "top_p"
+SETTINGS_SUMMARIZE_SEARCH_RESULTS = "summarize_search_results"
+SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING = "use_dynamic_conversation_routing"
+SETTINGS_VISION_MODEL = "vision_model"
+SETTINGS_ENABLE_TTS_RESPONSE = "enable_tts_response"
+SETTINGS_TTS_MODEL = "tts_model"
+SETTINGS_TTS_VOICE_PRESET_MODEL = "tts_voice_preset_model"
+SETTINGS_IMAGE_GEN_IMAGE_SIZE = "image_gen_image_size"
+SETTINGS_IMAGE_GEN_IMAGE_QUALITY = "image_gen_image_quality"
+SETTINGS_IMAGE_GEN_BACKGROUND = "image_gen_background"
+SETTINGS_IMAGE_GEN_OUTPUT_FORMAT = "image_gen_output_format"
+SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION = "image_gen_output_compression"
+SETTINGS_IMAGE_GEN_MODERATION = "image_gen_moderation"
+SETTINGS_TRIMMED_MESSAGES = "trimmed_messages"
+SETTINGS_WEB_SEARCH_MODEL = "web_search_model"
+
+# Default values for settings
+SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE = True
+SETTINGS_SUMMARIZE_SEARCH_RESULTS_DEFAULT_VALUE = True
+SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE = False
+SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE = True
+
+# Web search models
+WEB_SEARCH_MODELS = [
+    "gemini/gemini-2.0-flash-lite",
+    "openai/gpt-4o",
+    "anthropic/claude-3-opus",
+    "anthropic/claude-3-sonnet",
+]
+
+DEFAULT_WEB_SEARCH_MODEL = "gemini/gemini-2.0-flash-lite"

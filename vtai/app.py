@@ -40,6 +40,7 @@ from utils.llm_profile_builder import build_llm_profile
 from utils.media_processors import handle_tts_response
 from utils.safe_execution import safe_execution
 from utils.settings_builder import build_settings
+from utils.starter_prompts import get_command_route, get_command_template, set_commands
 from utils.user_session_helper import get_setting, is_in_assistant_profile
 
 # Initialize the application with improved client configuration
@@ -85,13 +86,11 @@ APP_NAME = const.APP_NAME
 @cl.set_chat_profiles
 async def build_chat_profile(_=None):
     """Define and set available chat profiles."""
-    # Force shuffling of starters on each app startup
-    # This ensures starter prompts are in a different order each time
+    # Return profiles without starter prompts
     return [
         ChatProfile(
             name=profile.title,
             markdown_description=profile.description,
-            starters=conf.get_shuffled_starters(use_random=True),
         )
         for profile in conf.APP_CHAT_PROFILES
     ]
@@ -104,6 +103,8 @@ async def start_chat():
     """
     # Initialize default settings
     cl.user_session.set(conf.SETTINGS_CHAT_MODEL, conf.DEFAULT_MODEL)
+    # Set default value for web search model
+    cl.user_session.set(const.SETTINGS_WEB_SEARCH_MODEL, const.DEFAULT_WEB_SEARCH_MODEL)
 
     # Build LLM profile with direct icon path instead of using map
     build_llm_profile()
@@ -113,6 +114,9 @@ async def start_chat():
 
     # Configure chat session with selected model
     await config_chat_session(settings)
+
+    # Initialize commands in the UI
+    await set_commands(use_all=True)
 
     if is_in_assistant_profile():
         try:
@@ -259,9 +263,15 @@ async def process_function_tool(
             api_key=openai_api_key, tavily_api_key=tavily_api_key
         )
 
+        # Get the web search model from settings
+        web_search_model = (
+            get_setting(const.SETTINGS_WEB_SEARCH_MODEL)
+            or const.DEFAULT_WEB_SEARCH_MODEL
+        )
+
         # Extract search parameters
         query = function_args.get("query", "")
-        model = function_args.get("model", "openai/gpt-4o")
+        model = function_args.get("model", web_search_model)
         max_results = function_args.get("max_results", None)
 
         # Build search options if provided
@@ -292,7 +302,7 @@ async def process_function_tool(
 
         # Perform the search
         try:
-            logger.info(f"Performing web search for: {query}")
+            logger.info(f"Performing web search for: {query} using model: {model}")
 
             # Create a step for the web search execution
             async with cl.Step(
@@ -673,6 +683,30 @@ async def on_message(message: cl.Message) -> None:
         operation_name="message processing",
         cancelled_message="The operation was cancelled. Please try again.",
     ):
+        # Check if message has a command attached
+        if message.command:
+            logger.info(f"Processing message with command: {message.command}")
+            # Get a template for the command if available
+            template = get_command_template(message.command)
+
+            # If this is a command without content, insert the template
+            if not message.content.strip() and template:
+                # Set the message content to the template
+                message.content = template
+                logger.info(f"Inserted template for command: {message.command}")
+
+            # Get the route associated with this command
+            route = get_command_route(message.command)
+            if route:
+                logger.info(f"Command {message.command} mapped to route: {route}")
+                # Prepend route marker for better routing
+                prefixed_content = f"[{route}] {message.content}"
+                message.content = prefixed_content
+            else:
+                # Just prepend the command name if no specific route mapping is found
+                prefixed_content = f"[{message.command}] {message.content}"
+                message.content = prefixed_content
+
         if is_in_assistant_profile():
             thread: Thread = cl.user_session.get("thread")
             files_ids = await process_files(message.elements, async_openai_client)
@@ -1141,6 +1175,11 @@ def main():
         cmd = f"chainlit {' '.join(remaining_args)} {os.path.realpath(__file__)}"
 
     print(f"Starting VT.ai: {cmd}")
+    os.system(cmd)
+
+
+if __name__ == "__main__":
+    main()
     os.system(cmd)
 
 

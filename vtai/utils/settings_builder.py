@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 import chainlit as cl
 from chainlit.input_widget import Select, Slider, Switch
+from utils import constants as const
 from utils import llm_providers_config as conf
 
 
@@ -131,6 +132,14 @@ async def build_settings() -> Dict[str, Any]:
                 description="Set the content moderation strictness. 'low' allows more creative freedom while still filtering inappropriate content.",
                 values=conf.SETTINGS_IMAGE_GEN_MODERATION_LEVELS,
                 initial_value=conf.DEFAULT_IMAGE_GEN_MODERATION,
+            ),
+            # Add web search model selection
+            Select(
+                id=const.SETTINGS_WEB_SEARCH_MODEL,
+                label="Web Search Model",
+                description="Select the model to use for web search and summarization.",
+                values=const.WEB_SEARCH_MODELS,
+                initial_value=const.DEFAULT_WEB_SEARCH_MODEL,
             ),
         ]
     ).send()
