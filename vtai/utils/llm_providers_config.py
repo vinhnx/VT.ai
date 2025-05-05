@@ -1,5 +1,8 @@
 """
 Settings configuration for LLM models and chat profiles.
+
+This module defines configuration constants and settings for various LLM providers,
+models, and feature-specific settings used throughout the VT.ai application.
 """
 
 import json
@@ -8,18 +11,30 @@ import random
 from datetime import datetime
 from pathlib import Path
 from random import choice, shuffle
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import chainlit as cl
 from litellm import completion
 from pydantic import BaseModel
-from router.trainer import create_routes
-from utils.chat_profile import AppChatProfileType
-from utils.starter_prompts import get_shuffled_starters
+
+from vtai.router.trainer import create_routes
+from vtai.utils.chat_profile import AppChatProfileType
+from vtai.utils.starter_prompts import get_shuffled_starters
+
+# ===== MODEL CLASSES =====
 
 
-# Define AppChatProfileModel class
 class AppChatProfileModel(BaseModel):
+    """
+    Defines a chat profile configuration for the application.
+
+    Attributes:
+            title: Display name of the chat profile
+            description: Text description of the profile's purpose
+            icon: Path to the profile icon image
+            is_default: Whether this is the default selected profile
+    """
+
     title: str
     description: str
     icon: str
@@ -28,19 +43,25 @@ class AppChatProfileModel(BaseModel):
 
 from chainlit.types import ChatProfile
 
-# Settings keys - grouped for better organization
-# Chat settings
+# ===== SETTING KEY CONSTANTS =====
+
+# Core Model Settings
 SETTINGS_CHAT_MODEL: str = "settings_chat_model"
 SETTINGS_TEMPERATURE: str = "settings_temperature"
-SETTINGS_TOP_K: str = "settings_top_k"
 SETTINGS_TOP_P: str = "settings_top_p"
+SETTINGS_TOP_K: str = "settings_top_k"  # Not currently exposed in UI
 SETTINGS_TRIMMED_MESSAGES: str = "settings_trimmed_messages"
+SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING: str = (
+    "settings_use_dynamic_conversation_routing"
+)
+SETTINGS_USE_THINKING_MODEL: str = (
+    "settings_use_thinking_model"  # Not currently exposed in UI
+)
 
-# Web search settings
-SETTINGS_SUMMARIZE_SEARCH_RESULTS: str = "settings_summarize_search_results"
-
-# Image and Vision settings
+# Vision Settings
 SETTINGS_VISION_MODEL: str = "settings_vision_model"
+
+# Image Generation Settings
 SETTINGS_IMAGE_GEN_LLM_MODEL: str = "settings_image_gen_llm_model"
 SETTINGS_IMAGE_GEN_IMAGE_STYLE: str = "settings_image_gen_image_style"
 SETTINGS_IMAGE_GEN_IMAGE_QUALITY: str = "settings_image_gen_image_quality"
@@ -50,35 +71,37 @@ SETTINGS_IMAGE_GEN_OUTPUT_FORMAT: str = "settings_image_gen_output_format"
 SETTINGS_IMAGE_GEN_MODERATION: str = "settings_image_gen_moderation"
 SETTINGS_IMAGE_GEN_OUTPUT_COMPRESSION: str = "settings_image_gen_output_compression"
 
-# Voice and TTS settings
+# Speech & Audio Settings
 SETTINGS_TTS_MODEL: str = "settings_tts_model"
 SETTINGS_TTS_VOICE_PRESET_MODEL: str = "settings_tts_voice_preset_model"
 SETTINGS_ENABLE_TTS_RESPONSE: str = "settings_enable_tts_response"
 
-# Routing settings
-SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING: str = (
-    "settings_use_dynamic_conversation_routing"
-)
-SETTINGS_USE_THINKING_MODEL: str = "settings_use_thinking_model"
+# Web Search Settings
+SETTINGS_SUMMARIZE_SEARCH_RESULTS: str = "settings_summarize_search_results"
 
-# Default values
+
+# ===== DEFAULT VALUES =====
+
+# Core Model Defaults
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
 DEFAULT_MODEL: str = "gemini/gemini-2.0-flash"
-DEFAULT_IMAGE_GEN_MODEL: str = "gpt-image-1"
+
+# Vision Model Defaults
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
+
+# Image Generation Defaults
+DEFAULT_IMAGE_GEN_MODEL: str = "gpt-image-1"
+DEFAULT_IMAGE_GEN_BACKGROUND: str = "auto"
+DEFAULT_IMAGE_GEN_OUTPUT_FORMAT: str = "jpeg"
+DEFAULT_IMAGE_GEN_MODERATION: str = "low"
+DEFAULT_IMAGE_GEN_OUTPUT_COMPRESSION: int = 100
+
+# Speech & Audio Defaults
 DEFAULT_TTS_MODEL: str = "gpt-4o-mini-tts"
 DEFAULT_TTS_PRESET: str = "nova"
 DEFAULT_WHISPER_MODEL: str = "whisper-1"
 DEFAULT_AUDIO_UNDERSTANDING_MODEL: str = "gpt-4o"
-
-# Default image generation settings
-DEFAULT_IMAGE_GEN_BACKGROUND: str = "auto"  # For GPT-Image-1: auto, transparent, opaque
-DEFAULT_IMAGE_GEN_OUTPUT_FORMAT: str = "jpeg"  # For GPT-Image-1: png, jpeg, webp
-DEFAULT_IMAGE_GEN_MODERATION: str = "low"  # For GPT-Image-1: auto, low
-DEFAULT_IMAGE_GEN_OUTPUT_COMPRESSION: int = (
-    100  # For GPT-Image-1: 0-100 (webp/jpeg only)
-)
 
 # Default boolean settings
 SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING_DEFAULT_VALUE: bool = True
@@ -87,37 +110,10 @@ SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE: bool = True
 SETTINGS_USE_THINKING_MODEL_DEFAULT_VALUE: bool = False
 SETTINGS_SUMMARIZE_SEARCH_RESULTS_DEFAULT_VALUE: bool = True
 
-# List of models that benefit from <think> tag for reasoning
-REASONING_MODELS = [
-    "deepseek/deepseek-reasoner",
-    "openrouter/deepseek/deepseek-r1:free",
-    "openrouter/deepseek/deepseek-r1",
-    "openrouter/deepseek/deepseek-chat-v3-0324:free",
-    "openrouter/deepseek/deepseek-chat-v3-0324",
-    "ollama/deepseek-r1:1.5b",
-    "ollama/deepseek-r1:7b",
-    "ollama/deepseek-r1:8b",
-    "ollama/deepseek-r1:14b",
-    "ollama/deepseek-r1:32b",
-    "ollama/deepseek-r1:70b",
-]
 
+# ===== OPTION LISTS =====
 
-# Function to check if a model is a reasoning model
-def is_reasoning_model(model_id: str) -> bool:
-    """
-    Check if a model is a reasoning model that benefits from <think> tags.
-
-    Args:
-        model_id: The ID of the model to check
-
-    Returns:
-        bool: True if the model is a reasoning model, False otherwise
-    """
-    return any(reasoning_model in model_id for reasoning_model in REASONING_MODELS)
-
-
-# Image generation options
+# Image Generation Options
 SETTINGS_IMAGE_GEN_IMAGE_STYLES: List[str] = ["vivid", "natural"]
 SETTINGS_IMAGE_GEN_IMAGE_QUALITIES: List[str] = ["standard", "hd"]
 SETTINGS_IMAGE_GEN_IMAGE_QUALITIES_GPT: List[str] = ["auto", "high", "medium", "low"]
@@ -132,7 +128,7 @@ SETTINGS_IMAGE_GEN_BACKGROUNDS: List[str] = ["auto", "transparent", "opaque"]
 SETTINGS_IMAGE_GEN_OUTPUT_FORMATS: List[str] = ["png", "jpeg", "webp"]
 SETTINGS_IMAGE_GEN_MODERATION_LEVELS: List[str] = ["auto", "low"]
 
-# TTS options
+# Speech & Audio Options
 TTS_VOICE_PRESETS: List[str] = [
     "alloy",
     "echo",
@@ -142,17 +138,37 @@ TTS_VOICE_PRESETS: List[str] = [
     "shimmer",
 ]
 
-# Model mappings
+# Models that benefit from <think> tag for reasoning
+REASONING_MODELS: List[str] = [
+    "deepseek/deepseek-reasoner",
+    "openrouter/deepseek/deepseek-r1:free",
+    "openrouter/deepseek/deepseek-r1",
+    "openrouter/deepseek/deepseek-chat-v3-0324:free",
+    "openrouter/deepseek/deepseek-chat-v3-0324",
+    "ollama/deepseek-r1:1.5b",
+    "ollama/deepseek-r1:7b",
+    "ollama/deepseek-r1:8b",
+    "ollama/deepseek-r1:14b",
+    "ollama/deepseek-r1:32b",
+    "ollama/deepseek-r1:70b",
+]
+
+
+# ===== MODEL MAPPINGS =====
+
+# Text-to-Speech Models
 TTS_MODELS_MAP: Dict[str, str] = {
     "OpenAI - GPT-4o mini TTS": "gpt-4o-mini-tts",
     "OpenAI - Text-to-speech 1": "tts-1",
     "OpenAI - Text-to-speech 1 HD": "tts-1-hd",
 }
 
+# Image Generation Models
 IMAGE_GEN_MODELS_ALIAS_MAP: Dict[str, str] = {
     "OpenAI - GPT Image 1": "gpt-image-1",  # Only support GPT-Image-1
 }
 
+# Vision Models
 VISION_MODEL_MAP: Dict[str, str] = {
     "OpenAI - GPT-4o": "gpt-4o",
     "OpenAI - GPT 4 Turbo": "gpt-4-turbo",
@@ -161,6 +177,7 @@ VISION_MODEL_MAP: Dict[str, str] = {
     "Ollama - LLama 3.2 Vision": "ollama/llama3.2-vision",
 }
 
+# Chat Models
 MODEL_ALIAS_MAP: Dict[str, str] = {
     # OpenAI models
     "OpenAI - GPT-4.1": "gpt-4.1",
@@ -234,10 +251,32 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Cohere - Command-R-Plus": "command-r-plus",
 }
 
+
+# ===== UTILITY FUNCTIONS =====
+
+
+def is_reasoning_model(model_id: str) -> bool:
+    """
+    Check if a model is a reasoning model that benefits from <think> tags.
+
+    Args:
+            model_id: The ID of the model to check
+
+    Returns:
+            bool: True if the model is a reasoning model, False otherwise
+    """
+    return any(reasoning_model in model_id for reasoning_model in REASONING_MODELS)
+
+
+# ===== RESOURCE PATHS =====
+
 # Define the icon path constant
 ICON_PATH = "./vtai/resources/vt.jpg"
 
-# Derive lists from dictionaries
+
+# ===== DERIVED LISTS =====
+
+# Generate lists from model dictionaries for UI display
 NAMES: List[str] = list(MODEL_ALIAS_MAP.keys())
 MODELS: List[str] = list(MODEL_ALIAS_MAP.values())
 
@@ -250,7 +289,10 @@ VISION_MODEL_MODELS: List[str] = list(VISION_MODEL_MAP.values())
 TTS_MODEL_NAMES: List[str] = list(TTS_MODELS_MAP.keys())
 TTS_MODEL_MODELS: List[str] = list(TTS_MODELS_MAP.values())
 
-# Chat profiles
+
+# ===== CHAT PROFILES =====
+
+# Define application chat profile
 APP_CHAT_PROFILE_CHAT = AppChatProfileModel(
     title=AppChatProfileType.CHAT.value,
     description="Multi-modal chat with LLM.",
@@ -262,7 +304,7 @@ APP_CHAT_PROFILES: List[AppChatProfileModel] = [
     APP_CHAT_PROFILE_CHAT,
 ]
 
-# Update to use markdown_description instead of description for Chainlit v2.0.0
+# Create Chainlit chat profiles from application profiles
 CHAT_PROFILES: List[ChatProfile] = [
     ChatProfile(
         name=profile.title,
@@ -272,9 +314,8 @@ CHAT_PROFILES: List[ChatProfile] = [
     for profile in APP_CHAT_PROFILES
 ]
 
-"""
-Configuration for the LLM providers.
-"""
+
+# ===== PROVIDER CONFIGURATIONS =====
 
 # Default configuration for different LLM providers
 DEFAULT_PROVIDERS_CONFIG = {
@@ -291,15 +332,14 @@ DEFAULT_PROVIDERS_CONFIG = {
 }
 
 
-def get_provider_config(provider_name):
+def get_provider_config(provider_name: str) -> Dict[str, Any]:
     """
     Get the configuration for a specific LLM provider.
 
     Args:
-        provider_name (str): The name of the provider (e.g., "openai", "anthropic")
+            provider_name: The name of the provider (e.g., "openai", "anthropic")
 
     Returns:
-        dict: Configuration for the specified provider
+            Dict[str, Any]: Configuration for the specified provider
     """
-    return DEFAULT_PROVIDERS_CONFIG.get(provider_name, {})
     return DEFAULT_PROVIDERS_CONFIG.get(provider_name, {})
