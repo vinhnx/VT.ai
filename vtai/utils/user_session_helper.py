@@ -8,8 +8,7 @@ from typing import Any
 
 import chainlit as cl
 
-# Update imports to use vtai namespace
-from utils.chat_profile import AppChatProfileType
+# Note: Import of AppChatProfileType removed as assistant profile is no longer used
 
 
 def update_message_history_from_user(context: str) -> None:
@@ -75,12 +74,4 @@ def get_setting(key: str) -> Any:
     return settings.get(key)
 
 
-def is_in_assistant_profile() -> bool:
-    """
-    Determines if the current session is in Assistant profile mode
-
-    Returns:
-        True if in Assistant profile, False otherwise
-    """
-    chat_profile = cl.user_session.get("chat_profile")
-    return chat_profile == AppChatProfileType.ASSISTANT.value
+# Note: is_in_assistant_profile() function has been removed as this feature is no longer supported

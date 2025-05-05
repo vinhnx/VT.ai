@@ -258,16 +258,8 @@ APP_CHAT_PROFILE_CHAT = AppChatProfileModel(
     is_default=True,
 )
 
-APP_CHAT_PROFILE_ASSISTANT = AppChatProfileModel(
-    title=AppChatProfileType.ASSISTANT.value,
-    description="[Beta] Use Mino built-in Assistant to ask complex question. Currently support Math Calculator",
-    icon=ICON_PATH,
-    is_default=True,
-)
-
 APP_CHAT_PROFILES: List[AppChatProfileModel] = [
     APP_CHAT_PROFILE_CHAT,
-    APP_CHAT_PROFILE_ASSISTANT,
 ]
 
 # Update to use markdown_description instead of description for Chainlit v2.0.0

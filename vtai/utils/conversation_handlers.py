@@ -15,8 +15,6 @@ import chainlit as cl
 import litellm
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI
-from router.constants import SemanticRouterType
-from tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
 from utils import llm_providers_config as conf
 from utils.config import logger
 from utils.error_handlers import handle_exception, safe_execution
@@ -33,6 +31,9 @@ from utils.user_session_helper import (
     update_message_history_from_assistant,
     update_message_history_from_user,
 )
+
+from vtai.router.constants import SemanticRouterType
+from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
 
 
 def create_message_actions(content: str, model: str) -> List[cl.Action]:
@@ -329,30 +330,19 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
     Args:
         settings: User settings dictionary
     """
-    from assistants.mino.mino import INSTRUCTIONS
-    from utils.chat_profile import AppChatProfileType
-
     async with safe_execution(operation_name="chat session configuration"):
-        chat_profile = cl.user_session.get("chat_profile")
-        if chat_profile == AppChatProfileType.CHAT.value:
-            cl.user_session.set(
-                conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL)
-            )
+        # Set the model from settings
+        cl.user_session.set(
+            conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL)
+        )
 
-            system_message = {
-                "role": "system",
-                "content": "You are a helpful assistant who tries their best to answer questions: ",
-            }
+        # Initialize with a standard system message
+        system_message = {
+            "role": "system",
+            "content": "You are a helpful assistant who tries their best to answer questions: ",
+        }
 
-            cl.user_session.set("message_history", [system_message])
-
-        elif chat_profile == AppChatProfileType.ASSISTANT.value:
-            system_message = {"role": "system", "content": INSTRUCTIONS}
-
-            cl.user_session.set("message_history", [system_message])
-
-            msg = "Hello! I'm Mino, your Assistant. I'm here to assist you. Please don't hesitate to ask me anything you'd like to know. Currently, I can write and run code to answer math questions."
-            await cl.Message(content=msg).send()
+        cl.user_session.set("message_history", [system_message])
 
 
 async def handle_thinking_conversation(

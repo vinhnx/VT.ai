@@ -10,10 +10,10 @@ class AppChatProfileType(str, Enum):
 
     Attributes:
         CHAT: Regular chat interface with LLM
-        ASSISTANT: Advanced assistant with additional capabilities
     """
+
     CHAT = "Chat"
-    ASSISTANT = "Assistant"
+    # Assistant profile has been removed
 
 
 class AppChatProfileModel(BaseModel):
@@ -26,6 +26,7 @@ class AppChatProfileModel(BaseModel):
         icon: Optional path to the profile icon
         is_default: Whether this profile should be the default selection
     """
+
     title: str = Field(..., description="Display name of the profile")
     description: str = Field(..., description="Profile description in markdown format")
     icon: Optional[str] = Field(None, description="Path to profile icon image")
