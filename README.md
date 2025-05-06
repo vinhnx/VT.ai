@@ -74,17 +74,8 @@ Access step-by-step reasoning from the models with transparent thinking processe
 
 ## Documentation
 
-VT.ai comes with comprehensive documentation built using MkDocs with the Material theme.
-
-### Documentation Structure
-
-The documentation is organized into several sections:
-
-- **User Guide**: Information for end users, including setup and usage instructions
-- **Developer Guide**: Information for developers who want to extend or modify VT.ai
-- **API Reference**: Detailed API documentation for VT.ai's components
-
-You can access the full documentation at <a href="https://vinhnx.github.io/VT.ai/"><img alt="MkDocs" src="https://img.shields.io/badge/MkDocs-526CFE?logo=materialformkdocs&logoColor=fff"></a>.
+**[You can access the full documentation at <a href="https://vinhnx.github.io/VT.ai/"><img alt="MkDocs" src="https://img.shields.io/badge/MkDocs-526CFE?logo=materialformkdocs&logoColor=fff"></a>](https://vinhnx.github.io/VT.ai/).
+**
 
 ### Documentation Build
 
