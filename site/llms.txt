@@ -1,0 +1,103 @@
+# VT.ai
+
+> VT.ai is a minimal multimodal AI chat application with dynamic routing capabilities that supports multiple AI providers including OpenAI, Anthropic Claude, Google Gemini, and local models via Ollama.
+
+VT.ai is a Python-based AI chat application featuring semantic-based routing, multimodal capabilities (text, image, audio), vision analysis, and dynamic response generation. The app supports multiple AI providers and offers a user-friendly interface for interacting with various AI models.
+
+## Documentation
+
+- [Getting Started](https://vinhnx.github.io/VT.ai/user/getting-started/) : Quick guide to install and configure VT.ai
+- [Features](https://vinhnx.github.io/VT.ai/user/features/) : Overview of VT.ai's capabilities and functionalities
+- [Models](https://vinhnx.github.io/VT.ai/user/models/) : Information about supported AI models and providers
+- [Configuration](https://vinhnx.github.io/VT.ai/user/configuration/) : Configuration options and customization settings
+
+## Developer Resources
+
+- [Architecture](https://vinhnx.github.io/VT.ai/developer/architecture/) : Overview of VT.ai's technical architecture
+- [Extending VT.ai](https://vinhnx.github.io/VT.ai/developer/extending/) : Guide to extending the application with custom features
+- [Semantic Routing](https://vinhnx.github.io/VT.ai/developer/routing/) : Documentation on VT.ai's intelligent routing system
+- [API Reference](https://vinhnx.github.io/VT.ai/api/) : Complete reference for VT.ai's API
+
+## Optional
+
+- [Troubleshooting](https://vinhnx.github.io/VT.ai/user/troubleshooting/) : Common issues and their solutions
+- [Models Integration](https://vinhnx.github.io/VT.ai/developer/models/) : Detailed guide on integrating new AI models
+- [Assistant Tools](https://vinhnx.github.io/VT.ai/developer/tools/) : Information about tools available to assistants
+
+# VT.ai Documentation llms.txt
+#
+# This is the llms.txt file for the VT.ai documentation.
+# For information about llms.txt files, see https://llmstxt.org/.
+
+title: VT.ai - Minimal Multimodal AI Chat App
+url: https://github.com/vinhnx/VT.ai
+language: en
+geography: global
+author: vinhnx
+modality: documentation
+
+summary: Documentation for VT.ai, a minimal multimodal AI chat application with dynamic routing capabilities.
+
+description:
+  This is the official documentation for VT.ai, a Python-based AI chat application
+  that supports multiple AI providers including OpenAI, Anthropic Claude, Google Gemini,
+  and local models via Ollama. The app features semantic-based routing, multimodal
+  capabilities (text, image, audio), vision analysis, and dynamic response generation.
+
+audience: Users and developers interested in using or extending VT.ai
+
+default-purpose: answer-questions-about-content
+
+documentation:
+  - These documents describe how to use, configure, and extend VT.ai
+  - The user guide explains basic functionality, available models, and troubleshooting
+  - The developer guide provides information on architecture, extending VT.ai, and internal components
+  - The API reference documents the application's components for developers
+
+key-concepts:
+  - Multimodal AI: VT.ai supports text, image, and audio inputs and outputs
+  - Semantic Routing: Smart system that directs queries to specialized handlers
+  - Multi-Provider Integration: Supports OpenAI, Anthropic, Google, and more
+  - Assistant Mode: Enhanced capabilities with code interpretation and file analysis
+  - Thinking Mode: Access to step-by-step reasoning from models
+  - Image Generation: Create images using DALL-E 3 and GPT-Image-1
+  - Voice Interaction: Support for speech-to-text and text-to-speech
+
+code-of-conduct:
+  - Provide accurate information from the documentation
+  - Maintain the technical tone of the documentation
+  - When answering configuration questions, provide specific examples
+  - Highlight best practices mentioned in the documentation
+  - Refer to the GitHub repository for contributing or reporting issues
+
+allowed-information:
+  - All information in the VT.ai documentation is public
+  - Model capabilities, configurations, and limitations
+  - Installation and setup procedures
+  - Troubleshooting steps for common issues
+  - Developer APIs and extension points
+
+prohibited-information:
+  - Do not provide API keys or security credentials
+  - Do not speculate on features not mentioned in the documentation
+  - Do not provide troubleshooting for unrelated AI applications
+
+response-guidelines:
+  - For user questions, focus on the practical usage information
+  - For developer questions, provide specific API details and examples
+  - Include relevant code snippets when appropriate
+  - Refer to specific documentation sections when possible
+  - For installation issues, refer to the troubleshooting section
+
+content-structure:
+  - User Guide: Getting started, features, configuration, models, troubleshooting
+  - Developer Guide: Architecture, extending VT.ai, semantic routing, model integration, tools
+  - API Reference: Application components, utilities, and interfaces
+
+versions:
+  - The documentation represents the current state of VT.ai
+  - Check the GitHub repository for the most up-to-date information
+
+updates:
+  - This llms.txt was created on May 6, 2025
+  - Updates to the documentation can be found in the GitHub repository
