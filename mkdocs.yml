@@ -5,9 +5,8 @@ site_url: https://vinhnx.github.io/VT.ai/
 repo_url: https://github.com/vinhnx/VT.ai
 edit_uri: edit/main/docs/
 
-# Files to include in the gh-deploy that are not in the docs directory
-extra_files:
-  - llms.txt
+# Use docs_dir for additional files if needed
+# docs_dir: docs
 
 theme:
   name: material
@@ -60,6 +59,7 @@ nav:
   - Developer Guide:
     - Architecture: developer/architecture.md
     - Extending VT.ai: developer/extending.md
+    - Model Context Protocol: developer/mcp.md
     - Semantic Routing: developer/routing.md
     - Models Integration: developer/models.md
     - Assistant Tools: developer/tools.md
