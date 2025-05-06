@@ -11,9 +11,11 @@
 
 <p align="center">
   <a href="https://pypi.org/project/vtai/"><img alt="PyPI" src="https://img.shields.io/pypi/v/vtai?logo=pypi&logoColor=fff"></a>
+  <a href="https://pypi.org/project/vtai/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/vtai?logo=python&logoColor=white"></a>
   <a href="https://huggingface.co/vinhnx90"><img alt="Hugging Face" src="https://img.shields.io/badge/Hugging%20Face-FFD21E?logo=huggingface&logoColor=000"></a>
   <a href="https://codespaces.new/vinhnx/VT.ai"><img alt="Open in GitHub Codespaces" src="https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github"/></a>
-  <a href="https://vinhnx.github.io/VT.ai"><img alt="MkDocs" src="https://img.shields.io/badge/MkDocs-526CFE?logo=materialformkdocs&logoColor=fff"></a>
+  <a href="https://vinhnx.github.io/VT.ai"><img alt="Documentation" src="https://img.shields.io/badge/Documentation-526CFE?logo=materialformkdocs&logoColor=fff"></a>
+  <a href="https://github.com/vinhnx/VT.ai/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 </p>
 
 <p align="center">
@@ -23,260 +25,181 @@
   <a href="#"><img alt="Deepseek" src="https://custom-icon-badges.demolab.com/badge/Deepseek-4D6BFF?logo=deepseek&logoColor=fff"></a>
 </p>
 
-VT.ai is a minimalist, multimodal chat application with dynamic routing capabilities. It supports multiple AI providers and offers a unified interface for text, image, and voice interactions with various AI models. This repository contains everything you need to get started with VT.ai, from basic setup to advanced customization.
+## VT.ai
 
-## Features
+VT.ai is a multimodal AI chat application designed to simplify interaction with different AI models through a unified interface. It employs vector-based semantic routing to direct queries to the most suitable model, eliminating the need to switch between multiple applications and interfaces.
 
-### Multi-Provider AI Integration
+**[Full documentation available here](https://vinhnx.github.io/VT.ai/)**
 
-Supports OpenAI (o1, o3, 4o), Anthropic (Claude 3.5, 3.7), Google (Gemini series), DeepSeek, Meta (Llama), Cohere, local models via Ollama, and more.
+## Key Features
 
-### Semantic-Based Routing
+- **Multi-Provider Integration**: Unified access to models from OpenAI (o1/o3/4o), Anthropic (Claude), Google (Gemini), DeepSeek, Llama, Cohere, and local models via Ollama
+- **Semantic Routing System**: Vector-based classification automatically routes queries to appropriate models using FastEmbed embeddings, removing the need for manual model selection
+- **Multimodal Capabilities**: Comprehensive support for text, image, and audio inputs with advanced vision analysis
+- **Image Generation**: GPT-Image-1 integration with support for transparent backgrounds, multiple formats, and customizable quality parameters
+- **Web Search Integration**: Real-time information retrieval with source attribution via Tavily API
+- **Voice Processing**: Advanced speech-to-text and text-to-speech functionality with configurable voice options and silence detection
+- **Reasoning Visualization**: Step-by-step model reasoning visualization with the `<think>` tag for transparent AI decision processes
 
-Smart routing system that automatically directs queries to specialized handlers based on vector-based classification.
+## Installation & Setup
 
-### Multimodal Capabilities
-
-Support for text, image, and audio inputs with vision analysis for images and URLs, plus GPT-Image-1 image generation with advanced settings for backgrounds, formats, and quality.
-
-### Web Search with Smart Summarization
-
-Integrated web search capabilities powered by OpenAI's web search or Tavily API to retrieve real-time information from the internet, providing up-to-date answers with source attribution. Features include:
-
-- **Smart Summarization**: Intelligently synthesizes multiple search results into coherent answers
-- **Source Attribution**: Provides clickable links to original sources for verification
-- **Configurable Experience**: Toggle between summarized results and raw search output
-- **Seamless Integration**: Automatically detects queries that need current information
-
-### Voice Interaction
-
-VT.ai includes advanced voice interaction capabilities:
-
-- **Speech-to-Text**: Real-time voice transcription using OpenAI's Whisper model
-  - Smart silence detection to automatically detect when you've finished speaking
-  - High-accuracy transcription for natural conversation flow
-  - Seamless integration with conversation routing for appropriate responses
-
-- **Text-to-Speech**: Listen to AI responses with natural-sounding voices
-  - Multiple voice options (alloy, echo, fable, onyx, nova, shimmer)
-  - Toggle TTS on/off in settings for flexibility
-  - High-quality voice synthesis using OpenAI's Audio API
-  - Speak response action appears on all messages
-
-- **Audio Understanding**: Analyze and understand audio content beyond simple transcription
-  - Upload audio files for detailed analysis
-  - Get both transcription and contextual understanding
-  - Support for various audio formats (MP3, WAV, M4A, etc.)
-
-### Thinking Mode
-
-Access step-by-step reasoning from the models with transparent thinking processes.
-
-## Documentation
-
-**[You can access the full documentation at <a href="https://vinhnx.github.io/VT.ai/"><img alt="MkDocs" src="https://img.shields.io/badge/MkDocs-526CFE?logo=materialformkdocs&logoColor=fff"></a>](https://vinhnx.github.io/VT.ai/).
-**
-
-### Documentation Build
-
-Documentation is built using MkDocs with helper scripts:
+Multiple installation methods are available depending on requirements:
 
 ```bash
-# Build documentation locally
-./scripts/build_docs.sh
+# Standard PyPI installation
+uv pip install vtai
 
-# Deploy documentation to GitHub Pages
-./scripts/deploy_docs.sh
-```
-
-## Scripts
-
-VT.ai includes several utility scripts in the `scripts/` directory to help with common development and deployment tasks:
-
-```bash
-# Documentation scripts
-./scripts/build_docs.sh    # Build documentation locally
-./scripts/deploy_docs.sh   # Deploy documentation to GitHub Pages
-
-# Release management
-./scripts/release.py       # Automate version bumping, tagging, and PyPI releases
-
-# Application runner
-./scripts/vtai_runner.py   # Simple script to run the VT.ai application
-```
-
-### Run Scripts
-
-VT.ai also includes two convenient shell scripts in the root directory for running the application:
-
-```bash
-# Run the VT.ai application with Chainlit interface
-./scripts/run_vtai_app.sh
-
-# Run the VT.ai MCP (Model Context Protocol) server
-# Default: localhost:9393
-./scripts/run_vtai_server.sh
-```
-
-These scripts will:
-
-1. Load environment variables from a `.env` file if it exists
-2. Install dependencies using `uv`
-3. Start the appropriate application (Chainlit app or MCP server)
-
-You can customize the MCP server host and port by setting environment variables:
-
-```bash
-# Set custom host and port for the MCP server
-export MCP_HOST="your-host"
-export MCP_PORT="your-port"
-./scripts/run_vtai_server.sh
-```
-
-## Installation (Python)
-
-VT.ai can be installed in multiple ways:
-
-### Quick Install from PyPI
-
-```bash
-# Install VT.ai from PyPI
-pip install vtai
-```
-
-### Quick Start with uvx (No Installation)
-
-```bash
-# Set your API key in the environment
-export OPENAI_API_KEY='sk-your-key-here'
-
-# Run VT.ai directly using uvx
+# Zero-installation experience with uvx
+export OPENAI_API_KEY='your-key-here'
 uvx vtai
+
+# Development installation
+git clone https://github.com/vinhnx/VT.ai.git
+cd VT.ai
+uv venv
+source .venv/bin/activate  # Linux/Mac
+uv pip install -e ".[dev]"  # Install with development dependencies
 ```
 
 ### API Key Configuration
 
-You can set your API keys when using the `vtai` command:
+Configure API keys to enable specific model capabilities:
 
 ```bash
-# Set OpenAI API key
-vtai --api-key openai=<your-key>
+# Command-line configuration
+vtai --api-key openai=sk-your-key-here
+
+# Environment variable configuration
+export OPENAI_API_KEY='sk-your-key-here'  # For OpenAI models
+export ANTHROPIC_API_KEY='sk-ant-your-key-here'  # For Claude models
+export GEMINI_API_KEY='your-key-here'  # For Gemini models
 ```
 
-Or use environment variables:
-
-```bash
-# For OpenAI (recommended for first-time users)
-export OPENAI_API_KEY='sk-your-key-here'
-vtai
-
-# For Anthropic Claude models
-export ANTHROPIC_API_KEY='sk-ant-your-key-here'
-vtai --model sonnet
-```
-
-API keys are saved to `~/.config/vtai/.env` for future use.
+API keys are securely stored in `~/.config/vtai/.env` for future use.
 
 ## Usage Guide
 
-### Chat Modes
+### Programmatic Usage
 
-1. **Standard Chat**
-   - Access to all configured LLM providers
-   - Dynamic conversation routing
-   - Support for text, image, and audio inputs
-   - Advanced thinking mode (use "<think>" tag)
+```python
+from vtai.app import run_app
 
-2. **Assistant Mode (Beta)**
-   - Code interpreter for computations
-   - File attachment support
-   - Persistent conversation threads
-   - Function calling for external integrations
-   - Web search capabilities for real-time information
+# Basic usage with default settings
+run_app()
 
-### Specialized Features
+# Advanced configuration
+run_app(
+    models=["gpt-4o", "claude-3-5-sonnet"],
+    enable_web_search=True,
+    enable_voice=True,
+    enable_thinking=True
+)
+```
 
-- **Web Search**: Get up-to-date information from the internet with source attribution
-- **Image Generation**: Generate images through prompts with advanced controls
-  - Multiple image sizes (1024x1024, 1536x1024, 1024x1536)
-  - Background options (auto, transparent, opaque)
-  - Format selection (PNG, JPEG, WebP) with compression settings
-  - Customizable moderation levels
-  - Images saved automatically with timestamps for easy reference
-- **Image Analysis**: Upload or provide URL for image interpretation
-- **Drag and Drop**: Easily share files by dragging and dropping them directly into the chat interface
-- **Text Processing**: Request summaries, translations, or content transformation
-- **Voice Interaction**: Text-to-speech for model responses
+### Interface Usage
+
+The application provides a clean, intuitive interface with the following capabilities:
+
+1. **Dynamic Conversations**: The semantic router automatically selects the most appropriate model for each query
+2. **Image Generation**: Create images using prompts like "generate an image of..." or "draw a..."
+3. **Visual Analysis**: Upload or provide URLs to analyze visual content
+4. **Reasoning Visualization**: Add `<think>` to prompts to observe step-by-step reasoning
+5. **Voice Interaction**: Use the microphone feature for speech input and text-to-speech output
+
+Detailed usage instructions are available in the [Getting Started Guide](https://vinhnx.github.io/VT.ai/user/getting-started/).
+
+## Documentation
+
+The documentation is organized into sections designed for different user needs:
+
+- **[User Guide](https://vinhnx.github.io/VT.ai/user/getting-started/)**: Installation, configuration, and feature documentation
+- **[Developer Guide](https://vinhnx.github.io/VT.ai/developer/architecture/)**: Architecture details, extension points, and implementation information
+- **[API Reference](https://vinhnx.github.io/VT.ai/api/)**: Comprehensive API documentation for programmatic usage
+
+## Implementation Options
+
+VT.ai offers two distinct implementations:
+
+- **Python Implementation**: Full-featured reference implementation with complete support for all capabilities
+- **Rust Implementation**: High-performance alternative with optimized memory usage and native compiled speed
+
+The [implementation documentation](https://vinhnx.github.io/VT.ai/user/getting-started/#implementation-options) provides a detailed comparison of both options.
 
 ## Supported Models
 
-| Category       | Models                                                     |
-|----------------|-----------------------------------------------------------|
-| **Chat**       | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5 |
-| **Vision**     | GPT-4o, Gemini 1.5 Pro/Flash, Llama3.2 Vision             |
-| **Image Gen**  | GPT-Image-1                                               |
-| **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                          |
-| **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B)                |
+| Category       | Models                                                |
+|----------------|----------------------------------------------------- |
+| **Chat**       | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5  |
+| **Vision**     | GPT-4o, Gemini 1.5 Pro/Flash, Claude 3, Llama3.2 Vision    |
+| **Image Gen**  | GPT-Image-1 with custom parameters                   |
+| **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                     |
+| **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B via Ollama) |
 
-## Architecture
+The [Models Documentation](https://vinhnx.github.io/VT.ai/user/models/) provides detailed information about model-specific capabilities and configuration options.
+
+## Technical Architecture
+
+VT.ai leverages several open-source projects to deliver its functionality:
+
+- **[Chainlit](https://chainlit.io)**: Modern chat interface framework
+- **[LiteLLM](https://docs.litellm.ai)**: Unified model abstraction layer
+- **[SemanticRouter](https://github.com/aurelio-labs/semantic-router)**: Intent classification system
+- **[FastEmbed](https://github.com/qdrant/fastembed)**: Efficient embedding generation
+- **[Tavily](https://tavily.com)**: Web search capabilities
+
+The application architecture follows a clean, modular design:
 
 - **Entry Point**: `vtai/app.py` - Main application logic
-- **Routing Layer**: `vtai/router/` - Semantic classification for query routing
-- **Model Management**: LiteLLM for unified model interface
-- **Configuration**: `vtai/utils/config.py` - Application configuration
-- **User Interface**: Chainlit web components
-- **Tools Layer**: `vtai/tools/` - Web search, file operations, and more
+- **Routing Layer**: `vtai/router/` - Semantic classification system
+- **Assistants**: `vtai/assistants/` - Specialized handlers for different query types
+- **Tools**: `vtai/tools/` - Web search, file operations, and other integrations
 
-## Development
+## Contributing
 
-### Python Environment Setup
+Contributions to VT.ai are welcome. The project accepts various types of contributions:
+
+- **Bug Reports**: Submit detailed GitHub issues for any bugs encountered
+- **Feature Requests**: Propose new functionality through GitHub issues
+- **Pull Requests**: Submit code improvements and bug fixes
+- **Documentation**: Enhance documentation or add examples
+- **Feedback**: Share user experiences to help improve the project
+
+Development setup:
 
 ```bash
-# Activate the virtual environment
-source .venv/bin/activate  # Linux/Mac
-.venv\Scripts\activate     # Windows
+# Clone the repository
+git clone https://github.com/vinhnx/VT.ai.git
+cd VT.ai
 
-# Install development dependencies
+# Set up development environment
+uv venv
+source .venv/bin/activate  # Linux/Mac
 uv pip install -e ".[dev]"
 
 # Run tests
 pytest
 ```
 
-### Testing
+## Testing and Quality
 
-VT.ai has comprehensive unit and integration tests:
+Quality is maintained through comprehensive testing:
 
 ```bash
-# Run Python tests
-python -m pytest
+# Run the test suite
+pytest
 
-# Run with test coverage
-python -m pytest --cov=vtai
+# Run with coverage reporting
+pytest --cov=vtai
+
+# Run specific test categories
+pytest tests/unit/
+pytest tests/integration/
 ```
-
-## Troubleshooting
-
-If you encounter issues, please check:
-
-1. That all required API keys are set in your `.env` file
-2. Python version is 3.11 or higher
-3. All dependencies are properly installed
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
-
-## Acknowledgements
-
-- [Chainlit](https://chainlit.io) - Chat interface framework
-- [LiteLLM](https://docs.litellm.ai) - Model abstraction layer
-- [SemanticRouter](https://github.com/aurelio-labs/semantic-router) - Intent classification
-- [FastEmbed](https://github.com/qdrant/fastembed) - Embedding models for routing
-- [Tavily](https://tavily.com) - Web search API integration
+VT.ai is available under the MIT License - See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-I'm [@vinhnx](https://github.com/vinhnx) on the internet.
-
-Thank you, and have a great day!
+Contact [@vinhnx](https://github.com/vinhnx) on GitHub with questions or feedback about VT.ai.
