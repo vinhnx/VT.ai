@@ -246,6 +246,11 @@ def load_model_prices() -> Dict[str, Any]:
     """
     global _model_prices_cache
 
+    # Skip pricing data completely if environment variable is set
+    if os.environ.get("VT_SKIP_MODEL_PRICES") == "1":
+        logger.info("Skipping model prices loading due to VT_SKIP_MODEL_PRICES=1")
+        return {}
+
     # Fast path for startup
     if _model_prices_cache:
         return _model_prices_cache

@@ -23,5 +23,7 @@ fi
 
 # Run the VT.ai application using chainlit
 echo "Starting VT.ai application..."
-export VT_FAST_START=1
+export VT_FAST_START=0
+# Skip LiteLLM model prices download
+export VT_SKIP_MODEL_PRICES=1
 chainlit run vtai/app.py "$@"
