@@ -8,8 +8,13 @@ This script handles:
 4. Uploading to PyPI
 5. Optional documentation building and deployment
 6. Optional pushing of tags and changes to GitHub
+
+Usage:
+    - Interactive mode: python release.py
+    - One-click mode: python release.py --yes [--new-version X.Y.Z]
 """
 
+import argparse
 import re
 import subprocess
 import sys
@@ -70,25 +75,76 @@ def tag_exists(tag_name):
     return result and tag_name in result.splitlines()
 
 
+def parse_args():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description="VT.ai release automation script")
+    parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="Non-interactive mode: automatically confirm all prompts",
+    )
+    parser.add_argument(
+        "--new-version", help="Specify new version number (format: X.Y.Z)"
+    )
+    parser.add_argument(
+        "--skip-tag", action="store_true", help="Skip creating a git tag"
+    )
+    parser.add_argument(
+        "--skip-upload", action="store_true", help="Skip uploading to PyPI"
+    )
+    parser.add_argument(
+        "--skip-docs",
+        action="store_true",
+        help="Skip building and deploying documentation",
+    )
+    parser.add_argument(
+        "--skip-push", action="store_true", help="Skip pushing to GitHub"
+    )
+    parser.add_argument(
+        "--commit-msg", help="Custom commit message when pushing changes"
+    )
+    return parser.parse_args()
+
+
 def main():
-    # 1. Get current version and ask for new version
+    args = parse_args()
+    non_interactive = args.yes
+
+    # 1. Get current version and determine new version
     current_version = get_current_version()
     print(f"Current version: {current_version}")
-    new_version = input("Enter new version number (or press Enter to keep current): ")
 
-    if not new_version:
-        new_version = current_version
-        print(f"Keeping version at {current_version}")
-    else:
-        # Update version in pyproject.toml
+    if args.new_version:
+        new_version = args.new_version
+        print(f"New version (from command line): {new_version}")
         update_version(new_version)
+    elif non_interactive:
+        # Bump patch version automatically in non-interactive mode
+        version_parts = current_version.split(".")
+        version_parts[-1] = str(int(version_parts[-1]) + 1)
+        new_version = ".".join(version_parts)
+        print(f"Auto-bumping to version: {new_version}")
+        update_version(new_version)
+    else:
+        new_version = input(
+            "Enter new version number (or press Enter to keep current): "
+        )
+        if not new_version:
+            new_version = current_version
+            print(f"Keeping version at {current_version}")
+        else:
+            update_version(new_version)
 
     # 2. Create git tag (optional)
     tag_name = f"v{new_version}"
-    create_tag = input(f"Create git tag '{tag_name}'? (y/n): ").lower()
+    create_tag = not args.skip_tag
+
+    if not non_interactive and not args.skip_tag:
+        create_tag = input(f"Create git tag '{tag_name}'? (y/n): ").lower() == "y"
 
     tag_created = False
-    if create_tag == "y":
+    if create_tag:
         if tag_exists(tag_name):
             print(f"⚠️  Tag '{tag_name}' already exists, skipping tag creation")
         else:
@@ -108,13 +164,21 @@ def main():
     run_command("python -m build", "Building distribution packages")
 
     # 4. Upload to PyPI
-    upload = input("Upload to PyPI? (y/n): ").lower()
-    if upload == "y":
+    upload_to_pypi = not args.skip_upload
+
+    if not non_interactive and not args.skip_upload:
+        upload_to_pypi = input("Upload to PyPI? (y/n): ").lower() == "y"
+
+    if upload_to_pypi:
         run_command("python -m twine upload dist/*", "Uploading to PyPI")
 
     # 5. Build and deploy documentation (optional)
-    update_docs = input("Build and deploy documentation? (y/n): ").lower()
-    if update_docs == "y":
+    update_docs = not args.skip_docs
+
+    if not non_interactive and not args.skip_docs:
+        update_docs = input("Build and deploy documentation? (y/n): ").lower() == "y"
+
+    if update_docs:
         # Determine if we're in the scripts directory or project root
         script_dir = Path(__file__).parent
 
@@ -123,9 +187,15 @@ def main():
         print("\nBuilding documentation...")
         run_command(f"bash {build_docs_script}", "Building documentation with MkDocs")
 
-        # Ask if user wants to deploy docs
-        deploy_docs = input("Deploy documentation to GitHub Pages? (y/n): ").lower()
-        if deploy_docs == "y":
+        # In non-interactive mode, always deploy docs if building them
+        deploy_docs = non_interactive
+
+        if not non_interactive:
+            deploy_docs = (
+                input("Deploy documentation to GitHub Pages? (y/n): ").lower() == "y"
+            )
+
+        if deploy_docs:
             deploy_docs_script = script_dir / "deploy_docs.sh"
             run_command(
                 f"bash {deploy_docs_script}", "Deploying documentation to GitHub Pages"
@@ -135,8 +205,14 @@ def main():
             print("Documentation built but not deployed.")
 
     # 6. Push tags and changes to GitHub
-    push_to_github = input("Push tags and changes to GitHub? (y/n): ").lower()
-    if push_to_github == "y":
+    push_to_github = not args.skip_push
+
+    if not non_interactive and not args.skip_push:
+        push_to_github = (
+            input("Push tags and changes to GitHub? (y/n): ").lower() == "y"
+        )
+
+    if push_to_github:
         changes_to_push = False
         tags_to_push = False
 
@@ -145,18 +221,24 @@ def main():
         if status:
             # Use the new version number as the default commit message
             default_commit_msg = f"Version {new_version}"
-            commit_msg = input(
-                f"Enter commit message (press Enter to use '{default_commit_msg}'): "
-            )
-            if not commit_msg:
+
+            if args.commit_msg:
+                commit_msg = args.commit_msg
+            elif non_interactive:
                 commit_msg = default_commit_msg
+            else:
+                commit_msg = input(
+                    f"Enter commit message (press Enter to use '{default_commit_msg}'): "
+                )
+                if not commit_msg:
+                    commit_msg = default_commit_msg
 
             run_command("git add .", "Staging all changes")
             run_command(f'git commit -m "{commit_msg}"', "Committing changes")
             changes_to_push = True
 
         # Check if we have a tag to push
-        if create_tag == "y" or tag_exists(tag_name):
+        if create_tag or tag_exists(tag_name):
             tags_to_push = True
 
         # Push changes if there are any
