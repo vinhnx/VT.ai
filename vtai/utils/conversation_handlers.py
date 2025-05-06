@@ -557,6 +557,161 @@ async def handle_deepseek_reasoner_conversation(
             await final_answer.send()
 
 
+async def handle_reasoning_conversation(
+    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
+) -> None:
+    """
+    Handles conversations with enhanced reasoning capabilities using LiteLLM's standardized reasoning_content.
+
+    Works across multiple providers including Anthropic, DeepSeek, Google AI, Vertex AI, and more.
+    Shows the AI's step-by-step reasoning process before presenting the final answer.
+
+    Args:
+        message: The user message object
+        messages: The conversation history
+        route_layer: The semantic router layer
+    """
+    # Track start time for the thinking duration
+    start = time.time()
+
+    # Get model and settings
+    model = get_setting(conf.SETTINGS_CHAT_MODEL)
+    temperature = get_setting(conf.SETTINGS_TEMPERATURE) or 0.7
+    top_p = get_setting(conf.SETTINGS_TOP_P) or 0.9
+
+    # Get the reasoning effort setting with fallback to medium
+    reasoning_effort = (
+        get_setting(conf.SETTINGS_REASONING_EFFORT) or conf.DEFAULT_REASONING_EFFORT
+    )
+
+    # Extract query from user message
+    query = message.content.strip()
+    update_message_history_from_user(query)
+
+    # Create a copy of messages for reasoning
+    reasoning_messages = [m.copy() for m in messages]
+
+    # Add the user query
+    reasoning_messages.append({"role": "user", "content": query})
+
+    # Create empty objects that will be initialized in the context
+    thinking_step = None
+    final_answer = None
+    thinking_completed = False
+
+    async with safe_execution(
+        operation_name=f"reasoning conversation with model {model}"
+    ):
+        # First check if model supports reasoning
+        if not litellm.supports_reasoning(model=model):
+            logger.info(
+                f"Model {model} does not support reasoning. Falling back to regular chat."
+            )
+            await handle_trigger_async_chat(
+                llm_model=model, messages=reasoning_messages, current_message=message
+            )
+            return
+
+        # Start with a thinking step
+        async with cl.Step(name="Thinking") as step:
+            thinking_step = step
+            # Create a message for the final answer, but don't send it yet
+            final_answer = cl.Message(content="")
+
+            # Define callback to handle streaming the reasoning content
+            async def reasoning_stream_callback(content, is_reasoning=False):
+                nonlocal thinking_step, final_answer
+
+                if is_reasoning:
+                    # Stream to thinking step
+                    await thinking_step.stream_token(content)
+                else:
+                    # Stream to final answer
+                    await final_answer.stream_token(content)
+
+            # Define custom streaming callback to handle streaming response
+            class ReasoningStreamingCallback:
+                def __init__(self):
+                    self.collected_reasoning = ""
+                    self.collected_content = ""
+
+                async def __call__(self, chunk):
+                    if chunk and hasattr(chunk.choices[0].delta, "reasoning_content"):
+                        reasoning_content = chunk.choices[0].delta.reasoning_content
+                        if reasoning_content:
+                            self.collected_reasoning += reasoning_content
+                            await reasoning_stream_callback(
+                                reasoning_content, is_reasoning=True
+                            )
+
+                    if chunk and chunk.choices[0].delta.content:
+                        content = chunk.choices[0].delta.content
+                        self.collected_content += content
+                        await reasoning_stream_callback(content, is_reasoning=False)
+
+            # Initialize streaming callback
+            streaming_callback = ReasoningStreamingCallback()
+
+            # Use litellm with reasoning parameters
+            try:
+                await asyncio.wait_for(
+                    litellm.acompletion(
+                        user=get_user_session_id(),
+                        model=model,
+                        messages=reasoning_messages,
+                        stream=True,
+                        num_retries=3,
+                        temperature=float(temperature),
+                        top_p=float(top_p),
+                        # Add reasoning parameters
+                        reasoning_effort=reasoning_effort,  # Use user-defined reasoning effort
+                        # For Anthropic models, can also use thinking parameter
+                        thinking=(
+                            {"type": "enabled", "budget_tokens": 2048}
+                            if "anthropic" in model.lower()
+                            else None
+                        ),
+                        response_format={"type": "text"},
+                        stream_callback=streaming_callback,
+                    ),
+                    timeout=120.0,
+                )
+
+                # Update the thinking step with duration once reasoning is complete
+                thought_for = round(time.time() - start)
+                thinking_step.name = f"Thought for {thought_for}s"
+                await thinking_step.update()
+
+            except Exception as e:
+                logger.error(f"Error in reasoning conversation: {str(e)}")
+                # If reasoning fails, fall back to regular chat
+                await cl.Message(
+                    content=f"I encountered an issue with reasoning: {str(e)}. Let me try a standard response."
+                ).send()
+                await handle_trigger_async_chat(
+                    llm_model=model,
+                    messages=reasoning_messages,
+                    current_message=message,
+                )
+                return
+
+        # Send the final answer after thinking is complete
+        if not final_answer.content:
+            # If no final answer was provided, create a fallback message
+            await cl.Message(
+                content="I've thought about this but don't have a specific answer to provide."
+            ).send()
+        else:
+            # Update message history and add TTS action
+            content = final_answer.content
+            update_message_history_from_assistant(content)
+
+            # Set the actions on the message using the helper function
+            final_answer.actions = create_message_actions(content, model)
+
+            await final_answer.send()
+
+
 async def handle_web_search(query: str, current_message: cl.Message) -> None:
     """
     Handles web search requests by using the WebSearchTool.

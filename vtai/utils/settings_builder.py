@@ -185,4 +185,14 @@ def _create_settings_widgets() -> List[Union[Select, Slider, Switch]]:
             values=const.WEB_SEARCH_MODELS,
             initial_value=const.DEFAULT_WEB_SEARCH_MODEL,
         ),
+        # ===== REASONING SETTINGS =====
+        Select(
+            id=conf.SETTINGS_REASONING_EFFORT,
+            label="Reasoning Depth",
+            description="Control how much reasoning effort models use when thinking through complex problems. "
+            "'Low' is faster but less thorough, 'Medium' balances speed and depth, while 'High' provides "
+            "the most detailed reasoning but may take longer to generate responses.",
+            values=conf.REASONING_EFFORT_LEVELS,
+            initial_value=conf.DEFAULT_REASONING_EFFORT,
+        ),
     ]

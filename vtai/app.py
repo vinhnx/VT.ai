@@ -62,7 +62,7 @@ def load_deferred_imports():
     # pylint: disable=global-statement
     global numpy, audioop, subprocess, build_llm_profile
     global process_files, handle_tts_response, safe_execution, get_command_route, get_command_template
-    global set_commands, handle_conversation, handle_files_attachment, handle_thinking_conversation, DictToObject
+    global set_commands, handle_conversation, handle_files_attachment, handle_thinking_conversation, handle_reasoning_conversation, DictToObject
     global config_chat_session
 
     # Import modules that are not needed during initial startup
@@ -74,6 +74,7 @@ def load_deferred_imports():
         config_chat_session,
         handle_conversation,
         handle_files_attachment,
+        handle_reasoning_conversation,
         handle_thinking_conversation,
     )
     from utils.dict_to_object import DictToObject
@@ -223,5 +224,11 @@ async def on_message(message: cl.Message) -> None:
                     "conversation handler"
                 )
                 await handle_thinking_conversation(message, messages, route_layer)
+            # Check if selected model supports LiteLLM's reasoning capabilities
+            elif conf.supports_reasoning(current_model):
+                logger.info(
+                    f"Using enhanced reasoning with LiteLLM for model: {current_model}"
+                )
+                await handle_reasoning_conversation(message, messages, route_layer)
             else:
                 await handle_conversation(message, messages, route_layer)

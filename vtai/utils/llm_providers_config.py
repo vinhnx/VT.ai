@@ -79,6 +79,9 @@ SETTINGS_ENABLE_TTS_RESPONSE: str = "settings_enable_tts_response"
 # Web Search Settings
 SETTINGS_SUMMARIZE_SEARCH_RESULTS: str = "settings_summarize_search_results"
 
+# Reasoning Settings
+SETTINGS_REASONING_EFFORT: str = "settings_reasoning_effort"
+
 
 # ===== DEFAULT VALUES =====
 
@@ -110,6 +113,9 @@ SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE: bool = True
 SETTINGS_USE_THINKING_MODEL_DEFAULT_VALUE: bool = False
 SETTINGS_SUMMARIZE_SEARCH_RESULTS_DEFAULT_VALUE: bool = True
 
+# Default reasoning settings
+DEFAULT_REASONING_EFFORT: str = "medium"
+
 
 # ===== OPTION LISTS =====
 
@@ -137,6 +143,9 @@ TTS_VOICE_PRESETS: List[str] = [
     "nova",
     "shimmer",
 ]
+
+# Reasoning Options
+REASONING_EFFORT_LEVELS: List[str] = ["low", "medium", "high"]
 
 # Models that benefit from <think> tag for reasoning
 REASONING_MODELS: List[str] = [
@@ -266,6 +275,40 @@ def is_reasoning_model(model_id: str) -> bool:
             bool: True if the model is a reasoning model, False otherwise
     """
     return any(reasoning_model in model_id for reasoning_model in REASONING_MODELS)
+
+
+def supports_reasoning(model_id: str) -> bool:
+    """
+    Check if a model supports LiteLLM's standardized reasoning capabilities.
+
+    This function checks if a model supports the standardized reasoning_content
+    feature in LiteLLM, which works across multiple providers including Anthropic,
+    DeepSeek, Bedrock, Vertex AI, OpenRouter, XAI, and Google AI.
+
+    Args:
+        model_id: The ID of the model to check
+
+    Returns:
+        bool: True if the model supports LiteLLM's reasoning capabilities, False otherwise
+    """
+    try:
+        import litellm
+
+        return litellm.supports_reasoning(model=model_id)
+    except (ImportError, Exception):
+        # Fall back to string matching if litellm.supports_reasoning is not available
+        reasoning_providers = [
+            "anthropic/",
+            "deepseek/",
+            "bedrock/",
+            "vertexai/",
+            "vertex_ai/",
+            "openrouter/anthropic/",
+            "openrouter/deepseek/",
+            "xai/",
+            "google/",
+        ]
+        return any(provider in model_id for provider in reasoning_providers)
 
 
 # ===== RESOURCE PATHS =====
