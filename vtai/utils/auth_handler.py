@@ -51,51 +51,6 @@ except ImportError:
 from datetime import datetime  # Added for timestamping
 
 
-@cl.password_auth_callback
-def auth_callback(username: str, password: str) -> Optional[cl.User]:
-    """
-    Basic authentication callback for Chainlit's password auth system.
-
-    In a production environment, this would validate against a secure database
-    with properly hashed passwords. For this prototype, we're using hardcoded credentials.
-
-    Args:
-            username: The username provided by the user
-            password: The password provided by the user
-
-    Returns:
-            A cl.User object if authentication is successful, None otherwise
-    """
-    # Log authentication attempt (without the password)
-    logger.info("Authentication attempt for user: %s", username)
-
-    # TODO: Replace with actual database check and proper password hashing
-    # For prototype/demo purposes only - this should never be used in production
-    if (username, password) == ("admin", "admin"):
-        logger.info("User %s successfully authenticated", username)
-        return cl.User(
-            identifier=username,
-            metadata={
-                "role": "admin",
-                "provider": "credentials",
-                # You can add additional user metadata here as needed
-            },
-        )
-    # You can add additional user accounts here for testing
-    elif (username, password) == ("user", "password"):
-        logger.info("User %s successfully authenticated", username)
-        return cl.User(
-            identifier=username,
-            metadata={
-                "role": "user",
-                "provider": "credentials",
-            },
-        )
-    else:
-        logger.warning("Failed authentication attempt for user: %s", username)
-        return None
-
-
 @cl.oauth_callback
 async def oauth_callback(
     provider_id: str, token: str, raw_user_data: Dict[str, Any], default_user: cl.User
