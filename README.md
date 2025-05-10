@@ -41,6 +41,16 @@ VT.ai is a multimodal AI chat application designed to simplify interaction with 
 - **Voice Processing**: Advanced speech-to-text and text-to-speech functionality with configurable voice options and silence detection
 - **Reasoning Visualization**: Step-by-step model reasoning visualization with the `<think>` tag for transparent AI decision processes
 
+## Authentication & Usage Tracking (New)
+
+VT.ai now includes OAuth-based authentication via Supabase and token usage tracking:
+
+- **User Authentication**: Sign in with GitHub, Google, or other OAuth providers
+- **Token Usage Logging**: Track and analyze token consumption for different models
+- **Test Mode**: Use basic features without authentication
+- **User Management**: Session-based authentication with login/logout functionality
+- **Subscription Ready**: Architecture prepared for upcoming subscription tiers
+
 ## Installation & Setup
 
 Multiple installation methods are available depending on requirements:
