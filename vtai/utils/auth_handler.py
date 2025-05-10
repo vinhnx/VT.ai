@@ -344,7 +344,7 @@ async def oauth_callback(
                         .upsert(
                             upsert_payload,
                             on_conflict="provider,provider_user_id",
-                            ignoreDuplicates=True  # This ensures existing records are not updated
+                            ignoreDuplicates=True,  # This ensures existing records are not updated
                         )
                         .execute()
                     )
@@ -385,9 +385,9 @@ async def oauth_callback(
                     upsert_response = (
                         await supabase_client.table("user_profiles")
                         .upsert(
-                            fallback_payload, 
+                            fallback_payload,
                             on_conflict="provider,provider_user_id",
-                            ignoreDuplicates=True  # This ensures existing records are not updated
+                            ignoreDuplicates=True,  # This ensures existing records are not updated
                         )
                         .execute()
                     )
