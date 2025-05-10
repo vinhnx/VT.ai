@@ -35,7 +35,6 @@ from utils.auth_ui import display_auth_status, get_auth_actions, show_subscripti
 from utils.config import cleanup, initialize_app, load_model_prices, logger
 from utils.error_handlers import handle_exception
 from utils.settings_builder import build_settings
-from utils.simple_auth import auth_callback  # Added direct password auth
 from utils.user_session_helper import get_setting
 
 # Register cleanup function to ensure resources are properly released

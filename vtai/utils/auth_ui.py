@@ -14,8 +14,8 @@ from vtai.utils.config import logger
 
 
 async def get_auth_actions() -> List[cl.Action]:
-    """Returns a list of actions for login and sign-up."""
-    return [
+    """Returns a list of actions for login, sign-up, and OAuth authentication."""
+    actions = [
         cl.Action(
             name="show_login_form",
             label="🔐 Login",
@@ -30,6 +30,30 @@ async def get_auth_actions() -> List[cl.Action]:
         ),
     ]
 
+    # Add OAuth buttons - these will automatically use the OAuth callback
+    # No need to add handlers for these buttons as Chainlit will handle the OAuth flow
+    actions.append(
+        cl.Action(
+            name="oauth_login_google",
+            label="🔑 Login with Google",
+            description="Login using your Google account",
+            payload={"provider": "google"},
+            url="/auth/oauth/google",
+        )
+    )
+
+    actions.append(
+        cl.Action(
+            name="oauth_login_github",
+            label="🔑 Login with GitHub",
+            description="Login using your GitHub account",
+            payload={"provider": "github"},
+            url="/auth/oauth/github",
+        )
+    )
+
+    return actions
+
 
 async def display_auth_status(
     is_authenticated: bool, user_data: Optional[Any] = None
@@ -38,8 +62,8 @@ async def display_auth_status(
     Displays the current authentication status in the sidebar.
 
     Args:
-            is_authenticated: Whether the user is authenticated.
-            user_data: The user data, either from Supabase (dict) or password auth (cl.User object).
+        is_authenticated: Whether the user is authenticated.
+        user_data: The user data, either from Supabase (dict) or password auth (cl.User object).
     """
     # Note: In older versions of Chainlit, we would remove previous auth messages here
     # But since the remove_elements function isn't available, we'll just send new messages
@@ -54,17 +78,37 @@ async def display_auth_status(
             )
             user_email = user_data.get("email", "No email available")
             user_id = user_data.get("id", "Unknown ID")
-            auth_provider = "Supabase"
+
+            # Determine auth provider based on identities if available
+            identities = user_data.get("identities", [])
+            if identities and len(identities > 0):
+                auth_provider = identities[0].get("provider", "Supabase")
+                # Format provider name for display (capitalize)
+                auth_provider = auth_provider.capitalize()
+            else:
+                auth_provider = "Supabase"
         else:
-            # Password auth user data (cl.User object)
+            # Chainlit User object (password auth or OAuth)
             user_name = user_data.identifier
-            user_email = "Local user"  # We don't store emails in password auth
-            user_id = user_data.identifier
-            auth_provider = (
-                user_data.metadata.get("provider", "credentials")
+            user_email = (
+                user_data.metadata.get("email", "Local user")
                 if hasattr(user_data, "metadata")
-                else "Unknown"
+                else "Local user"
             )
+            user_id = user_data.identifier
+
+            if hasattr(user_data, "metadata") and user_data.metadata:
+                # Check if this was an OAuth login
+                if user_data.metadata.get("oauth", False):
+                    provider = user_data.metadata.get("provider", "Unknown")
+                    auth_provider = f"{provider.capitalize()} (OAuth)"
+                else:
+                    auth_provider = user_data.metadata.get("provider", "credentials")
+                    # Format provider name for display
+                    if auth_provider == "credentials":
+                        auth_provider = "Password"
+            else:
+                auth_provider = "Unknown"
 
         # Display authenticated user info
         await cl.Message(
@@ -95,7 +139,8 @@ Sign up or log in to access:
 - Customization options
 
 Click the **Login** or **Sign Up** button above to authenticate.
-			""",
+You can also use Google or GitHub for quick sign-in.
+            """,
             author="Auth Status",
         ).send()
 
@@ -108,8 +153,8 @@ async def show_subscription_info(
     Placeholder for Phase 2 implementation.
 
     Args:
-            supabase_client: The Supabase client.
-            user_id: The authenticated user's ID.
+        supabase_client: The Supabase client.
+        user_id: The authenticated user's ID.
     """
     if not supabase_client or not user_id:
         return
@@ -153,6 +198,6 @@ All features are available in this mode.
 **Status**: Active
 
 *For Phase 1, all users have access to a free tier with basic functionality.*
-		""",
+        """,
         author="Subscription Info",
     ).send()
