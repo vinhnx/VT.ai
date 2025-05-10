@@ -2,17 +2,53 @@
 Authentication handling for VT.ai.
 
 Manages both Supabase and simple password-based authentication, including login,
-OAuth flows, session management, password reset, and email verification.
+OAuth flows, session management, password reset, and email verification. Provides
+comprehensive integration with Supabase for user profile synchronization.
 """
 
+import json
+import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import chainlit as cl
+import dotenv
 from gotrue.errors import AuthApiError, AuthUnknownError
-from supabase import Client
+from supabase import Client, create_client
 from supabase.lib.client_options import ClientOptions
 
 from vtai.utils.config import logger
+
+# Load environment variables
+dotenv.load_dotenv()
+
+# First attempt to import supabase_client from vtai.app
+# If that fails, initialize it locally
+try:
+    from vtai.app import supabase_client
+
+    logger.info("Supabase client imported from vtai.app")
+except ImportError:
+    # Initialize Supabase client locally
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        logger.warning(
+            "Supabase URL or Key not found in environment variables. "
+            "Supabase integration will be disabled."
+        )
+        supabase_client: Optional[Client] = None
+    else:
+        try:
+            supabase_client: Optional[Client] = create_client(
+                SUPABASE_URL, SUPABASE_KEY
+            )
+            logger.info("Supabase client initialized locally in auth_handler.py")
+        except Exception as e:
+            logger.error(f"Failed to initialize Supabase client locally: {e}")
+            supabase_client = None
+
+from datetime import datetime  # Added for timestamping
 
 
 @cl.password_auth_callback
@@ -68,7 +104,8 @@ async def oauth_callback(
     OAuth callback for Chainlit's OAuth authentication system.
 
     This function is called when a user successfully authenticates via OAuth.
-    It enhances the default user object with information from the provider.
+    It enhances the default user object with information from the provider
+    and syncs user data with the Supabase 'user_profiles' table.
 
     Args:
         provider_id: The OAuth provider ID (e.g., 'google', 'github', etc.)
@@ -82,10 +119,8 @@ async def oauth_callback(
     logger.info("-----------------------------------------------------")
     logger.info("ENTERING OAUTH_CALLBACK (REFINED)")
     logger.info(f"Provider ID: {provider_id}")
-    logger.info(
-        f"Token: {token[:15]}... (truncated for security)"
-    )  # Log only a small part
-    logger.debug(f"Raw User Data: {raw_user_data}")  # Full data only in debug
+    logger.info(f"Token: {token[:15]}... (truncated for security)")
+    logger.info(f"Raw User Data from {provider_id}: {raw_user_data}")
     logger.info(
         f"Default User (incoming): Identifier: {default_user.identifier}, Metadata: {default_user.metadata}"
     )
@@ -97,16 +132,34 @@ async def oauth_callback(
     user_provider_specific_id: Optional[str] = None
 
     if provider_id == "google":
-        user_provider_specific_id = raw_user_data.get("sub")
+        # Google can return either "sub" or "id" field for the user ID
+        user_provider_specific_id = raw_user_data.get("sub") or raw_user_data.get("id")
+        if user_provider_specific_id is None:
+            # As a last resort, if both are missing, try to use a hashed email as ID
+            email = raw_user_data.get("email")
+            if email:
+                import hashlib
+
+                user_provider_specific_id = hashlib.md5(email.encode()).hexdigest()
+                logger.warning(
+                    f"Using MD5 hash of email as provider_user_id: {user_provider_specific_id}"
+                )
+
         email = raw_user_data.get("email")
         name = raw_user_data.get("name")
         picture = raw_user_data.get("picture")
+        logger.info(
+            f"Google OAuth details extracted - user_id: {user_provider_specific_id}, email: {email}, name: {name}"
+        )
     elif provider_id == "github":
         gh_id = raw_user_data.get("id")
         user_provider_specific_id = str(gh_id) if gh_id is not None else None
         email = raw_user_data.get("email")  # May be null
         name = raw_user_data.get("name") or raw_user_data.get("login")
         picture = raw_user_data.get("avatar_url")
+        logger.info(
+            f"GitHub OAuth details extracted - id: {user_provider_specific_id}, email: {email}, name: {name}"
+        )
     else:
         logger.warning(f"OAuth callback for unhandled provider: {provider_id}")
         # For unhandled providers, we'll rely on default_user and whatever Chainlit populates.
@@ -125,37 +178,237 @@ async def oauth_callback(
     if email:
         enhanced_user.metadata["email"] = email
     if name:
-        # Use provider name, potentially overwriting if default_user had one from a generic source
         enhanced_user.metadata["name"] = name
     if picture:
         enhanced_user.metadata["picture"] = picture
     if user_provider_specific_id:
         enhanced_user.metadata["user_provider_id"] = user_provider_specific_id
-    # Store a subset or all of raw_user_data if needed for debugging or other features,
-    # but be mindful of size and sensitivity.
-    # enhanced_user.metadata["raw_oauth_data"] = raw_user_data # Example
 
     logger.info(
         f"Enhanced User prepared: Identifier: {enhanced_user.identifier}, Metadata: {enhanced_user.metadata}"
     )
 
-    # Attempt to set our custom session variables.
-    # This is where the "Chainlit context not found" error might occur.
-    # Even if this fails, returning enhanced_user allows Chainlit to proceed.
-    try:
-        logger.info("Attempting to set user session variables...")
-        cl.user_session.set("user", enhanced_user)  # Store the cl.User object
-        cl.user_session.set("authenticated", True)
-        cl.user_session.set("auth_provider_type", "oauth")
-        cl.user_session.set("oauth_provider_id", provider_id)  # Store specific provider
-        logger.info("User session variables set successfully in oauth_callback.")
-    except Exception as e:
-        logger.error(
-            f"Error setting user session variables in OAuth callback: {type(e).__name__}: {e}"
+    # Log supabase_client availability
+    logger.info(f"Supabase client available: {supabase_client is not None}")
+
+    # Sync with Supabase user_profiles table
+    if supabase_client:
+        profile_to_sync = {
+            "provider": enhanced_user.metadata.get("provider"),
+            "provider_user_id": enhanced_user.metadata.get("user_provider_id"),
+            "email": enhanced_user.metadata.get("email"),
+            "full_name": enhanced_user.metadata.get("name"),
+            "avatar_url": enhanced_user.metadata.get("picture"),
+            "chainlit_user_identifier": enhanced_user.identifier,
+            "raw_oauth_details": json.dumps(raw_user_data),  # Ensure JSON serialized
+            "updated_at": datetime.utcnow().isoformat()
+            + "+00:00",  # ISO 8601 format for Supabase
+        }
+
+        # Log the profile before filtering
+        logger.info(
+            f"Profile to sync (before filtering None values): {profile_to_sync}"
         )
-        logger.exception("Full traceback for session setting error in oauth_callback:")
-        # Continue without these custom session variables if an error occurs.
-        # Chainlit's own session management based on the returned user should still function.
+
+        # Filter out None values, but use empty string for provider_user_id if it's None
+        # This helps prevent issues with Supabase constraints
+        profile_to_sync = {
+            k: (v if v is not None or k != "provider_user_id" else "")
+            for k, v in profile_to_sync.items()
+            if v is not None or k == "provider_user_id"
+        }
+
+        # Extra safety check: If provider_user_id is still None or empty after filtering,
+        # generate a random ID as a last resort
+        if not profile_to_sync.get("provider_user_id"):
+            import uuid
+
+            profile_to_sync["provider_user_id"] = str(uuid.uuid4())
+            logger.warning(
+                f"Generated random UUID as provider_user_id: {profile_to_sync['provider_user_id']}"
+            )
+
+        # Log the profile after filtering
+        logger.info(f"Profile to sync (after filtering None values): {profile_to_sync}")
+
+        if profile_to_sync.get("provider") and profile_to_sync.get("provider_user_id"):
+            try:
+                logger.info(
+                    f"Attempting to sync profile for provider '{profile_to_sync['provider']}' "
+                    f"and user_id '{profile_to_sync['provider_user_id']}' with Supabase."
+                )
+
+                select_response = None
+                try:
+                    # Try to check if the user exists
+                    select_response = (
+                        await supabase_client.table("user_profiles")
+                        .select("id")
+                        .eq("provider", profile_to_sync["provider"])
+                        .eq("provider_user_id", profile_to_sync["provider_user_id"])
+                        .maybe_single()
+                        .execute()
+                    )
+                except Exception as select_e:
+                    logger.error(
+                        f"Error during select query: {type(select_e).__name__} - {select_e}"
+                    )
+                    # Continue with insert even if select fails
+
+                # Log the select response
+                logger.info(f"Supabase select response: {select_response}")
+                logger.info(
+                    f"Supabase select data: {getattr(select_response, 'data', None)}"
+                )
+                logger.info(
+                    f"Supabase select error: {getattr(select_response, 'error', None)}"
+                )
+
+                select_data = getattr(select_response, "data", None)
+                select_error = getattr(select_response, "error", None)
+
+                if select_error:
+                    logger.error(
+                        f"Supabase select error: {getattr(select_error, 'message', select_error)}"
+                    )
+                    # Try to insert anyway since select failed
+                    logger.info("Attempting insert after select error...")
+                    insert_payload = profile_to_sync.copy()
+                    now_iso = datetime.utcnow().isoformat() + "+00:00"
+                    insert_payload["created_at"] = now_iso
+                    insert_payload["updated_at"] = now_iso
+
+                    try:
+                        insert_response = (
+                            await supabase_client.table("user_profiles")
+                            .insert(insert_payload)
+                            .execute()
+                        )
+
+                        # Log the insert response
+                        logger.info(f"Supabase insert response: {insert_response}")
+                        logger.info(
+                            f"Supabase insert data: {getattr(insert_response, 'data', None)}"
+                        )
+                        logger.info(
+                            f"Supabase insert error: {getattr(insert_response, 'error', None)}"
+                        )
+                    except Exception as insert_e:
+                        logger.error(
+                            f"Error during insert after select error: {type(insert_e).__name__} - {insert_e}"
+                        )
+                elif select_data:  # User exists, update them
+                    db_user_id = select_response.data["id"]
+                    logger.info(
+                        f"Updating existing user profile (ID: {db_user_id}) in Supabase."
+                    )
+                    update_payload = profile_to_sync.copy()
+                    update_payload["updated_at"] = (
+                        datetime.utcnow().isoformat() + "+00:00"
+                    )
+
+                    update_response = (
+                        await supabase_client.table("user_profiles")
+                        .update(update_payload)
+                        .eq("id", db_user_id)
+                        .execute()
+                    )
+
+                    # Log the update response
+                    logger.info(f"Supabase update response: {update_response}")
+                    logger.info(
+                        f"Supabase update data: {getattr(update_response, 'data', None)}"
+                    )
+                    logger.info(
+                        f"Supabase update error: {getattr(update_response, 'error', None)}"
+                    )
+
+                    update_error = getattr(update_response, "error", None)
+                    if update_error:
+                        logger.error(
+                            f"Supabase update error: {getattr(update_error, 'message', update_error)}"
+                        )
+                    else:
+                        logger.info("User profile updated successfully in Supabase.")
+                else:  # User does not exist, insert them
+                    logger.info("Inserting new user profile into Supabase.")
+                    insert_payload = profile_to_sync.copy()
+                    now_iso = datetime.utcnow().isoformat() + "+00:00"
+                    insert_payload["created_at"] = now_iso
+                    insert_payload["updated_at"] = now_iso
+
+                    insert_response = (
+                        await supabase_client.table("user_profiles")
+                        .insert(insert_payload)
+                        .execute()
+                    )
+
+                    # Log the insert response
+                    logger.info(f"Supabase insert response: {insert_response}")
+                    logger.info(
+                        f"Supabase insert data: {getattr(insert_response, 'data', None)}"
+                    )
+                    logger.info(
+                        f"Supabase insert error: {getattr(insert_response, 'error', None)}"
+                    )
+
+                    insert_error = getattr(insert_response, "error", None)
+                    if insert_error:
+                        logger.error(
+                            f"Supabase insert error: {getattr(insert_error, 'message', insert_error)}"
+                        )
+                    else:
+                        logger.info(
+                            "New user profile inserted successfully into Supabase."
+                        )
+
+            except Exception as e:
+                logger.error(
+                    f"Error during Supabase profile sync: {type(e).__name__} - {e}"
+                )
+                logger.exception("Traceback for Supabase profile sync error:")
+
+                # Final fallback - try a direct upsert
+                try:
+                    logger.info("Attempting direct upsert as final fallback...")
+                    fallback_payload = profile_to_sync.copy()
+                    now_iso = datetime.utcnow().isoformat() + "+00:00"
+                    fallback_payload["created_at"] = now_iso
+                    fallback_payload["updated_at"] = now_iso
+
+                    upsert_response = (
+                        await supabase_client.table("user_profiles")
+                        .upsert(
+                            fallback_payload, on_conflict="provider,provider_user_id"
+                        )
+                        .execute()
+                    )
+
+                    logger.info(f"Fallback upsert response: {upsert_response}")
+                    logger.info(
+                        f"Fallback upsert data: {getattr(upsert_response, 'data', None)}"
+                    )
+                except Exception as fallback_e:
+                    logger.error(
+                        f"Fallback upsert also failed: {type(fallback_e).__name__} - {fallback_e}"
+                    )
+        else:
+            logger.warning(
+                "Provider or provider_user_id missing in enhanced_user.metadata. "
+                "Skipping Supabase profile sync."
+            )
+    else:
+        logger.info("Supabase client not available. Skipping user profile sync.")
+
+    # We won't try to set user session variables here because of Chainlit context issues
+    # The ChainlitContextException occurs because OAuth callback runs outside Chainlit's context
+    # Instead, Chainlit will automatically use the returned enhanced_user to set up the user session
+    logger.info(
+        "Skipping manual user session variable setting due to potential Chainlit context issues"
+    )
+    logger.info(
+        "Chainlit will set up the user session based on the enhanced_user we return"
+    )
 
     logger.info("-----------------------------------------------------")
     logger.info("EXITING OAUTH_CALLBACK (REFINED) - RETURNING ENHANCED USER")
@@ -188,15 +441,13 @@ async def initialize_auth(supabase_client: Optional[Client]) -> None:
         logger.warning(
             "Supabase client not available. Only simple password auth will be available."
         )
-        cl.user_session.set("authenticated", False)  # Ensure defaults are set
+        cl.user_session.set("authenticated", False)
         cl.user_session.set("user", None)
         return
 
-    # Initialize user session defaults for this interaction
     cl.user_session.set("authenticated", False)
     cl.user_session.set("user", None)
 
-    # Attempt to load and validate a stored session
     stored_session_data = cl.user_session.get("supabase_session_storage")
 
     if stored_session_data:
@@ -205,29 +456,24 @@ async def initialize_auth(supabase_client: Optional[Client]) -> None:
             logger.debug(
                 "Attempting to restore session for user if ID is present: %s", user_id
             )
-            # Restore session in Supabase client
             supabase_client.auth.set_session(
                 access_token=stored_session_data["access_token"],
                 refresh_token=stored_session_data["refresh_token"],
             )
-            # Verify the session and get user details. This might also refresh the token.
             response = supabase_client.auth.get_user()
 
             if response and response.user:
                 user_data = response.user.model_dump()
-                # Get the latest session details (possibly refreshed)
                 current_session_details = supabase_client.auth.get_session()
                 if not current_session_details:
                     logger.warning(
                         "Failed to get current session details after get_user succeeded. Clearing stored session."
                     )
                     cl.user_session.set("supabase_session_storage", None)
-                    # Keep authenticated as False, user as None (already set)
                     return
 
                 cl.user_session.set("user", user_data)
                 cl.user_session.set("authenticated", True)
-                # Update the stored session with the latest (potentially refreshed) tokens
                 cl.user_session.set(
                     "supabase_session_storage", current_session_details.model_dump()
                 )
@@ -235,7 +481,7 @@ async def initialize_auth(supabase_client: Optional[Client]) -> None:
                 logger.info(
                     "User %s authenticated from stored session.", user_data.get("id")
                 )
-                return  # Successfully authenticated
+                return
             else:
                 logger.warning(
                     "Stored session found but get_user() failed. Clearing stored session."
@@ -243,20 +489,17 @@ async def initialize_auth(supabase_client: Optional[Client]) -> None:
                 cl.user_session.set("supabase_session_storage", None)
 
         except AuthApiError as e:
-            # This can happen if tokens are invalid or expired
             logger.warning(
                 "Failed to validate stored session due to auth API error: %s. Clearing stored session.",
                 str(e),
             )
             cl.user_session.set("supabase_session_storage", None)
-            # Ensure supabase client doesn't retain a bad session state from set_session attempt
             try:
-                supabase_client.auth.sign_out()  # Clear any potentially lingering session in client
-            except Exception:  # nosec
-                pass  # Ignore errors during this cleanup sign_out
+                supabase_client.auth.sign_out()
+            except Exception:
+                pass
 
         except AuthUnknownError as e:
-            # Handle authentication errors separately
             logger.warning(
                 "Failed to validate stored session due to auth unknown error: %s. Clearing stored session.",
                 str(e),
@@ -264,22 +507,20 @@ async def initialize_auth(supabase_client: Optional[Client]) -> None:
             cl.user_session.set("supabase_session_storage", None)
             try:
                 supabase_client.auth.sign_out()
-            except Exception:  # nosec
+            except Exception:
                 pass
 
         except Exception as e:
-            # Handle other unexpected errors
             logger.warning(
                 "Failed to validate stored session: %s. Clearing stored session.",
                 str(e),
             )
             cl.user_session.set("supabase_session_storage", None)
             try:
-                supabase_client.auth.sign_out()  # Clear any potentially lingering session in client
-            except Exception:  # nosec
-                pass  # Ignore errors during this cleanup sign_out
+                supabase_client.auth.sign_out()
+            except Exception:
+                pass
 
-    # If no valid session was found or restored, authenticated remains False
     logger.debug("No valid stored session found or session restoration failed.")
 
 
@@ -303,7 +544,6 @@ async def handle_password_signup(
         or a message if email confirmation is needed.
     """
     try:
-        # Sign up user according to the auth-py format
         response = supabase_client.auth.sign_up(
             {
                 "email": email,
@@ -314,15 +554,12 @@ async def handle_password_signup(
             }
         )
 
-        if response.user and response.session:  # Successful signup, session created
+        if response.user and response.session:
             user_data = response.user.model_dump()
             session_data = response.session.model_dump()
             cl.user_session.set("user", user_data)
             cl.user_session.set("authenticated", True)
-            cl.user_session.set(
-                "supabase_session_storage", session_data
-            )  # Persist this
-            # Ensure client has session for immediate use
+            cl.user_session.set("supabase_session_storage", session_data)
             supabase_client.auth.set_session(
                 session_data["access_token"], session_data["refresh_token"]
             )
@@ -330,9 +567,7 @@ async def handle_password_signup(
                 "User %s signed up and logged in successfully.", user_data.get("id")
             )
             return user_data, None
-        elif (
-            response.user and not response.session
-        ):  # Signup successful, but email confirmation might be needed
+        elif response.user and not response.session:
             user_data = response.user.model_dump()
             logger.info(
                 "User %s signed up. Email confirmation may be required.",
@@ -392,7 +627,6 @@ async def handle_password_login(
         error_message is None if login was successful.
     """
     try:
-        # Login using the auth-py format
         response = supabase_client.auth.sign_in_with_password(
             {"email": email, "password": password}
         )
@@ -402,17 +636,13 @@ async def handle_password_login(
             session_data = response.session.model_dump()
             cl.user_session.set("user", user_data)
             cl.user_session.set("authenticated", True)
-            cl.user_session.set(
-                "supabase_session_storage", session_data
-            )  # Persist this
-            # Ensure client has session for immediate use
+            cl.user_session.set("supabase_session_storage", session_data)
             supabase_client.auth.set_session(
                 session_data["access_token"], session_data["refresh_token"]
             )
             logger.info("User %s logged in successfully.", user_data.get("id"))
             return user_data, None
         else:
-            # This case should ideally be caught by exceptions for invalid credentials.
             logger.warning(
                 "Login attempt for %s failed with an unexpected response: %s",
                 email,
@@ -467,7 +697,6 @@ async def handle_oauth_signup(
         A dictionary containing the OAuth sign-in URL.
     """
     try:
-        # Initiate OAuth flow according to auth-py format
         response = supabase_client.auth.sign_in_with_oauth(
             {
                 "provider": provider,
@@ -479,7 +708,6 @@ async def handle_oauth_signup(
 
         logger.info("Initiated OAuth flow for provider: %s", provider)
 
-        # Return the URL that the user should be redirected to
         return {"provider": response.provider, "url": response.url}
 
     except AuthApiError as e:
@@ -529,15 +757,11 @@ async def get_user_subscription_tier(
     Returns:
             The subscription tier name, or None if no active subscription exists
     """
-    # This is a placeholder - in Phase 2, we'll implement actual subscription checks
-    # For now, we'll just return a test tier
     return "basic_test"
 
 
 async def check_authentication(
-    supabase_client: Optional[
-        Client
-    ],  # Keep for API consistency, though direct use here is minimal
+    supabase_client: Optional[Client],
 ) -> Tuple[bool, Optional[Any]]:
     """
     Checks if the current user is authenticated based on Chainlit session state.
@@ -549,31 +773,23 @@ async def check_authentication(
     Returns:
             A tuple containing (is_authenticated, user_data)
     """
-    # First check for password-based authentication
     user = cl.user_session.get("user")
     if (
         user
         and isinstance(user, cl.User)
         and user.metadata.get("provider") == "credentials"
     ):
-        # User is authenticated via password auth
         return True, user
 
-    # Then check for Supabase authentication
     is_authenticated = cl.user_session.get("authenticated", False)
     user_data = cl.user_session.get("user")
 
     if is_authenticated and user_data:
-        # Assumes initialize_auth or login/signup handlers have correctly set up
-        # the Supabase client's session state for the current user interaction.
         return True, user_data
 
-    # If not authenticated or no user_data, ensure clean state
     if not is_authenticated:
-        cl.user_session.set("user", None)  # Ensure user is None if not authenticated
-        cl.user_session.set(
-            "supabase_session_storage", None
-        )  # Clear any stale session storage
+        cl.user_session.set("user", None)
+        cl.user_session.set("supabase_session_storage", None)
 
     return False, None
 
@@ -586,23 +802,19 @@ async def logout(supabase_client: Optional[Client]) -> None:
     Args:
         supabase_client: The initialized Supabase client
     """
-    # First check for password-based authentication
     user = cl.user_session.get("user")
     if (
         user
         and isinstance(user, cl.User)
         and user.metadata.get("provider") == "credentials"
     ):
-        # Handle password auth logout
         logger.info("Logging out password-authenticated user: %s", user.identifier)
         cl.user_session.set("user", None)
         cl.user_session.set("authenticated", False)
         return
 
-    # Handle Supabase authentication logout
     if supabase_client:
         try:
-            # Auth-py API expects sign_out to be called directly
             supabase_client.auth.sign_out()
             logger.info("User signed out from Supabase auth")
         except AuthApiError as e:
@@ -612,10 +824,9 @@ async def logout(supabase_client: Optional[Client]) -> None:
         except Exception as e:
             logger.warning("Exception during Supabase sign out: %s", str(e))
 
-    # Clear local Chainlit session data
     cl.user_session.set("authenticated", False)
     cl.user_session.set("user", None)
-    cl.user_session.set("supabase_session_storage", None)  # Clear stored session
+    cl.user_session.set("supabase_session_storage", None)
 
     await cl.Message(
         content="👋 You have been successfully logged out.",

@@ -31,7 +31,7 @@ from utils.auth_handler import (
     initialize_auth,
     logout,
 )
-from utils.auth_ui import display_auth_status, get_auth_actions, show_subscription_info
+from utils.auth_ui import display_auth_status, get_auth_actions
 from utils.config import cleanup, initialize_app, load_model_prices, logger
 from utils.error_handlers import handle_exception
 from utils.settings_builder import build_settings
@@ -190,17 +190,9 @@ async def on_show_login_form(action: cl.Action):
                     content=f"✅ Welcome back, {user_name}! You are now logged in.",
                     author="System",
                 ).send()
-                # Refresh UI elements
-                await cl.run_sync(cl.remove_actions_by_name("show_login_form"))
-                await cl.run_sync(cl.remove_actions_by_name("show_signup_form"))
-                await cl.Action(
-                    name="logout_action",
-                    label="Logout",
-                    description="Sign out",
-                    payload={},
-                ).send(for_id="header")
+
                 await display_auth_status(True, user_data)
-                await show_subscription_info(supabase_client, user_data.get("id"))
+
             else:
                 await cl.Message(
                     content=f"⚠️ Login Failed: {error_message}", author="System"
@@ -214,106 +206,6 @@ async def on_show_login_form(action: cl.Action):
         await cl.Message(
             content=f"An unexpected error occurred: {e}", author="System"
         ).send()
-
-
-@cl.action_callback("show_signup_form")
-async def on_show_signup_form(action: cl.Action):
-    await cl.Message(content="Preparing sign-up form...").send()
-    try:
-        res = await cl.AskUserMessage(
-            content="Please enter your email for sign-up:",
-            timeout=120,
-            author="Sign-up",
-        ).send()
-        if not res or not res.get("content"):
-            await cl.Message(
-                content="Sign-up cancelled or timed out.", author="System"
-            ).send()
-            return
-        email = res["content"].strip()
-
-        res = await cl.AskUserMessage(
-            content="Please enter a password (min 6 characters):",
-            timeout=120,
-            author="Sign-up",
-        ).send()
-        if not res or not res.get("content"):
-            await cl.Message(
-                content="Sign-up cancelled or timed out.", author="System"
-            ).send()
-            return
-        password = res["content"].strip()
-
-        if supabase_client:
-            user_data, message = await handle_password_signup(
-                supabase_client, email, password
-            )
-            if user_data:  # Successfully signed up and logged in
-                user_name = user_data.get("user_metadata", {}).get(
-                    "full_name", user_data.get("email", "User")
-                )
-                await cl.Message(
-                    content=f"✅ Welcome, {user_name}! You have successfully signed up and are logged in.",
-                    author="System",
-                ).send()
-                # Refresh UI elements
-                await cl.run_sync(cl.remove_actions_by_name("show_login_form"))
-                await cl.run_sync(cl.remove_actions_by_name("show_signup_form"))
-                await cl.Action(
-                    name="logout_action",
-                    label="Logout",
-                    description="Sign out",
-                    payload={},
-                ).send(for_id="header")
-                await display_auth_status(True, user_data)
-                await show_subscription_info(supabase_client, user_data.get("id"))
-            elif (
-                message
-            ):  # Signup successful, but action needed (e.g. email confirmation) or error
-                await cl.Message(content=f"{message}", author="System").send()
-            else:  # Should not happen if user_data is None and message is None, but as a fallback
-                await cl.Message(
-                    content="⚠️ Sign-up failed. Please try again.", author="System"
-                ).send()
-        else:
-            await cl.Message(
-                content="Auth service not available.", author="System"
-            ).send()
-    except Exception as e:
-        logger.error(f"Error during signup form: {e}")
-        await cl.Message(
-            content=f"An unexpected error occurred: {e}", author="System"
-        ).send()
-
-
-@cl.action_callback("logout_action")
-async def on_logout_action(_: cl.Action):
-    """
-    Callback for when the logout button is clicked.
-    """
-    # Check if user was authenticated via password auth
-    user = cl.user_session.get("user")
-    if (
-        user
-        and hasattr(user, "metadata")
-        and user.metadata.get("provider") == "credentials"
-    ):
-        logger.info(f"Logging out password-authenticated user: {user.identifier}")
-        # Reset session for password-authenticated users
-        cl.user_session.set("user", None)
-        cl.user_session.set("authenticated", False)
-    else:
-        # Handle Supabase logout
-        await logout(supabase_client)
-
-    # Reload the UI to update the session state
-    # Remove logout button, add login/signup buttons
-    await cl.run_sync(cl.remove_actions_by_name("logout_action"))
-    auth_actions = await get_auth_actions()
-    for auth_action in auth_actions:
-        await auth_action.send(for_id="header")
-    await display_auth_status(False)
-    await create_test_mode_message()  # Show test mode message after logout
 
 
 @cl.on_chat_start
@@ -338,21 +230,35 @@ async def start_chat():
 
         # Display welcome message
         await cl.Message(
-            content=f"Welcome, {chainlit_user.identifier}! You're logged in via password authentication.",
+            content=f"Welcome, {chainlit_user.identifier}!",
             author="System",
         ).send()
 
         # Display auth status and subscription info
         await display_auth_status(True, chainlit_user)
-        await show_subscription_info(supabase_client, chainlit_user.identifier)
 
-        # Add logout button to header
-        await cl.Action(
-            name="logout_action",
-            label="Logout",
-            description="Sign out of your account",
-            payload={},
-        ).send(for_id="header")
+    # Check if user is authenticated via OAuth
+    elif (
+        chainlit_user
+        and hasattr(chainlit_user, "metadata")
+        and chainlit_user.metadata.get("oauth") == True
+    ):
+        logger.info(f"User authenticated via OAuth: {chainlit_user.identifier}")
+        cl.user_session.set("authenticated", True)
+
+        # Get user's provider and name
+        provider = chainlit_user.metadata.get("provider", "OAuth")
+        name = chainlit_user.metadata.get(
+            "name", chainlit_user.identifier
+        )  # Display welcome message
+        await cl.Message(
+            content=f"Welcome, {name}!",
+            author="System",
+        ).send()
+
+        # Display auth status and subscription info
+        await display_auth_status(True, chainlit_user)
+
     # --- Initialize Supabase Auth ---
     elif supabase_client:
         logger.info("Supabase client is available, initializing authentication")
@@ -366,44 +272,19 @@ async def start_chat():
             )
             logger.info(f"User is authenticated via Supabase: {user_name}")
             await cl.Message(
-                content=f"Welcome back, {user_name}! You're logged in.",
+                content=f"Welcome back, {user_name}!",
                 author="System",
             ).send()
 
             # Display auth status in sidebar
             await display_auth_status(True, user_data)
 
-            # Show subscription information
-            await show_subscription_info(supabase_client, user_data.get("id"))
-
-            # Add a logout button to the header
-            await cl.Action(
-                name="logout_action",
-                label="Logout",
-                description="Sign out of your account",
-                payload={},
-            ).send(for_id="header")
-        else:
-            # User is not authenticated - show login/signup buttons and test mode message
-            logger.info("User is not authenticated, showing login/signup buttons")
-            auth_actions = await get_auth_actions()
-            for action in auth_actions:
-                logger.info(f"Sending auth action: {action.name}")
-                await action.send(for_id="header")
-            await create_test_mode_message()
-
-            # Display auth status for unauthenticated users
-            await display_auth_status(False)
     else:
         logger.warning("Supabase client not initialized. Authentication is disabled.")
         cl.user_session.set("user", None)  # Default to no user
         cl.user_session.set("authenticated", False)
 
-        # Even though Supabase client is not available, we still show login/signup buttons
-        # for UI consistency and to prompt users to set up their credentials
-        auth_actions = await get_auth_actions()
-        for action in auth_actions:
-            await action.send(for_id="header")
+        # Login/signup buttons removed as requested
 
         await create_test_mode_message()  # Inform user about test mode if Supabase is down
         await display_auth_status(False)
@@ -457,6 +338,14 @@ async def on_message(message: cl.Message) -> None:
         user_role = user.metadata.get("role", "user")
         logger.info(
             f"Processing message for password-authenticated user: {user_id} (role: {user_role})"
+        )
+    # Check if user is authenticated via OAuth
+    elif user and hasattr(user, "metadata") and user.metadata.get("oauth") == True:
+        # OAuth authenticated user
+        user_id = user.identifier
+        provider = user.metadata.get("provider", "OAuth")
+        logger.info(
+            f"Processing message for OAuth-authenticated user: {user_id} (provider: {provider})"
         )
     else:
         # Check Supabase authentication

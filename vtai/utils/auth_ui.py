@@ -5,6 +5,7 @@ This module provides UI elements to show the current authentication status and r
 """
 
 import asyncio
+import traceback
 from typing import Any, Dict, List, Optional
 
 import chainlit as cl
@@ -42,17 +43,42 @@ async def get_auth_actions() -> List[cl.Action]:
         )
     )
 
-    actions.append(
-        cl.Action(
-            name="oauth_login_github",
-            label="🔑 Login with GitHub",
-            description="Login using your GitHub account",
-            payload={"provider": "github"},
-            url="/auth/oauth/github",
-        )
-    )
-
     return actions
+
+
+async def handle_auth_error(
+    error_message: str, exception: Optional[Exception] = None
+) -> None:
+    """Display an error message to the user and log the details.
+
+    Args:
+        error_message: The user-friendly error message to display
+        exception: Optional exception object for detailed logging
+    """
+    if exception:
+        logger.error(
+            "Authentication error: %s - %s: %s",
+            error_message,
+            type(exception).__name__,
+            str(exception),
+        )
+        logger.debug("Authentication error traceback: %s", traceback.format_exc())
+    else:
+        logger.error("Authentication error: %s", error_message)
+
+    # Display error to the user
+    await cl.Message(
+        content=f"❌ **Authentication Error**\n\n{error_message}",
+        author="System",
+    ).send()
+
+    # Add retry button
+    auth_actions = await get_auth_actions()
+    await cl.Message(
+        content="Please try again or use a different authentication method:",
+        author="Actions",
+        actions=auth_actions,
+    ).send()
 
 
 async def display_auth_status(
@@ -65,10 +91,6 @@ async def display_auth_status(
         is_authenticated: Whether the user is authenticated.
         user_data: The user data, either from Supabase (dict) or password auth (cl.User object).
     """
-    # Note: In older versions of Chainlit, we would remove previous auth messages here
-    # But since the remove_elements function isn't available, we'll just send new messages
-    # and let Chainlit handle any UI updates
-
     if is_authenticated and user_data:
         # Handle different user object structures
         if isinstance(user_data, dict):
@@ -81,7 +103,7 @@ async def display_auth_status(
 
             # Determine auth provider based on identities if available
             identities = user_data.get("identities", [])
-            if identities and len(identities > 0):
+            if identities and len(identities) > 0:
                 auth_provider = identities[0].get("provider", "Supabase")
                 # Format provider name for display (capitalize)
                 auth_provider = auth_provider.capitalize()
@@ -109,95 +131,3 @@ async def display_auth_status(
                         auth_provider = "Password"
             else:
                 auth_provider = "Unknown"
-
-        # Display authenticated user info
-        await cl.Message(
-            content=f"""
-## 🔐 Authenticated
-
-**User**: {user_name}
-**Email**: {user_email}
-**ID**: {user_id}
-**Auth Provider**: {auth_provider}
-
-*You have full access to all VT.ai features.*
-            """,
-            author="Auth Status",
-        ).send()
-    else:
-        # Display test mode info
-        await cl.Message(
-            content="""
-## 🧪 Test Mode
-
-You're currently using VT.ai in test mode with limited features.
-
-Sign up or log in to access:
-- Personal conversation history
-- Higher usage limits
-- Advanced features
-- Customization options
-
-Click the **Login** or **Sign Up** button above to authenticate.
-You can also use Google or GitHub for quick sign-in.
-            """,
-            author="Auth Status",
-        ).send()
-
-
-async def show_subscription_info(
-    supabase_client: Optional[Client], user_id: Optional[str]
-) -> None:
-    """
-    Displays the current subscription information for the user.
-    Placeholder for Phase 2 implementation.
-
-    Args:
-        supabase_client: The Supabase client.
-        user_id: The authenticated user's ID.
-    """
-    if not supabase_client or not user_id:
-        return
-
-    # Check if using password authentication
-    user = cl.user_session.get("user")
-    if (
-        user
-        and hasattr(user, "metadata")
-        and user.metadata.get("provider") == "credentials"
-    ):
-        # For password auth users, display a default subscription message
-        await cl.Message(
-            content="""
-## 📊 Subscription Info
-
-You're using VT.ai with a local authentication account.
-All features are available in this mode.
-
-**Plan**: Standard
-**Usage**: Unlimited during development
-            """,
-            author="Subscription",
-        ).send()
-        return
-
-    # Note: In older versions of Chainlit, we would remove previous messages here
-    # But since the remove_elements function isn't available, we'll just send new messages
-    # and let Chainlit handle any UI updates
-
-    # Placeholder for Phase 2 - This will be implemented when subscription management is added
-    # For now, we'll just display a basic message about subscription status
-
-    subscription_tier = "Free Tier"  # This will come from the database in Phase 2
-
-    await cl.Message(
-        content=f"""
-## 📊 Subscription Status
-
-**Current Plan**: {subscription_tier}
-**Status**: Active
-
-*For Phase 1, all users have access to a free tier with basic functionality.*
-        """,
-        author="Subscription Info",
-    ).send()
