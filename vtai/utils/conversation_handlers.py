@@ -25,6 +25,7 @@ from utils.media_processors import (
     handle_vision,
 )
 from utils.url_extractor import extract_url
+from utils.usage_logger import get_user_id_from_session, log_usage_to_supabase
 from utils.user_session_helper import (
     get_setting,
     get_user_session_id,
@@ -96,6 +97,10 @@ async def use_chat_completion_api(
         timeout: Timeout in seconds for the operation
     """
     logger.info(f"Using Chat Completions API for model: {model}")
+
+    # Track usage stats
+    usage_stats = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+
     stream = await asyncio.wait_for(
         litellm.acompletion(
             user=get_user_session_id(),
@@ -116,6 +121,67 @@ async def use_chat_completion_api(
     async for part in stream:
         if token := part.choices[0].delta.content or "":
             await stream_callback(token)
+
+        # Some LLM providers might include usage info in each chunk
+        if hasattr(part, "usage") and part.usage:
+            usage = part.usage
+            usage_stats["input_tokens"] = getattr(usage, "prompt_tokens", 0)
+            usage_stats["output_tokens"] = getattr(usage, "completion_tokens", 0)
+            usage_stats["total_tokens"] = getattr(usage, "total_tokens", 0)
+
+    # After streaming completes, try to log usage
+    # If we didn't get usage info from the chunks, try to calculate from LiteLLM's cost functions
+    if usage_stats["total_tokens"] == 0:
+        try:
+            # LiteLLM has a completion_cost function, but it requires the full response object
+            # As an alternative, we can estimate tokens using a simple rule (e.g., 1 token ≈ 4 chars)
+            # This is very rough and should be replaced with a more accurate method
+            input_text = "".join([m.get("content", "") for m in messages])
+            input_tokens_estimate = len(input_text) // 4
+
+            # Get content from the message that was streamed to
+            final_content = getattr(
+                stream_callback, "_content", ""
+            )  # Try to access content if available
+            if not final_content and hasattr(stream_callback, "__self__"):
+                # If callback is a method, try to get content from its instance
+                final_content = getattr(stream_callback.__self__, "content", "")
+
+            output_tokens_estimate = len(final_content) // 4
+            total_tokens_estimate = input_tokens_estimate + output_tokens_estimate
+
+            usage_stats["input_tokens"] = input_tokens_estimate
+            usage_stats["output_tokens"] = output_tokens_estimate
+            usage_stats["total_tokens"] = total_tokens_estimate
+
+            logger.info(
+                f"Estimated token usage: input={input_tokens_estimate}, "
+                f"output={output_tokens_estimate}, total={total_tokens_estimate}"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to estimate token usage: {e}")
+
+    # Log usage to Supabase
+    try:
+        session_id = get_user_session_id()
+        user_id = get_user_id_from_session()
+
+        # Optional: Calculate approximate cost
+        # This would require a mapping of models to costs
+        cost = None  # For now, we don't calculate cost
+
+        await log_usage_to_supabase(
+            user_id=user_id,
+            session_id=session_id,
+            model_name=model,
+            input_tokens=usage_stats["input_tokens"],
+            output_tokens=usage_stats["output_tokens"],
+            total_tokens=usage_stats["total_tokens"],
+            cost=cost,
+        )
+    except Exception as e:
+        logger.error(f"Error logging usage to Supabase: {e}")
+        # Continue execution even if logging fails
 
 
 async def handle_trigger_async_chat(
@@ -512,6 +578,10 @@ async def handle_deepseek_reasoner_conversation(
             stream=True,
         )
 
+        # Variables to collect full content
+        collected_reasoning = ""
+        collected_answer = ""
+
         # Start with a thinking step
         async with cl.Step(name="Thinking") as step:
             thinking_step = step
@@ -526,6 +596,7 @@ async def handle_deepseek_reasoner_conversation(
                 if reasoning_content is not None and not thinking_completed:
                     # Stream the reasoning content to the thinking step
                     await thinking_step.stream_token(reasoning_content)
+                    collected_reasoning += reasoning_content
                 elif not thinking_completed:
                     # Exit the thinking step when reasoning is complete
                     thought_for = round(time.time() - start)
@@ -533,6 +604,7 @@ async def handle_deepseek_reasoner_conversation(
                     await thinking_step.update()
                     thinking_completed = True
                     break
+                break
 
         # Stream the final answer content
         async for chunk in stream:
@@ -654,7 +726,7 @@ async def handle_reasoning_conversation(
 
             # Use litellm with reasoning parameters
             try:
-                await asyncio.wait_for(
+                response = await asyncio.wait_for(
                     litellm.acompletion(
                         user=get_user_session_id(),
                         model=model,
@@ -681,6 +753,42 @@ async def handle_reasoning_conversation(
                 thought_for = round(time.time() - start)
                 thinking_step.name = f"Thought for {thought_for}s"
                 await thinking_step.update()
+
+                # Log token usage
+                try:
+                    # Try to extract usage from the response
+                    usage = {}
+                    if hasattr(response, "usage"):
+                        usage = response.usage
+                        input_tokens = getattr(usage, "prompt_tokens", 0)
+                        output_tokens = getattr(usage, "completion_tokens", 0)
+                        total_tokens = getattr(usage, "total_tokens", 0)
+                    else:
+                        # Estimate based on content length
+                        input_text_length = sum(
+                            len(m.get("content", "")) for m in reasoning_messages
+                        )
+                        input_tokens = input_text_length // 4  # Rough estimate
+                        output_tokens = (
+                            len(streaming_callback.collected_content)
+                            + len(streaming_callback.collected_reasoning)
+                        ) // 4
+                        total_tokens = input_tokens + output_tokens
+
+                    # Log to Supabase
+                    session_id = get_user_session_id()
+                    user_id = get_user_id_from_session()
+                    await log_usage_to_supabase(
+                        user_id=user_id,
+                        session_id=session_id,
+                        model_name=model,
+                        input_tokens=input_tokens,
+                        output_tokens=output_tokens,
+                        total_tokens=total_tokens,
+                        cost=None,  # Cost calculation to be implemented later
+                    )
+                except Exception as e:
+                    logger.error(f"Error logging reasoning usage: {e}")
 
             except Exception as e:
                 logger.error(f"Error in reasoning conversation: {str(e)}")
