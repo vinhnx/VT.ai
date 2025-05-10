@@ -199,7 +199,3 @@ pytest tests/integration/
 ## License
 
 VT.ai is available under the MIT License - See [LICENSE](LICENSE) for details.
-
-## Contact
-
-Contact [@vinhnx](https://github.com/vinhnx) on GitHub with questions or feedback about VT.ai.
