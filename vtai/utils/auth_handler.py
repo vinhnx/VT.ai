@@ -330,36 +330,42 @@ async def oauth_callback(
                         )
                     else:
                         logger.info("User profile updated successfully in Supabase.")
-                else:  # User does not exist, insert them
-                    logger.info("Inserting new user profile into Supabase.")
-                    insert_payload = profile_to_sync.copy()
+                else:  # User does not exist, use upsert to handle both insertion and conflict cases
+                    logger.info("Using upsert for user profile in Supabase.")
+                    upsert_payload = profile_to_sync.copy()
                     now_iso = datetime.utcnow().isoformat() + "+00:00"
-                    insert_payload["created_at"] = now_iso
-                    insert_payload["updated_at"] = now_iso
+                    upsert_payload["created_at"] = now_iso
+                    upsert_payload["updated_at"] = now_iso
 
-                    insert_response = (
+                    # Use upsert with on_conflict parameter to handle duplicates
+                    # This will insert if the record doesn't exist, and do nothing if it does
+                    upsert_response = (
                         await supabase_client.table("user_profiles")
-                        .insert(insert_payload)
+                        .upsert(
+                            upsert_payload,
+                            on_conflict="provider,provider_user_id",
+                            ignoreDuplicates=True  # This ensures existing records are not updated
+                        )
                         .execute()
                     )
 
-                    # Log the insert response
-                    logger.info(f"Supabase insert response: {insert_response}")
+                    # Log the upsert response
+                    logger.info(f"Supabase upsert response: {upsert_response}")
                     logger.info(
-                        f"Supabase insert data: {getattr(insert_response, 'data', None)}"
+                        f"Supabase upsert data: {getattr(upsert_response, 'data', None)}"
                     )
                     logger.info(
-                        f"Supabase insert error: {getattr(insert_response, 'error', None)}"
+                        f"Supabase upsert error: {getattr(upsert_response, 'error', None)}"
                     )
 
-                    insert_error = getattr(insert_response, "error", None)
-                    if insert_error:
+                    upsert_error = getattr(upsert_response, "error", None)
+                    if upsert_error:
                         logger.error(
-                            f"Supabase insert error: {getattr(insert_error, 'message', insert_error)}"
+                            f"Supabase upsert error: {getattr(upsert_error, 'message', upsert_error)}"
                         )
                     else:
                         logger.info(
-                            "New user profile inserted successfully into Supabase."
+                            "User profile upsert completed successfully in Supabase."
                         )
 
             except Exception as e:
@@ -368,7 +374,7 @@ async def oauth_callback(
                 )
                 logger.exception("Traceback for Supabase profile sync error:")
 
-                # Final fallback - try a direct upsert
+                # Final fallback - try a direct upsert with explicit error handling
                 try:
                     logger.info("Attempting direct upsert as final fallback...")
                     fallback_payload = profile_to_sync.copy()
@@ -379,7 +385,9 @@ async def oauth_callback(
                     upsert_response = (
                         await supabase_client.table("user_profiles")
                         .upsert(
-                            fallback_payload, on_conflict="provider,provider_user_id"
+                            fallback_payload, 
+                            on_conflict="provider,provider_user_id",
+                            ignoreDuplicates=True  # This ensures existing records are not updated
                         )
                         .execute()
                     )
