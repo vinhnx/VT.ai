@@ -68,3 +68,5 @@ We use tabs, not spaces.
 ## Python workflow
 
 Every pip command should be run with uv prefix, example: `uv pip install -U litellm`. In short, use uv or uvx
+
+Do not use 'gpt' or 'gemini' models as default model to test, use 'openrouter/qwen/qwen3-0.6b-04-28:free' instead.
