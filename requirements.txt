@@ -4,6 +4,7 @@ litellm>=1.30.0
 openai>=1.20.0
 pydantic==2.10.1  # Specific version due to compatibility issues with chainlit: https://github.com/Chainlit/chainlit/issues/1556
 python-dotenv>=1.0.0
+supabase>=2.15.0
 
 # Semantic routing
 semantic-router[fastembed]>=0.0.54

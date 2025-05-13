@@ -320,7 +320,7 @@ echo $OPENAI_API_KEY
 curl -s -X POST https://api.openai.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $OPENAI_API_KEY" \
-  -d '{"model":"gpt-3.5-turbo", "messages":[{"role":"user","content":"Hello"}]}'
+  -d '{"model":"openrouter/qwen/qwen3-0.6b-04-28:free", "messages":[{"role":"user","content":"Hello"}]}'
 ```
 
 #### Performance Optimization
