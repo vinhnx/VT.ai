@@ -9,9 +9,8 @@ This document describes the token usage monitoring system integrated with LiteLL
 The token usage monitoring system consists of the following components:
 
 1. **LiteLLM Callbacks**: A custom callback handler that extends LiteLLM's SupabaseHandler to add user identification and track token usage.
-2. **Usage Logging Tables**: Two tables in Supabase store token usage data:
+2. **Usage Logging Table**: Supabase table that stores token usage data:
    - `request_logs`: Detailed logs of each LLM request, including token usage, model, and user identification
-   - `usage_logs`: Summary of token usage for each user, used for subscription tier management
 
 3. **Subscription Tier Management**: Token usage data is used to enforce subscription tier limits in the API endpoints.
 
@@ -34,7 +33,6 @@ class VTAISupabaseHandler(SupabaseHandler):
         self,
         supabase_client: Client,
         table_name: str = "request_logs",
-        log_to_legacy: bool = True,
     ):
         """
         Initialize the VT.ai Supabase callback handler.
@@ -42,7 +40,6 @@ class VTAISupabaseHandler(SupabaseHandler):
         Args:
             supabase_client: The initialized Supabase client
             table_name: The Supabase table name to log to
-            log_to_legacy: Whether to also log to the legacy usage_logs table
         """
         # Call parent init
         super().__init__(supabase_client=supabase_client, table_name=table_name)

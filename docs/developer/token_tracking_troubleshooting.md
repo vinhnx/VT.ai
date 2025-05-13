@@ -20,6 +20,7 @@ result = query.execute()
 ```
 
 This fix has been applied to the following files:
+
 - `vtai/utils/litellm_callbacks.py`
 - `vtai/utils/usage_logger.py`
 
@@ -28,6 +29,7 @@ This fix has been applied to the following files:
 To test if token tracking is working properly:
 
 1. Run the test script with the service key (bypasses RLS policies):
+
    ```bash
    python scripts/test_fixed_callbacks.py
    ```
@@ -43,12 +45,15 @@ To test if token tracking is working properly:
 **Cause**: Row-Level Security (RLS) policies may be preventing the service from inserting records.
 
 **Solution**:
+
 1. Use the Supabase service key instead of the regular key:
+
    ```python
    supabase_client = create_client(supabase_url, os.environ.get("SUPABASE_SERVICE_KEY"))
    ```
 
 2. Or update the RLS policies to allow the application to insert records:
+
    ```sql
    CREATE POLICY "Allow service role to insert request_logs"
    ON public.request_logs
@@ -64,12 +69,15 @@ To test if token tracking is working properly:
 **Cause**: LiteLLM callbacks may not be properly registered.
 
 **Solution**:
+
 1. Ensure the initialization function is called:
+
    ```python
-   initialize_litellm_callbacks(supabase_client, log_to_legacy=True)
+   initialize_litellm_callbacks(supabase_client)
    ```
 
 2. Verify that callbacks are registered:
+
    ```python
    print(f"Callbacks registered: {litellm.callbacks}")
    ```
@@ -81,16 +89,19 @@ To test if token tracking is working properly:
 You can run these diagnostic scripts to troubleshoot:
 
 1. Test basic connectivity to Supabase:
+
    ```bash
    python scripts/test_direct_insertion.py
    ```
 
 2. Test the full callback mechanism:
+
    ```bash
    python scripts/test_fixed_callbacks.py
    ```
 
 3. Debug the callback registration:
+
    ```bash
    python scripts/debug_litellm_callbacks.py
    ```

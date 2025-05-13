@@ -480,14 +480,12 @@ def load_routes(encoder=None, use_cache: bool = True) -> list:
 
 def initialize_app(
     supabase_client: Optional[Client] = None,
-    log_to_legacy: bool = False,
 ) -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
     """
     Initialize the application configuration.
 
     Args:
         supabase_client: Optional Supabase client for token usage tracking
-        log_to_legacy: Whether to also log to the legacy usage_logs table (deprecated)
 
     Returns:
         Tuple of (route_layer, None, openai_client, async_openai_client)
@@ -516,7 +514,7 @@ def initialize_app(
         litellm.callbacks = []
 
         # Initialize our custom callbacks
-        initialize_litellm_callbacks(supabase_client, log_to_legacy=log_to_legacy)
+        initialize_litellm_callbacks(supabase_client)
 
         if litellm.callbacks:
             logger.info(
