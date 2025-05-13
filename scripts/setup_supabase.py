@@ -75,7 +75,7 @@ def setup_supabase():
         # Try to validate if some tables already exist
         tables_to_check = [
             "user_profiles",
-            "usage_history",
+            "request_logs",
             "stripe_customers",
             "subscription_plans",
             "api_keys",

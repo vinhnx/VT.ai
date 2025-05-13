@@ -2,8 +2,8 @@
 """
 Validate that the necessary RLS policies are in place for token usage tracking.
 
-This script checks the RLS policies for the request_logs and usage_logs tables
-to ensure that LiteLLM token tracking callbacks can write to both tables.
+This script checks the RLS policies for the request_logs table to ensure
+that LiteLLM token tracking callbacks can write to it correctly.
 """
 
 import logging
@@ -152,6 +152,9 @@ def test_insert_permissions(client: Client, table_name: str) -> bool:
         True if insert is successful, False otherwise
     """
     try:
+        import json
+        import time
+
         # Prepare test data
         test_data = {}
         if table_name == "request_logs":
@@ -163,15 +166,9 @@ def test_insert_permissions(client: Client, table_name: str) -> bool:
                 "response_time": 0.1,
                 "litellm_call_id": f"test-validate-{time.time()}",
             }
-        elif table_name == "usage_logs":
-            test_data = {
-                "user_id": "test-validate-user",
-                "session_id": f"test-session-{time.time()}",
-                "model_name": "test-model",
-                "input_tokens": 10,
-                "output_tokens": 20,
-                "total_tokens": 30,
-            }
+        else:
+            logger.error("❌ Unsupported table: %s", table_name)
+            return False
 
         # Insert test data
         logger.info("Testing insert permissions for %s table...", table_name)
@@ -186,10 +183,6 @@ def test_insert_permissions(client: Client, table_name: str) -> bool:
             if table_name == "request_logs":
                 client.table(table_name).delete().eq(
                     "litellm_call_id", test_data["litellm_call_id"]
-                ).execute()
-            elif table_name == "usage_logs":
-                client.table(table_name).delete().eq(
-                    "session_id", test_data["session_id"]
                 ).execute()
 
             return True
@@ -227,21 +220,6 @@ def main():
         if not test_insert_permissions(client, "request_logs"):
             all_checks_passed = False
 
-    # Check usage_logs table
-    if not check_table_exists(client, "usage_logs"):
-        all_checks_passed = False
-    else:
-        if not check_policies(client, "usage_logs"):
-            all_checks_passed = False
-
-        # Import json and time for test insert if not already imported
-        if "json" not in locals():
-            import json
-            import time
-
-        if not test_insert_permissions(client, "usage_logs"):
-            all_checks_passed = False
-
     # Summary
     if all_checks_passed:
         logger.info("\n✅ All checks passed! Token tracking should work correctly.")
@@ -254,16 +232,18 @@ def main():
             "\nTo fix policies, you may need to run SQL commands in the Supabase SQL Editor to:"
         )
         print(
-            "1. Create more permissive INSERT policies that allow ALL users to insert"
+            "1. Create more permissive INSERT policies that allow authenticated users to insert"
         )
-        print("2. Ensure your service role has full access to both tables")
+        print("2. Ensure your service role has full access to the request_logs table")
         print("\nExample policy for request_logs:")
         print(
-            'CREATE POLICY "Allow all inserts to request_logs" ON public.request_logs FOR INSERT WITH CHECK (true);'
+            'CREATE POLICY "Allow authenticated users to insert request logs" ON public.request_logs FOR INSERT TO authenticated WITH CHECK (true);'
         )
-        print("\nExample policy for usage_logs:")
         print(
-            'CREATE POLICY "Allow all inserts to usage_logs" ON public.usage_logs FOR INSERT WITH CHECK (true);'
+            'CREATE POLICY "Allow users to view their own request logs" ON public.request_logs FOR SELECT TO authenticated USING (end_user = auth.uid());'
+        )
+        print(
+            'CREATE POLICY "Allow service role to view all request logs" ON public.request_logs FOR ALL TO service_role USING (true);'
         )
         return 1
 

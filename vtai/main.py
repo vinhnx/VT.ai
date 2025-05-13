@@ -7,6 +7,7 @@ VT.ai monetization plan. It integrates with Supabase for user authentication
 and data storage, and Stripe for payment processing.
 """
 
+import json
 import os
 from typing import List, Optional
 
@@ -788,13 +789,21 @@ async def track_usage(user_id: str, tokens: int) -> None:
             .execute()
         )
 
-        # Also log this usage record in usage_history for analytics
-        supabase_query("usage_history").insert(
+        # Also log this usage record in request_logs for analytics
+        supabase_query("request_logs").insert(
             {
-                "user_id": user_id,
-                "tokens_used": tokens,
-                "timestamp": "now()",
                 "model": "model_placeholder",  # In a real implementation, pass the model name
+                "messages": json.dumps([]),  # Empty array as placeholder
+                "end_user": user_id,
+                "status": "success",
+                "response_time": 0.0,
+                "additional_details": json.dumps(
+                    {
+                        "tokens_used": tokens,
+                        "timestamp": "now()",
+                        "manual_tracking": True,
+                    }
+                ),
             }
         ).execute()
 

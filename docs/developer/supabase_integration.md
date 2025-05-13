@@ -52,7 +52,7 @@ python scripts/setup_supabase.py
 The schema creates the following tables:
 
 1. **user_profiles**: Stores subscription information and usage statistics for each user
-2. **usage_history**: Records detailed token usage for analytics and auditing
+2. **request_logs**: Records detailed token usage for analytics and auditing
 3. **stripe_customers**: Maps Supabase users to Stripe customers
 4. **subscription_plans**: Defines the available subscription tiers and their limits
 5. **api_keys**: Manages API keys for authentication as an alternative to JWT tokens
