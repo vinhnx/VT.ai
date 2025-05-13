@@ -6,12 +6,11 @@ This document explains how token usage tracking is implemented in VT.ai using Li
 
 ## Components
 
-### 1. Database Tables
+### 1. Database Table
 
-Two tables are used for token usage tracking:
+The system uses a single table for token usage tracking:
 
-- **request_logs**: The main table for storing detailed request information
-- **usage_logs**: A legacy table maintained for backward compatibility
+- **request_logs**: Stores detailed information about each LLM request including tokens, cost, and user data
 
 ### 2. Callback Handler
 
@@ -27,7 +26,7 @@ The callback handler is initialized in `vtai/utils/config.py` during application
 2. The `log_success_event` method is called for successful requests.
 3. The `log_failure_event` method is called for failed requests.
 4. Both methods retrieve user information from the Chainlit session.
-5. Request data is logged to both the `request_logs` and `usage_logs` tables.
+5. Request data is logged to the `request_logs` table.
 
 ## Database Schema
 
@@ -51,24 +50,6 @@ CREATE TABLE public.request_logs (
 );
 ```
 
-### usage_logs Table
-
-```sql
-CREATE TABLE public.usage_logs (
-    id UUID NOT NULL DEFAULT uuid_generate_v4(),
-    user_id TEXT NOT NULL,
-    session_id TEXT NULL DEFAULT ''::TEXT,
-    model_name TEXT NULL DEFAULT ''::TEXT,
-    input_tokens INTEGER NULL DEFAULT '0'::INTEGER,
-    output_tokens INTEGER NULL DEFAULT '0'::INTEGER,
-    total_tokens INTEGER NULL DEFAULT '0'::INTEGER,
-    cost REAL NULL DEFAULT '0'::REAL,
-    created_at TIMESTAMP WITH TIME ZONE NULL DEFAULT NOW(),
-    auth_method TEXT NULL DEFAULT 'supabase'::TEXT,
-    PRIMARY KEY (id)
-);
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -79,7 +60,7 @@ CREATE TABLE public.usage_logs (
 
 3. **401 Unauthorized Errors**: If you see 401 errors, it's likely that the RLS policies are preventing the insertions. Use the service key instead of the regular key to bypass RLS.
 
-4. **Missing Tables**: Ensure both the `request_logs` and `usage_logs` tables exist in your Supabase database.
+4. **Missing Table**: Ensure the `request_logs` table exists in your Supabase database.
 
 5. **"can't be used in 'await' expression" Errors**: This occurs when the Supabase client's response object is incorrectly awaited. The fix is to use the Supabase client in a non-awaitable manner, since the Python SDK already returns the result synchronously when execute() is called.
 
@@ -129,25 +110,30 @@ If you need to fix permissions, run these SQL commands in the Supabase SQL Edito
 ```sql
 -- For request_logs table
 -- Create permissive insert policy
-CREATE POLICY "Allow all inserts to request_logs"
+CREATE POLICY "Allow authenticated users to insert request logs"
 ON public.request_logs
-FOR INSERT WITH CHECK (true);
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+-- Create policy for anonymous users
+CREATE POLICY "Allow anonymous users to insert request logs"
+ON public.request_logs
+FOR INSERT
+TO anon
+WITH CHECK (true);
 
 -- Create policy for service role to do anything
-CREATE POLICY "Service role has full access to request_logs"
+CREATE POLICY "Service role has full access to request logs"
 ON public.request_logs
 USING (auth.role() = 'service_role');
 
--- For usage_logs table
--- Create permissive insert policy
-CREATE POLICY "Allow all inserts to usage_logs"
-ON public.usage_logs
-FOR INSERT WITH CHECK (true);
-
--- Create policy for service role to do anything
-CREATE POLICY "Service role has full access to usage_logs"
-ON public.usage_logs
-USING (auth.role() = 'service_role');
+-- Create policy for users to view their own logs
+CREATE POLICY "Users can view their own request logs"
+ON public.request_logs
+FOR SELECT
+TO anon, authenticated
+USING ((auth.uid())::text = end_user);
 ```
 
 ## Testing
@@ -194,7 +180,12 @@ CREATE TABLE public.usage_logs (
 
 ## Row-Level Security
 
-Row-Level Security (RLS) policies are applied to both tables to ensure users can only access their own data.
+Row-Level Security (RLS) policies are applied to the `request_logs` table to ensure users can only access their own data. The current policies allow:
+
+1. Authenticated users to insert records
+2. Anonymous users to insert records
+3. Users to view only their own records
+4. Service role to have full access to all records
 
 ## Setup
 
@@ -276,8 +267,8 @@ tier_limits = {
    - Ensure your application has proper permissions to insert data
 
 2. **Duplicate Records**
-   - Expected behavior when `log_to_legacy` is set to `True`
-   - Set `log_to_legacy=False` to avoid duplicate logging
+   - This is no longer an issue as we're only using one table now
+   - The `log_to_legacy` parameter is now ignored
 
 3. **Permission Errors**
    - Confirm that RLS policies are correctly applied
@@ -330,7 +321,7 @@ The custom `VTAISupabaseHandler` class is implemented in `vtai/utils/litellm_cal
 
 1. **User identification**: Extracts user IDs from various contexts (Chainlit sessions, request metadata)
 2. **Token estimation**: Provides approximate token counts when not available in the API response
-3. **Dual table logging**: Records usage data to both modern and legacy tables
+3. **Database logging**: Records usage data to the `request_logs` table
 4. **Error handling**: Captures and logs failure events with detailed error information
 
 Unlike the built-in LiteLLM handlers, our implementation is standalone and doesn't depend on specific LiteLLM integration classes, making it more robust to LiteLLM version changes.

@@ -30,7 +30,6 @@ class VTAISupabaseHandler:
         self,
         supabase_client: Client,
         table_name: str = "request_logs",
-        log_to_legacy: bool = True,
     ):
         """
         Initialize the VT.ai Supabase callback handler.
@@ -38,11 +37,9 @@ class VTAISupabaseHandler:
         Args:
             supabase_client: The initialized Supabase client
             table_name: The Supabase table name to log to
-            log_to_legacy: Whether to also log to the legacy usage_logs table
         """
         self.client = supabase_client
         self.table_name = table_name
-        self.log_to_legacy = log_to_legacy
 
     def __call__(
         self,
@@ -228,18 +225,6 @@ class VTAISupabaseHandler:
                 else:
                     logger.error(f"Error inserting into {self.table_name} table: {e}")
 
-            # Log to legacy usage_logs table if enabled
-            if self.log_to_legacy and user_id:
-                self._log_to_legacy_table(
-                    user_id=user_id,
-                    session_id=session_id,
-                    model_name=model_name,
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                    total_tokens=total_tokens,
-                    cost=cost,
-                )
-
         except Exception as e:
             logger.error(f"Error in VTAISupabaseHandler.log_success_event: {e}")
             import traceback
@@ -379,105 +364,15 @@ class VTAISupabaseHandler:
 
         return user_id
 
-    def _log_to_legacy_table(
-        self,
-        user_id: str,
-        session_id: str,
-        model_name: str,
-        input_tokens: int,
-        output_tokens: int,
-        total_tokens: int,
-        cost: Optional[float] = None,
-    ):
-        """
-        Log token usage to the legacy usage_logs table.
-
-        Args:
-            user_id: The user ID
-            session_id: The session ID
-            model_name: The model name
-            input_tokens: The number of input tokens
-            output_tokens: The number of output tokens
-            total_tokens: The total number of tokens
-            cost: The cost of the request if available
-        """
-        try:
-            # Determine auth method
-            auth_method = "supabase"
-
-            # Try to get user from Chainlit session
-            chainlit_user = cl.user_session.get("user")
-            if (
-                chainlit_user
-                and hasattr(chainlit_user, "metadata")
-                and chainlit_user.metadata
-            ):
-                if chainlit_user.metadata.get("provider") == "credentials":
-                    auth_method = "password"
-                elif chainlit_user.metadata.get("oauth") == True:
-                    auth_method = f"{chainlit_user.metadata.get('provider', 'oauth')}"
-
-            # Format the current time in ISO 8601 format
-            current_time = datetime.utcnow().isoformat() + "Z"
-
-            # Prepare the data for the legacy table
-            legacy_data = {
-                "user_id": user_id,
-                "session_id": session_id,
-                "model_name": model_name,
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "total_tokens": total_tokens,
-                "cost": cost if cost is not None else 0.0,
-                "created_at": current_time,
-                "auth_method": auth_method,
-            }
-
-            # Insert the data into the legacy table
-            try:
-                # Create the query without awaiting it
-                query = self.client.table("usage_logs").insert(legacy_data)
-
-                # Execute the query directly (not awaited)
-                result = query.execute()
-
-                if hasattr(result, "error") and result.error:
-                    logger.error(
-                        f"Error inserting into legacy usage_logs table: {result.error}"
-                    )
-                else:
-                    logger.debug(
-                        f"Successfully logged to legacy usage_logs table for user {user_id}"
-                    )
-            except Exception as e:
-                if "401" in str(e) or "Unauthorized" in str(e):
-                    logger.error(
-                        "Row-level security policy prevented logging to legacy usage_logs table. "
-                        "This may happen if the user doesn't have the right permissions."
-                    )
-                    logger.error(
-                        "Consider using SUPABASE_SERVICE_KEY instead of SUPABASE_KEY for token tracking."
-                    )
-                else:
-                    logger.error(f"Error inserting into legacy usage_logs table: {e}")
-
-        except Exception as e:
-            logger.error(f"Error logging to legacy usage_logs table: {e}")
-            import traceback
-
-            logger.error(f"Traceback: {traceback.format_exc()}")
-
 
 def initialize_litellm_callbacks(
     supabase_client: Optional[Client] = None,
-    log_to_legacy: bool = True,
 ) -> None:
     """
     Initialize LiteLLM callbacks for token usage tracking.
 
     Args:
         supabase_client: The initialized Supabase client
-        log_to_legacy: Whether to also log to the legacy usage_logs table
     """
     if not supabase_client:
         logger.warning(
@@ -490,7 +385,6 @@ def initialize_litellm_callbacks(
         callback_handler = VTAISupabaseHandler(
             supabase_client=supabase_client,
             table_name="request_logs",
-            log_to_legacy=log_to_legacy,
         )
 
         # Register the callback handler with LiteLLM
@@ -617,44 +511,6 @@ async def log_usage_to_supabase(
                 )
             else:
                 logger.error(f"Error inserting into request_logs table: {e}")
-
-        # Also log to legacy usage_logs table
-        legacy_data = {
-            "user_id": user_id,
-            "session_id": session_id,
-            "model_name": model_name,
-            "input_tokens": input_tokens,
-            "output_tokens": output_tokens,
-            "total_tokens": total_tokens,
-            "cost": cost if cost is not None else 0.0,
-            "created_at": datetime.utcnow().isoformat() + "Z",
-            "auth_method": "supabase",
-        }
-
-        # Insert into legacy table
-        try:
-            # Create the query without awaiting it
-            legacy_query = supabase_client.table("usage_logs").insert(legacy_data)
-
-            # Execute the query directly (not awaited)
-            legacy_result = legacy_query.execute()
-
-            if hasattr(legacy_result, "error") and legacy_result.error:
-                logger.error(
-                    f"Error inserting into legacy usage_logs table: {legacy_result.error}"
-                )
-            else:
-                logger.debug(
-                    f"Successfully logged to legacy usage_logs table for user {user_id}"
-                )
-        except Exception as e:
-            if "401" in str(e) or "Unauthorized" in str(e):
-                logger.error(
-                    "Row-level security policy prevented logging to legacy usage_logs table. "
-                    "This may happen if the user doesn't have the right permissions."
-                )
-            else:
-                logger.error(f"Error inserting into legacy usage_logs table: {e}")
 
     except Exception as e:
         logger.error(f"Error logging usage to Supabase: {e}")
