@@ -23,10 +23,11 @@ import httpx
 import litellm
 from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
+from supabase import Client
 
 # Update imports to use vtai namespace
-from router.constants import RouteLayer
-from utils import constants as const
+from vtai.router.constants import RouteLayer
+from vtai.utils import constants as const
 
 # Configure logging - set level based on environment
 log_level = os.environ.get("VT_LOG_LEVEL", "INFO").upper()
@@ -477,9 +478,16 @@ def load_routes(encoder=None, use_cache: bool = True) -> list:
         return []
 
 
-def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
+def initialize_app(
+    supabase_client: Optional[Client] = None,
+    log_to_legacy: bool = False,
+) -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
     """
     Initialize the application configuration.
+
+    Args:
+        supabase_client: Optional Supabase client for token usage tracking
+        log_to_legacy: Whether to also log to the legacy usage_logs table (deprecated)
 
     Returns:
         Tuple of (route_layer, None, openai_client, async_openai_client)
@@ -498,6 +506,31 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
 
     # Configure litellm for better timeout handling
     litellm.request_timeout = 60  # 60 seconds timeout
+
+    # Initialize LiteLLM callbacks for token usage tracking
+    # This is critical for logging token usage to Supabase
+    try:
+        from vtai.utils.litellm_callbacks import initialize_litellm_callbacks
+
+        # Clear any existing callbacks first to prevent duplicates
+        litellm.callbacks = []
+
+        # Initialize our custom callbacks
+        initialize_litellm_callbacks(supabase_client, log_to_legacy=log_to_legacy)
+
+        if litellm.callbacks:
+            logger.info(
+                f"Successfully initialized {len(litellm.callbacks)} LiteLLM callbacks"
+            )
+        else:
+            logger.error(
+                "No LiteLLM callbacks were registered - token usage tracking will not work!"
+            )
+    except Exception as e:
+        logger.error(f"Failed to initialize LiteLLM callbacks: {e}")
+        import traceback
+
+        logger.error(f"Callback initialization error details: {traceback.format_exc()}")
 
     # Initialize encoder - potentially lazily in fast mode
     encoder = initialize_encoder(lazy_load=fast_start)
@@ -560,4 +593,5 @@ def cleanup():
     try:
         temp_dir.cleanup()
     except Exception as e:
+        logger.warning(f"Error cleaning up temporary directory: {e}")
         logger.warning(f"Error cleaning up temporary directory: {e}")

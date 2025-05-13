@@ -101,21 +101,32 @@ async def use_chat_completion_api(
     # Track usage stats
     usage_stats = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
 
-    stream = await asyncio.wait_for(
-        litellm.acompletion(
-            user=get_user_session_id(),
-            model=model,
-            messages=messages,
-            stream=True,
-            num_retries=3,
-            temperature=temperature,
-            top_p=top_p,
-            timeout=timeout
-            - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
-            response_format={"type": "text"},
-        ),
-        timeout=timeout,
-    )
+    # Generate a unique call ID for tracking in Supabase
+    call_id = f"call-{get_user_session_id()}-{int(time.time())}"
+
+    try:
+        stream = await asyncio.wait_for(
+            litellm.acompletion(
+                user=get_user_session_id(),
+                model=model,
+                messages=messages,
+                stream=True,
+                num_retries=3,
+                temperature=temperature,
+                top_p=top_p,
+                timeout=timeout
+                - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
+                response_format={"type": "text"},
+                litellm_call_id=call_id,  # Add a unique call ID
+                # Don't use litellm_logging_obj as it can cause issues with some models
+            ),
+            timeout=timeout,
+        )
+    except Exception as e:
+        logger.error(f"Error in chat completion with model {model}: {str(e)}")
+        logger.error(f"Error details: {type(e).__name__}: {str(e)}")
+        # Re-raise the exception to be caught by the calling function
+        raise
 
     # Process Chat Completions API format
     async for part in stream:
@@ -161,7 +172,9 @@ async def use_chat_completion_api(
         except Exception as e:
             logger.warning(f"Failed to estimate token usage: {e}")
 
-    # Log usage to Supabase
+    # NOTE: This manual usage logging is now REDUNDANT with the LiteLLM callbacks
+    # which automatically log to Supabase. It's kept for backwards compatibility
+    # and will be removed in a future update.
     try:
         session_id = get_user_session_id()
         user_id = get_user_id_from_session()

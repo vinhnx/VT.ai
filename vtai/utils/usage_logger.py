@@ -2,6 +2,8 @@
 Utility for logging LLM usage to Supabase.
 """
 
+import json
+import time
 from typing import Optional
 
 import chainlit as cl
@@ -31,7 +33,7 @@ async def log_usage_to_supabase(
     cost: Optional[float] = None,
 ) -> None:
     """
-    Logs LLM usage data to the Supabase 'usage_logs' table.
+    Logs LLM usage data to the Supabase 'request_logs' table.
 
     Args:
         user_id: The ID of the authenticated user (if available).
@@ -50,6 +52,14 @@ async def log_usage_to_supabase(
         )
         return
 
+    # Debug logging
+    logger.debug(
+        f"Logging usage to request_logs table - Model: {model_name}, User: {user_id or 'anonymous'}, Session: {session_id}"
+    )
+    logger.debug(
+        f"Token counts - Input: {input_tokens}, Output: {output_tokens}, Total: {total_tokens}"
+    )
+
     # Check if user is authenticated with built-in password system rather than Supabase
     user = cl.user_session.get("user")
     if (
@@ -60,78 +70,105 @@ async def log_usage_to_supabase(
         logger.info("User authenticated via password auth. Skipping usage logging.")
         return
 
-    log_entry = {
-        "user_id": user_id,
-        "session_id": session_id,
-        "model_name": model_name,
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "total_tokens": total_tokens,
-        "cost": cost,
-        # timestamp is handled by Supabase (default now())
-    }
-
     try:
-        # Supabase table name is 'usage_logs'
-        data, count = (
-            await client_to_use.table("usage_logs").insert(log_entry).execute()
+        # Format the data for the request_logs table structure
+        request_log_entry = {
+            "model": model_name,
+            "messages": "[]",  # Empty JSON array as string
+            "response": "{}",  # Empty JSON object as string
+            "end_user": user_id or session_id,
+            "status": "success",
+            "response_time": 0.0,  # Not available from this function
+            "total_cost": cost,
+            "additional_details": json.dumps(
+                {
+                    "session_id": session_id,
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "total_tokens": total_tokens,
+                    "timestamp": time.time(),
+                    "migrated_from_usage_logger": True,
+                }
+            ),
+            "litellm_call_id": f"legacy-{int(time.time())}-{session_id[-8:]}",
+        }
+
+        result = (
+            await client_to_use.table("request_logs")
+            .insert(request_log_entry)
+            .execute()
         )
-        if (
-            count is not None
-            and len(count) > 0
-            and hasattr(count[1], "__len__")
-            and len(count[1]) > 0
-        ):  # Check if insertion was successful based on returned data structure
+
+        if hasattr(result, "data") and result.data:
             logger.info(
-                f"Successfully logged usage for model {model_name} to Supabase."
+                f"Successfully logged usage for model {model_name} to request_logs table."
             )
         else:
-            if data and data[0]:
-                logger.info(
-                    f"Successfully logged usage for model {model_name} to Supabase. Data: {data[0]}"
-                )
-            else:
-                logger.warning(
-                    f"Usage logging to Supabase for model {model_name} might have failed or returned an unexpected response. Data: {data}, Count: {count}"
-                )
+            logger.warning(
+                f"Usage logging to request_logs table for model {model_name} might have failed. "
+                f"Error: {getattr(result, 'error', 'Unknown error')}"
+            )
 
     except Exception as e:
         # Handle RLS policy violations more gracefully
         if "violates row-level security policy" in str(e):
             logger.warning(
-                f"Row-level security policy prevented logging usage to Supabase. "
+                f"Row-level security policy prevented logging usage to request_logs table. "
                 f"This may happen if the user doesn't have the right permissions."
             )
         else:
-            logger.error(f"Error logging usage to Supabase: {e}")
+            logger.error(f"Error logging usage to request_logs table: {e}")
 
 
 def get_user_id_from_session() -> Optional[str]:
     """
     Retrieves the user ID from the Chainlit user session.
     """
-    # Check if the user is authenticated
-    is_authenticated = cl.user_session.get("authenticated", False)
+    try:
+        # Check if the user is authenticated
+        is_authenticated = cl.user_session.get("authenticated", False)
 
-    if not is_authenticated:
+        if not is_authenticated:
+            logger.debug("User not authenticated, returning None")
+            return None
+
+        user_info = cl.user_session.get("user")
+
+        # Handle different user object structures
+        if user_info:
+            # Handle dict structure (from Supabase auth)
+            if isinstance(user_info, dict):
+                user_id = user_info.get("id")
+                logger.debug(f"Retrieved user ID from dict: {user_id}")
+                return user_id
+            # Handle cl.User object structure (from password auth)
+            elif hasattr(user_info, "identifier"):
+                user_id = user_info.identifier
+                logger.debug(f"Retrieved user ID from User object: {user_id}")
+                return user_id
+            # Log if we don't understand the user_info structure
+            else:
+                logger.warning(f"Unknown user_info structure: {type(user_info)}")
+                logger.debug(f"User info content: {user_info}")
+
+        logger.debug("No user ID found in session")
         return None
-
-    user_info = cl.user_session.get("user")
-
-    # Handle different user object structures
-    if user_info:
-        # Handle dict structure (from Supabase auth)
-        if isinstance(user_info, dict):
-            return user_info.get("id")
-        # Handle cl.User object structure (from password auth)
-        elif hasattr(user_info, "identifier"):
-            return user_info.identifier
-
-    return None
+    except Exception as e:
+        logger.error(f"Error retrieving user ID from session: {e}")
+        return None
 
 
 def get_session_id() -> str:
     """
     Retrieves the current Chainlit session ID.
     """
-    return cl.user_session.id()  # Ensure this is the correct way to get session ID
+    try:
+        session_id = cl.user_session.id()
+        if not session_id:
+            logger.warning("Chainlit session ID is empty, using fallback")
+            session_id = f"fallback-{int(time.time())}"
+        logger.debug(f"Retrieved session ID: {session_id}")
+        return session_id
+    except Exception as e:
+        logger.error(f"Error retrieving session ID: {e}")
+        return f"error-{int(time.time())}"
