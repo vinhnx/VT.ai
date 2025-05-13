@@ -142,7 +142,7 @@ The router module includes a trainer for updating embeddings:
 
 ```python
 # Import the trainer
-from router.trainer import train_router
+from vtai.router.trainer import train_router
 
 # Train the router with new examples
 train_router(
