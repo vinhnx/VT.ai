@@ -93,21 +93,24 @@ async def log_usage_to_supabase(
             "litellm_call_id": f"legacy-{int(time.time())}-{session_id[-8:]}",
         }
 
-        result = (
-            await client_to_use.table("request_logs")
-            .insert(request_log_entry)
-            .execute()
-        )
+        # Create the query without awaiting it
+        query = client_to_use.table("request_logs").insert(request_log_entry)
 
-        if hasattr(result, "data") and result.data:
-            logger.info(
-                f"Successfully logged usage for model {model_name} to request_logs table."
-            )
-        else:
-            logger.warning(
-                f"Usage logging to request_logs table for model {model_name} might have failed. "
-                f"Error: {getattr(result, 'error', 'Unknown error')}"
-            )
+        # Execute the query - handle as non-awaitable
+        try:
+            result = query.execute()
+
+            if hasattr(result, "data") and result.data:
+                logger.info(
+                    f"Successfully logged usage for model {model_name} to request_logs table."
+                )
+            else:
+                logger.warning(
+                    f"Usage logging to request_logs table for model {model_name} might have failed. "
+                    f"Error: {getattr(result, 'error', 'Unknown error')}"
+                )
+        except Exception as query_error:
+            logger.error(f"Error executing Supabase query: {query_error}")
 
     except Exception as e:
         # Handle RLS policy violations more gracefully

@@ -54,7 +54,8 @@ dotenv.load_dotenv(".env")
 
 # Initialize Supabase client
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+# Try to get service key first, then fall back to regular key
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     logger.warning(
@@ -64,6 +65,13 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     supabase_client: Optional[Client] = None
 else:
     try:
+        # If we're using the service key, log that we're using elevated privileges
+        if (
+            os.environ.get("SUPABASE_SERVICE_KEY")
+            and os.environ.get("SUPABASE_SERVICE_KEY") == SUPABASE_KEY
+        ):
+            logger.info("Using service role for Supabase client (elevated privileges).")
+
         supabase_client: Optional[Client] = create_client(SUPABASE_URL, SUPABASE_KEY)
         logger.info("Supabase client initialized successfully.")
     except Exception as e:
