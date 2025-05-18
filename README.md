@@ -29,7 +29,7 @@
 
 VT.ai is a multimodal AI chat application designed to simplify interaction with different AI models through a unified interface. It employs vector-based semantic routing to direct queries to the most suitable model, eliminating the need to switch between multiple applications and interfaces.
 
-**[Full documentation available here](https://vinhnx.github.io/VT.ai/)**
+**[Documentation](https://vinhnx.github.io/VT.ai/)**
 
 ## Key Features
 
