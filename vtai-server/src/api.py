@@ -6,6 +6,15 @@ Exposes a /api/chat endpoint that accepts a user message and returns an assistan
 
 import os
 import sys
+
+# Ensure the project root is in sys.path for vtai imports
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+# Add VT.ai src to path for imports
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
 from typing import Optional
 
 import litellm
@@ -16,9 +25,6 @@ from litellm.exceptions import AuthenticationError, BadRequestError, RateLimitEr
 from pydantic import BaseModel
 
 from vtai.utils.llm_providers_config import DEFAULT_MODEL, MODEL_ALIAS_MAP
-
-# Add VT.ai src to path for imports
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 app = FastAPI()
 
@@ -110,6 +116,9 @@ async def chat_endpoint(req: ChatRequest) -> ChatResponse:
 
 if __name__ == "__main__":
     # When running directly, use the module name
+    # This allows for proper reloading during development
+    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
     # This allows for proper reloading during development
     uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
     uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
