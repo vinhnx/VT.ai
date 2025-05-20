@@ -10,9 +10,10 @@ from typing import Any, Dict, Optional
 import chainlit as cl
 from openai.types.beta.threads import ImageFileContentBlock, Message, TextContentBlock
 from openai.types.beta.threads.runs import RunStep
-from utils import constants as const
-from utils.config import logger
-from utils.user_session_helper import get_setting
+
+from vtai.utils import constants as const
+from vtai.utils.config import logger
+from vtai.utils.user_session_helper import get_setting
 
 
 # Action callback for changing the model
@@ -211,5 +212,6 @@ async def process_tool_call(
     if update:
         await cl_step.update()
     else:
+        await cl_step.send()
         await cl_step.send()
         await cl_step.send()

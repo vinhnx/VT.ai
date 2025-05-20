@@ -10,7 +10,8 @@ from typing import Any, Callable, Optional
 
 import chainlit as cl
 from litellm.exceptions import BadRequestError, RateLimitError, ServiceUnavailableError
-from utils.config import logger
+
+from vtai.utils.config import logger
 
 
 async def handle_exception(e: Exception) -> None:
@@ -83,4 +84,5 @@ async def safe_execution(
         raise
     except Exception as e:
         logger.error(f"Error in {operation_name}: {e}")
+        await handle_exception(e)
         await handle_exception(e)

@@ -8,7 +8,8 @@ from contextlib import contextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from utils.media_processors import handle_trigger_async_image_gen, handle_vision
+
+from vtai.utils.media_processors import handle_trigger_async_image_gen, handle_vision
 
 
 class MockResponse:
@@ -164,4 +165,5 @@ async def test_handle_trigger_async_image_gen(mock_aimage_generation, mock_cl_me
                                     assert (
                                         mock_message_instance.send.call_count >= 1
                                     )  # Verify the message was sent
+                                    assert mock_message_instance.send.call_count >= 1
                                     assert mock_message_instance.send.call_count >= 1

@@ -88,7 +88,7 @@ SETTINGS_REASONING_EFFORT: str = "settings_reasoning_effort"
 # Core Model Defaults
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
-DEFAULT_MODEL: str = "gemini/gemini-2.0-flash"
+DEFAULT_MODEL: str = "openrouter/qwen/qwen3-0.6b-04-28:free"
 
 # Vision Model Defaults
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"

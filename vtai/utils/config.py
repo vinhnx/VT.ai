@@ -25,8 +25,8 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 
 # Update imports to use vtai namespace
-from router.constants import RouteLayer
-from utils import constants as const
+from vtai.router.constants import RouteLayer
+from vtai.utils import constants as const
 
 # Configure logging - set level based on environment
 log_level = os.environ.get("VT_LOG_LEVEL", "INFO").upper()
@@ -560,4 +560,5 @@ def cleanup():
     try:
         temp_dir.cleanup()
     except Exception as e:
+        logger.warning(f"Error cleaning up temporary directory: {e}")
         logger.warning(f"Error cleaning up temporary directory: {e}")

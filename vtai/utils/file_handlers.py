@@ -13,7 +13,8 @@ import chainlit as cl
 import requests
 from openai import AsyncOpenAI
 from PIL import Image
-from utils.config import allowed_mime, logger
+
+from vtai.utils.config import allowed_mime, logger
 
 
 async def check_files(files: List) -> Tuple[bool, Optional[str]]:
@@ -176,4 +177,5 @@ def validate_image_dimensions(
         return True, None, (width, height)
     except Exception as e:
         logger.error(f"Error validating image dimensions: {e}")
+        return False, f"Error validating image: {str(e)}", None
         return False, f"Error validating image: {str(e)}", None

@@ -80,7 +80,7 @@ export MCP_PORT="your-port"
 You can use MCP in your VT.ai applications by importing the necessary components:
 
 ```python
-from utils.mcp_integration import create_mcp_completion, initialize_mcp
+from vtai.utils.mcp_integration import create_mcp_completion, initialize_mcp
 
 # Initialize MCP configuration
 mcp_config = initialize_mcp()
@@ -106,7 +106,7 @@ async def example_completion():
 MCP supports streaming responses for a better user experience:
 
 ```python
-from utils.mcp_integration import create_mcp_completion
+from vtai.utils.mcp_integration import create_mcp_completion
 
 async def example_streaming():
     messages = [
@@ -138,7 +138,7 @@ VT.ai includes a dedicated handler for using MCP with Chainlit:
 
 ```python
 import chainlit as cl
-from utils.mcp_integration import ChainlitMCPHandler, initialize_mcp
+from vtai.utils.mcp_integration import ChainlitMCPHandler, initialize_mcp
 
 # Initialize MCP handler
 mcp_handler = ChainlitMCPHandler()
@@ -203,7 +203,7 @@ This demo shows:
 You can create custom model mappings:
 
 ```python
-from utils.mcp_integration import initialize_mcp
+from vtai.utils.mcp_integration import initialize_mcp
 
 custom_model_map = {
     "my-fast-model": "o3-mini",
@@ -219,7 +219,7 @@ mcp_config = initialize_mcp(model_map=custom_model_map)
 You can call the MCP API directly:
 
 ```python
-from utils.mcp_integration import call_mcp_api
+from vtai.utils.mcp_integration import call_mcp_api
 
 async def direct_call():
     messages = [
@@ -240,7 +240,7 @@ async def direct_call():
 MCP supports multimodal inputs including images:
 
 ```python
-from utils.mcp_integration import create_mcp_completion
+from vtai.utils.mcp_integration import create_mcp_completion
 import base64
 
 async def image_analysis():

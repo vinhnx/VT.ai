@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 import chainlit as cl
 
 # Import MCP integration components
-from utils.mcp_integration import (
+from vtai.utils.mcp_integration import (
     ChainlitMCPHandler,
     MCPConfig,
     call_mcp_api,

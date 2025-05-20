@@ -9,8 +9,9 @@ import contextlib
 from typing import Any, Callable, Optional
 
 import chainlit as cl
-from utils.config import logger
-from utils.error_handlers import handle_exception
+
+from vtai.utils.config import logger
+from vtai.utils.error_handlers import handle_exception
 
 
 @contextlib.asynccontextmanager
@@ -51,4 +52,5 @@ async def safe_execution(
         raise
     except Exception as e:
         logger.error(f"Error in {operation_name}: {e}")
+        await handle_exception(e)
         await handle_exception(e)

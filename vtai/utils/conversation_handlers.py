@@ -15,25 +15,25 @@ import chainlit as cl
 import litellm
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI
-from utils import llm_providers_config as conf
-from utils.config import logger
-from utils.error_handlers import handle_exception, safe_execution
-from utils.media_processors import (
+
+from vtai.router.constants import SemanticRouterType
+from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
+from vtai.utils import llm_providers_config as conf
+from vtai.utils.config import logger
+from vtai.utils.error_handlers import handle_exception, safe_execution
+from vtai.utils.media_processors import (
     handle_audio_transcribe,
     handle_audio_understanding,
     handle_trigger_async_image_gen,
     handle_vision,
 )
-from utils.url_extractor import extract_url
-from utils.user_session_helper import (
+from vtai.utils.url_extractor import extract_url
+from vtai.utils.user_session_helper import (
     get_setting,
     get_user_session_id,
     update_message_history_from_assistant,
     update_message_history_from_user,
 )
-
-from vtai.router.constants import SemanticRouterType
-from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
 
 
 def create_message_actions(content: str, model: str) -> List[cl.Action]:

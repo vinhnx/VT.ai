@@ -20,12 +20,12 @@ import chainlit as cl
 import dotenv
 
 # Import only essential modules for startup
-from utils import constants as const
-from utils import llm_providers_config as conf
-from utils.config import cleanup, initialize_app, load_model_prices, logger
-from utils.error_handlers import handle_exception
-from utils.settings_builder import build_settings
-from utils.user_session_helper import get_setting
+from vtai.utils import constants as const
+from vtai.utils import llm_providers_config as conf
+from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
+from vtai.utils.error_handlers import handle_exception
+from vtai.utils.settings_builder import build_settings
+from vtai.utils.user_session_helper import get_setting
 
 # Register cleanup function to ensure resources are properly released
 atexit.register(cleanup)
@@ -70,19 +70,20 @@ def load_deferred_imports():
     import subprocess
 
     import numpy as np
-    from utils.conversation_handlers import (
+
+    from vtai.utils.conversation_handlers import (
         config_chat_session,
         handle_conversation,
         handle_files_attachment,
         handle_reasoning_conversation,
         handle_thinking_conversation,
     )
-    from utils.dict_to_object import DictToObject
-    from utils.file_handlers import process_files
-    from utils.llm_profile_builder import build_llm_profile
-    from utils.media_processors import handle_tts_response
-    from utils.safe_execution import safe_execution
-    from utils.starter_prompts import (
+    from vtai.utils.dict_to_object import DictToObject
+    from vtai.utils.file_handlers import process_files
+    from vtai.utils.llm_profile_builder import build_llm_profile
+    from vtai.utils.media_processors import handle_tts_response
+    from vtai.utils.safe_execution import safe_execution
+    from vtai.utils.starter_prompts import (
         get_command_route,
         get_command_template,
         set_commands,
@@ -231,4 +232,5 @@ async def on_message(message: cl.Message) -> None:
                 )
                 await handle_reasoning_conversation(message, messages, route_layer)
             else:
+                await handle_conversation(message, messages, route_layer)
                 await handle_conversation(message, messages, route_layer)

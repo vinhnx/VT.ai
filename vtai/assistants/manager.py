@@ -10,7 +10,8 @@ from typing import List, Optional
 from assistants.tools import ASSISTANT_TOOLS
 from openai import AsyncOpenAI
 from openai.types.beta import Assistant
-from utils import constants as const
+
+from vtai.utils import constants as const
 
 
 async def create_assistant(
@@ -83,4 +84,5 @@ async def get_or_create_assistant(
     # Create a new assistant
     return await create_assistant(
         client=client, name=name, instructions=instructions, tools=tools, model=model
+    )
     )

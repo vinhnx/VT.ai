@@ -295,8 +295,8 @@ def is_in_assistant_profile():
 ### Configuration Example
 
 ```python
-from utils import constants, config
-from utils.llm_providers_config import get_available_models
+from vtai.utils import constants, config
+from vtai.utils.llm_providers_config import get_available_models
 
 # Get application logger
 logger = config.get_logger()
@@ -312,7 +312,7 @@ route_layer, assistant_id, openai_client, async_openai_client = config.initializ
 ### Conversation Handling Example
 
 ```python
-from utils.conversation_handlers import handle_conversation, handle_thinking_conversation
+from vtai.utils.conversation_handlers import handle_conversation, handle_thinking_conversation
 
 # Handle standard query
 await handle_conversation(message, message_history, route_layer)
@@ -325,7 +325,7 @@ if "<think>" in message.content:
 ### Media Processing Example
 
 ```python
-from utils.media_processors import handle_vision, handle_tts_response
+from vtai.utils.media_processors import handle_vision, handle_tts_response
 
 # Process an image
 if message.elements and message.elements[0].type == "image":

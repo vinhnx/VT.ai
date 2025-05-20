@@ -13,7 +13,8 @@ from litellm.exceptions import (
     BadRequestError,
     ServiceUnavailableError,
 )
-from utils.config import logger
+
+from vtai.utils.config import logger
 
 
 def is_openai_model(model: str) -> bool:
@@ -62,4 +63,5 @@ async def try_chat_completion(
     # Use messages directly with acompletion
     return await litellm.acompletion(
         model=model, messages=messages, **acompletion_kwargs
+    )
     )

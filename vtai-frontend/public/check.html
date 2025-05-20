@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VT.ai Status Check</title>
+    <script>
+        window.onload = function () {
+            // Check if we can connect to the backend
+            fetch('/api/health', { method: 'GET' })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('backend-status').textContent = '✅ Connected';
+                        document.getElementById('backend-status').style.color = 'green';
+                    } else {
+                        document.getElementById('backend-status').textContent = '❌ Error: ' + response.status;
+                        document.getElementById('backend-status').style.color = 'red';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('backend-status').textContent = '❌ Connection failed';
+                    document.getElementById('backend-status').style.color = 'red';
+                    console.error('Backend connection error:', error);
+                });
+        };
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+
+        .status-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>VT.ai Status Check</h1>
+
+    <div class="status-card">
+        <h2>Frontend Status</h2>
+        <p>✅ Running on: <span id="frontend-url"></span></p>
+        <script>
+            document.getElementById('frontend-url').textContent = window.location.origin;
+        </script>
+    </div>
+
+    <div class="status-card">
+        <h2>Backend Status</h2>
+        <p>Status: <span id="backend-status">Checking...</span></p>
+    </div>
+
+    <a href="/" class="button">Go to VT.ai Application</a>
+</body>
+
+</html>

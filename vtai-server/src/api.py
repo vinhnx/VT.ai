@@ -15,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from litellm.exceptions import AuthenticationError, BadRequestError, RateLimitError
 from pydantic import BaseModel
 
+from vtai.utils.llm_providers_config import DEFAULT_MODEL, MODEL_ALIAS_MAP
+
 # Add VT.ai src to path for imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
@@ -32,10 +34,24 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     message: str
+    model: str = None  # Optional: allow frontend to specify model
 
 
 class ChatResponse(BaseModel):
     reply: str
+
+
+class HealthResponse(BaseModel):
+    status: str
+    version: str = "1.0.0"
+
+
+@app.get("/api/health", response_model=HealthResponse)
+async def health_check() -> HealthResponse:
+    """
+    Simple health check endpoint to verify the API is running.
+    """
+    return HealthResponse(status="ok")
 
 
 @app.post("/api/chat", response_model=ChatResponse)
@@ -55,8 +71,17 @@ async def chat_endpoint(req: ChatRequest) -> ChatResponse:
             {"role": "user", "content": req.message},
         ]
 
-        # Use a default model (change to match your environment)
-        model = os.environ.get("OPENAI_API_MODEL", "gpt-4o-nano")
+        # Model resolution logic
+        # Priority: request > env > default
+        requested_model = (
+            req.model or os.environ.get("OPENAI_API_MODEL") or DEFAULT_MODEL
+        )
+        # If the model is an alias, resolve it
+        model = MODEL_ALIAS_MAP.get(requested_model, requested_model)
+
+        # Gemini support: if model string contains 'gemini' and does not have provider, prepend 'gemini/'
+        if "gemini" in model and not model.startswith("gemini/"):
+            model = f"gemini/{model}"
 
         # Call the API directly
         response = await litellm.acompletion(
@@ -86,4 +111,5 @@ async def chat_endpoint(req: ChatRequest) -> ChatResponse:
 if __name__ == "__main__":
     # When running directly, use the module name
     # This allows for proper reloading during development
+    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
     uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)

@@ -23,9 +23,9 @@ from openai import OpenAI
 from PIL import Image
 
 # Update imports to use vtai namespace
-from utils import llm_providers_config as conf
-from utils.config import get_openai_client, logger
-from utils.user_session_helper import (
+from vtai.utils import llm_providers_config as conf
+from vtai.utils.config import get_openai_client, logger
+from vtai.utils.user_session_helper import (
     get_setting,
     get_user_session_id,
     update_message_history_from_assistant,
@@ -300,7 +300,7 @@ async def handle_audio_understanding(path: str, prompt: str = None) -> None:
         logger.info(f"Using prompt: {prompt}")
 
         # Get OpenAI client
-        from utils.config import get_openai_client
+        from vtai.utils.config import get_openai_client
 
         openai_client = get_openai_client()
 
@@ -600,7 +600,7 @@ async def speech_to_text(audio_file: BinaryIO) -> str:
     Returns:
         Transcribed text from the audio
     """
-    from utils.config import get_openai_client
+    from vtai.utils.config import get_openai_client
 
     openai_client = get_openai_client()
 
@@ -708,7 +708,7 @@ async def process_audio() -> None:
         cl.user_session.set("message_history", messages)
 
         # Get the current conversation handler based on settings
-        from utils.conversation_handlers import handle_conversation
+        from vtai.utils.conversation_handlers import handle_conversation
 
         # Create a message object for processing
         temp_message = cl.Message(content=transcription)
