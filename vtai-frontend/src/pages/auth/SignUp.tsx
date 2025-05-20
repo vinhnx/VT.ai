@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
+import useRedirectIfAuthenticated from '../../components/useRedirectIfAuthenticated';
 
 const supabase = createClient(
 	import.meta.env.VITE_SUPABASE_URL,
@@ -12,6 +13,7 @@ const supabase = createClient(
  * On success, redirects to VT.ai frontend root.
  */
 const SignUp: React.FC = () => {
+	useRedirectIfAuthenticated();
 	const navigate = useNavigate();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -26,7 +28,8 @@ const SignUp: React.FC = () => {
 		if (error) {
 			setError(error.message);
 		} else if (data.user) {
-			// TODO: Upsert profile in Supabase DB here if needed
+			 // Upsert user profile after successful sign up
+			await supabase.from('user_profiles').upsert({ id: data.user.id, email: data.user.email });
 			window.location.href = '/';
 		}
 		setLoading(false);

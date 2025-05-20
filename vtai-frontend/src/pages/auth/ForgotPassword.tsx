@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import useRedirectIfAuthenticated from '../../components/useRedirectIfAuthenticated';
 
 const supabase = createClient(
 	import.meta.env.VITE_SUPABASE_URL,
@@ -11,6 +12,8 @@ const supabase = createClient(
  * Sends a password reset email using Supabase.
  */
 const ForgotPassword: React.FC = () => {
+	useRedirectIfAuthenticated();
+
 	const [email, setEmail] = useState('');
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);

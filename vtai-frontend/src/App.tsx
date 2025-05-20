@@ -7,6 +7,7 @@ import Login from './pages/auth/Login';
 import SignUp from './pages/auth/SignUp';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import UpdatePassword from './pages/auth/UpdatePassword';
+import RequireAuth from './components/RequireAuth';
 
 const App: React.FC = () => {
 	return (
@@ -15,11 +16,15 @@ const App: React.FC = () => {
 				<Header />
 				<main className="main-content">
 					<Routes>
-						<Route path="/auth/login" element={<Login />} />
-						<Route path="/auth/sign-up" element={<SignUp />} />
+						<Route path="/auth/login" element={<AuthLogin />} />
+						<Route path="/auth/sign-up" element={<AuthLogin />} />
 						<Route path="/auth/forgot-password" element={<ForgotPassword />} />
 						<Route path="/auth/update-password" element={<UpdatePassword />} />
-						<Route path="/" element={<Chat />} />
+						<Route path="/" element={
+							<RequireAuth>
+								<Chat />
+							</RequireAuth>
+						} />
 					</Routes>
 				</main>
 			</div>

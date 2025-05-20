@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
+import useRedirectIfAuthenticated from '../../components/useRedirectIfAuthenticated';
 
 const supabase = createClient(
 	import.meta.env.VITE_SUPABASE_URL,
@@ -12,6 +13,7 @@ const supabase = createClient(
  * Allows users to set a new password after reset.
  */
 const UpdatePassword: React.FC = () => {
+	useRedirectIfAuthenticated();
 	const navigate = useNavigate();
 	const [password, setPassword] = useState('');
 	const [error, setError] = useState<string | null>(null);
