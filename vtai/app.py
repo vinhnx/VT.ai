@@ -109,6 +109,8 @@ def ensure_model_prices():
 # App name constant
 APP_NAME = const.APP_NAME
 
+# Deprecated: Chainlit custom authentication. No longer used.
+
 
 @cl.set_chat_profiles
 async def build_chat_profile(_=None):

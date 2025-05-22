@@ -1,6 +1,14 @@
 {
+  "name": "vt-ai-root",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Root package for VT.ai monorepo. No scripts here. See subfolders for apps.",
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",
-    "react-router-dom": "^7.6.0"
+    "better-auth": "^1.2.8",
+    "react-router-dom": "^7.6.0",
+    "tailwindcss": "^3.4.3",
+    "postcss": "^8.4.38",
+    "autoprefixer": "^10.4.19"
   }
 }
