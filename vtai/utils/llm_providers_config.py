@@ -88,7 +88,7 @@ SETTINGS_REASONING_EFFORT: str = "settings_reasoning_effort"
 # Core Model Defaults
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
-DEFAULT_MODEL: str = "mistralai/mistral-nemo:free"
+DEFAULT_MODEL: str = "ollama/deepseek-r1:1.5b"
 
 # Vision Model Defaults
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"

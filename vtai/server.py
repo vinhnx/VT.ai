@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware  # Add this import
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from vtai.app import auth_middleware, logger, supabase_client
+from vtai.app import logger, supabase_client
 
 # Create a new main FastAPI application
 main_app = FastAPI()
@@ -29,10 +29,6 @@ main_app.add_middleware(
 logger.info(
     "[SERVER] CORS middleware registered, allowing origin http://localhost:3000."
 )
-
-# Register authentication middleware as the very first middleware for the main_app
-main_app.middleware("http")(auth_middleware)
-logger.info("[SERVER] Authentication middleware registered to main_app.")
 
 # Mount the public directory at /public for static assets
 public_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "public"))
