@@ -21,9 +21,14 @@ else
   echo "Skipping dependency check. Use --check-deps flag to verify all dependencies."
 fi
 
-# Run the VT.ai application using chainlit
-echo "Starting VT.ai application..."
+# Activate the virtual environment before running the app
+if [ -d ".venv" ]; then
+  echo "Activating .venv..."
+  source .venv/bin/activate
+fi
+
+# Run the VT.ai application using uvicorn with the new main_app
+echo "Starting VT.ai application with Uvicorn..."
 export VT_FAST_START=0
-# Skip LiteLLM model prices download
 export VT_SKIP_MODEL_PRICES=1
-chainlit run vtai/app.py "$@"
+uvicorn vtai.server:main_app --host 0.0.0.0 --port 8000 --reload "$@"

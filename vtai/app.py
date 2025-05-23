@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
 import chainlit as cl
-from fastapi import Request, status
+from fastapi import HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
 from supabase import Client as SupabaseClient
@@ -76,32 +76,55 @@ async def auth_middleware(request: Request, call_next):
     """
     FastAPI middleware to check for Supabase JWT and redirect if not authenticated.
     """
+    logger.info(
+        f"[AUTH_MIDDLEWARE] Path: {request.url.path} | supabase_client: {'set' if supabase_client else 'None'}"
+    )
+
+    # Define public paths where authentication is not required
+    public_paths = [
+        "/healthz",  # For main_app's health check
+        "/public/",  # For main_app's own static files (e.g., from vtai/public directory)
+        "/static-files/",  # Chainlit's primary static assets (JS, CSS)
+        "/assets/",  # Potentially other assets served by Chainlit
+        "/favicon.ico",  # Favicon for the Chainlit app
+        "/ws",  # Chainlit's WebSocket connections (often /ws or /ws/socket.io/)
+        # Add any other Chainlit-specific public paths if identified, e.g., for public file access
+    ]
+
+    # Allow /ws/socket.io/ for websockets explicitly
+    if request.url.path.startswith("/ws/socket.io/"):
+        logger.info(f"Path '{request.url.path}' is a WebSocket connection. Skipping auth for this specific path.")
+        response = await call_next(request)
+        return response
+
+    matched_public_path = None
+    for p_path in public_paths:
+        if request.url.path.startswith(p_path):
+            matched_public_path = p_path
+            break
+
+    if matched_public_path:
+        logger.info(
+            f"Path '{request.url.path}' is public because it starts with '{matched_public_path}'. Skipping auth."
+        )
+        response = await call_next(request)
+        return response
+    else:
+        logger.info(
+            f"Path '{request.url.path}' is NOT public. Proceeding with auth. (Checked against: {public_paths})"
+        )
+
     if not supabase_client:
-        logger.error("Supabase client not initialized. Skipping authentication.")
-        response = await call_next(request)
-        return response
-
-    # Allow access to specific paths without authentication (e.g., health checks, static files)
-    allowed_paths = ["/healthz", "/assets"]  # Add any other public paths
-    if any(request.url.path.startswith(path) for path in allowed_paths):
-        response = await call_next(request)
-        return response
-
-    # Also allow access to Chainlit's internal static files and API routes
-    # These are typically under /static-files, /public, and /chainlit
-    if (
-        request.url.path.startswith("/static-files")
-        or request.url.path.startswith("/public")
-        or request.url.path.startswith("/chainlit")
-        or request.url.path.startswith("/ws")
-        or request.url.path.startswith("/files")
-    ):  # Add /files for Chainlit 1.x file uploads
-        response = await call_next(request)
-        return response
+        logger.error("Supabase client not available. Authentication cannot proceed.")
+        if "websocket" in request.scope.get("type", ""):
+            pass
+        return RedirectResponse(
+            url=f"http://localhost:3000/auth/login?error=supabase_unavailable",
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        )
 
     token = request.cookies.get("supabase-auth-token")
     if not token:
-        # Try to get token from Authorization header
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split("Bearer ")[1]
@@ -111,16 +134,15 @@ async def auth_middleware(request: Request, call_next):
         try:
             user_response = supabase_client.auth.get_user(token)
             user = user_response.user
-            # Do NOT call cl.user_session.set() here; Chainlit context is not available in FastAPI middleware
-            # Instead, set user info in Chainlit event handlers (e.g., @cl.on_chat_start) where context exists
+            if user:
+                logger.info(
+                    f"Authenticated user: {user.email if hasattr(user, 'email') else user}"
+                )
         except Exception as e:
             logger.warning(f"Token validation failed: {e}")
             user = None
-
     if not user:
-        # Redirect to Next.js login page
         login_url = "http://localhost:3000/auth/login"
-        # Encode the current URL to be used as redirect_uri
         redirect_uri = quote(str(request.url), safe="")
         full_login_url = f"{login_url}?redirect_uri={redirect_uri}"
         logger.info(f"User not authenticated. Redirecting to {full_login_url}")
