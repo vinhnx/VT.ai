@@ -35,7 +35,7 @@
 	function checkAuthenticationStatus() {
 		// Check for auth token in cookies
 		const authToken = getCookie('supabase-auth-token');
-		
+
 		if (authToken && !isAuthenticated) {
 			console.log('Auth Bridge - Token found, validating...');
 			validateToken(authToken);
@@ -57,7 +57,7 @@
 		// In the future, we could add client-side validation here
 		isAuthenticated = true;
 		console.log('Auth Bridge - Authentication validated');
-		
+
 		// Notify Chainlit about authentication status
 		if (window.chainlit) {
 			window.chainlit.emit('auth_status_changed', {
@@ -70,9 +70,9 @@
 	function handleLogout() {
 		isAuthenticated = false;
 		userInfo = null;
-		
+
 		console.log('Auth Bridge - User logged out');
-		
+
 		// Notify Chainlit about logout
 		if (window.chainlit) {
 			window.chainlit.emit('auth_status_changed', {
@@ -80,7 +80,7 @@
 				timestamp: Date.now()
 			});
 		}
-		
+
 		// Redirect to login if needed
 		// This is handled by server-side middleware, but we can add client-side logic here
 	}
@@ -97,17 +97,17 @@
 	function handleTokenFromUrl() {
 		const urlParams = new URLSearchParams(window.location.search);
 		const token = urlParams.get('token') || urlParams.get('access_token');
-		
+
 		if (token) {
 			console.log('Auth Bridge - Token found in URL, setting cookie...');
-			
+
 			// Set the token as a cookie
 			document.cookie = `supabase-auth-token=${token}; path=/; SameSite=Lax`;
-			
+
 			// Clean up URL
 			const cleanUrl = window.location.origin + window.location.pathname;
 			window.history.replaceState({}, document.title, cleanUrl);
-			
+
 			// Validate the new token
 			validateToken(token);
 		}
@@ -116,9 +116,9 @@
 	// Load the realtime voice script dynamically
 	function loadRealtimeVoiceScript() {
 		console.log('Auth Bridge - Loading realtime voice functionality...');
-		
+
 		const script = document.createElement('script');
-		script.src = '/realtime-voice.js'; // Correct: do not use /public/
+		script.src = '/public/realtime-voice.js'; // Now served from /public
 		script.async = true;
 		script.onload = function() {
 			console.log('Auth Bridge - Realtime voice script loaded successfully');
@@ -126,7 +126,7 @@
 		script.onerror = function() {
 			console.error('Auth Bridge - Failed to load realtime voice script');
 		};
-		
+
 		document.head.appendChild(script);
 	}
 

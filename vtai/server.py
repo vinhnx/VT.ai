@@ -14,11 +14,11 @@ from vtai.app import auth_middleware, logger, supabase_client
 # Expose the FastAPI app
 app = chainlit.server.app
 
-# Mount the public directory at root for static assets
+# Mount the public directory at /public for static assets (not at /)
 public_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "public"))
 if os.path.isdir(public_dir):
-    app.mount("/", StaticFiles(directory=public_dir), name="public")
-    logger.info(f"Mounted public static files at / from {public_dir}")
+    app.mount("/public", StaticFiles(directory=public_dir), name="public")
+    logger.info(f"Mounted public static files at /public from {public_dir}")
 
 # Add authentication middleware (always enabled, no VT_ENABLE_AUTH check)
 if supabase_client:
