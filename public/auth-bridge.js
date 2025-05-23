@@ -7,10 +7,6 @@
 	// Initialize authentication state
 	let isAuthenticated = false;
 	let userInfo = null;
-
-	// Supabase configuration - these will be set via environment or server
-	let supabaseUrl = null;
-	let supabaseAnonKey = null;
 	let supabaseClient = null;
 
 	console.log('VT.ai Auth Bridge - Initializing...');
@@ -20,10 +16,89 @@
 		initializeAuthBridge();
 	});
 
+	// Delete all auth cookies
+	function clearAuthCookies() {
+		const cookies = document.cookie.split(';');
+
+		for (let cookie of cookies) {
+			const cookieName = cookie.split('=')[0].trim();
+			// Delete all Supabase and session related cookies
+			if (cookieName.includes('supabase') ||
+				cookieName.includes('sb-') ||
+				cookieName.includes('auth') ||
+				cookieName.includes('session')) {
+				document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+			}
+		}
+		console.log('Auth Bridge - Cleared all auth cookies');
+	}
+
+	// Complete logout process
+	async function handleLogout() {
+		console.log('Auth Bridge - Starting logout process');
+
+		try {
+			// First get Supabase client
+			const { createClient } = window.supabaseClient;
+			if (!supabaseClient) {
+				supabaseClient = createClient(
+					window.SUPABASE_URL,
+					window.SUPABASE_ANON_KEY
+				);
+			}
+
+			// Call Supabase signOut
+			if (supabaseClient) {
+				await supabaseClient.auth.signOut();
+				console.log('Auth Bridge - Supabase signOut successful');
+			}
+
+			// Clear all auth cookies
+			clearAuthCookies();
+
+			// Update auth state
+			isAuthenticated = false;
+			userInfo = null;
+
+			// Notify Chainlit about logout
+			if (window.chainlit) {
+				window.chainlit.emit('auth_status_changed', {
+					authenticated: false,
+					timestamp: Date.now()
+				});
+			}
+
+			// Store current URL for redirect back after login
+			const currentUrl = window.location.href;
+			if (currentUrl && !currentUrl.includes('/auth/login')) {
+				sessionStorage.setItem('vtai_redirect_after_login', currentUrl);
+			}
+
+			// Redirect to login with stored return URL
+			const redirectUrl = sessionStorage.getItem('vtai_redirect_after_login');
+			const loginUrl = redirectUrl ?
+				`http://localhost:3000/auth/login?redirect_uri=${encodeURIComponent(redirectUrl)}` :
+				'http://localhost:3000/auth/login';
+
+			// Force reload to clear any remaining state
+			window.location.href = loginUrl;
+
+		} catch (error) {
+			console.error('Auth Bridge - Error during logout:', error);
+			// Fallback - force redirect to login
+			window.location.href = 'http://localhost:3000/auth/login';
+		}
+	}
+
 	function initializeAuthBridge() {
 		console.log('Auth Bridge - Setting up authentication handlers...');
 
-		// Check if we're already authenticated via server-side middleware
+		// Handle Chainlit logout events
+		if (window.chainlit) {
+			window.chainlit.on('logout', handleLogout);
+		}
+
+		// Check if we're already authenticated
 		checkAuthenticationStatus();
 
 		// Set up periodic auth check
@@ -65,24 +140,6 @@
 		}
 	}
 
-	function handleLogout() {
-		isAuthenticated = false;
-		userInfo = null;
-
-		console.log('Auth Bridge - User logged out');
-
-		// Notify Chainlit about logout
-		if (window.chainlit) {
-			window.chainlit.emit('auth_status_changed', {
-				authenticated: false,
-				timestamp: Date.now()
-			});
-		}
-
-		// Redirect to login if needed
-		// This is handled by server-side middleware, but we can add client-side logic here
-	}
-
 	// Function to handle login redirect with proper redirect_uri
 	function redirectToLogin() {
 		const currentUrl = encodeURIComponent(window.location.href);
@@ -111,11 +168,30 @@
 		}
 	}
 
+	// --- Force redirect on logout marker message ---
+	function observeLogoutMarker() {
+		function checkAndRedirect() {
+			const logoutMsg = Array.from(document.querySelectorAll('.cl-message, .message, .cl-message-content, .cl-chat-message'))
+				.find(el => el.textContent && el.textContent.includes('__FORCE_LOGOUT__'));
+			if (logoutMsg) {
+				clearAuthCookies();
+				window.location.replace('http://localhost:3000/auth/login');
+			}
+		}
+		const chatRoot = document.querySelector('#chainlit-app') || document.body;
+		const observer = new MutationObserver(checkAndRedirect);
+		observer.observe(chatRoot, { childList: true, subtree: true });
+		// Also check immediately in case the message is already present
+		setTimeout(checkAndRedirect, 500);
+	}
+	document.addEventListener('DOMContentLoaded', observeLogoutMarker);
+
 	// Check for token in URL on load
 	handleTokenFromUrl();
 
 	// Expose some functions globally for debugging
 	window.VTAuthBridge = {
+		logout: handleLogout,
 		checkStatus: checkAuthenticationStatus,
 		redirectToLogin: redirectToLogin,
 		isAuthenticated: () => isAuthenticated,
