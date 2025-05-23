@@ -118,7 +118,7 @@
 		console.log('Auth Bridge - Loading realtime voice functionality...');
 		
 		const script = document.createElement('script');
-		script.src = '/public/realtime-voice.js';
+		script.src = '/realtime-voice.js'; // Correct: do not use /public/
 		script.async = true;
 		script.onload = function() {
 			console.log('Auth Bridge - Realtime voice script loaded successfully');

@@ -4,20 +4,37 @@ VT - Main application entry point.
 A multimodal AI chat application with dynamic conversation routing.
 """
 
+import os
+
+import dotenv
+
+
+def ensure_env_loaded():
+    """Ensure .env is loaded for both main and Chainlit subprocesses."""
+    if not os.environ.get("SUPABASE_URL") or not os.environ.get("SUPABASE_ANON_KEY"):
+        dotenv.load_dotenv()
+
+
+ensure_env_loaded()
+
 import argparse
 import asyncio
 import atexit
 import json
-import os
 import shutil
 import sys
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 import chainlit as cl
-import dotenv
+from fastapi import Request, status
+from fastapi.responses import RedirectResponse
+from jose import JWTError, jwt
+from supabase import Client as SupabaseClient
+from supabase import create_client
 
 # Import only essential modules for startup
 from vtai.utils import constants as const
@@ -30,6 +47,20 @@ from vtai.utils.user_session_helper import get_setting
 # Register cleanup function to ensure resources are properly released
 atexit.register(cleanup)
 
+# Initialize Supabase client
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
+
+if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+    logger.warning(
+        "SUPABASE_URL and SUPABASE_ANON_KEY environment variables are not set. Authentication will not work."
+    )
+    supabase_client: Optional[SupabaseClient] = None
+else:
+    supabase_client: Optional[SupabaseClient] = create_client(
+        SUPABASE_URL, SUPABASE_ANON_KEY
+    )
+
 # Flag to track if we're in fast mode
 fast_mode = os.environ.get("VT_FAST_START") == "1"
 if fast_mode:
@@ -38,6 +69,68 @@ if fast_mode:
 
 # Initialize the application with improved client configuration
 route_layer, _, openai_client, async_openai_client = initialize_app()
+
+
+# Middleware for authentication
+async def auth_middleware(request: Request, call_next):
+    """
+    FastAPI middleware to check for Supabase JWT and redirect if not authenticated.
+    """
+    if not supabase_client:
+        logger.error("Supabase client not initialized. Skipping authentication.")
+        response = await call_next(request)
+        return response
+
+    # Allow access to specific paths without authentication (e.g., health checks, static files)
+    allowed_paths = ["/healthz", "/assets"]  # Add any other public paths
+    if any(request.url.path.startswith(path) for path in allowed_paths):
+        response = await call_next(request)
+        return response
+
+    # Also allow access to Chainlit's internal static files and API routes
+    # These are typically under /static-files, /public, and /chainlit
+    if (
+        request.url.path.startswith("/static-files")
+        or request.url.path.startswith("/public")
+        or request.url.path.startswith("/chainlit")
+        or request.url.path.startswith("/ws")
+        or request.url.path.startswith("/files")
+    ):  # Add /files for Chainlit 1.x file uploads
+        response = await call_next(request)
+        return response
+
+    token = request.cookies.get("supabase-auth-token")
+    if not token:
+        # Try to get token from Authorization header
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split("Bearer ")[1]
+
+    user = None
+    if token:
+        try:
+            user_response = supabase_client.auth.get_user(token)
+            user = user_response.user
+            # Do NOT call cl.user_session.set() here; Chainlit context is not available in FastAPI middleware
+            # Instead, set user info in Chainlit event handlers (e.g., @cl.on_chat_start) where context exists
+        except Exception as e:
+            logger.warning(f"Token validation failed: {e}")
+            user = None
+
+    if not user:
+        # Redirect to Next.js login page
+        login_url = "http://localhost:3000/auth/login"
+        # Encode the current URL to be used as redirect_uri
+        redirect_uri = quote(str(request.url), safe="")
+        full_login_url = f"{login_url}?redirect_uri={redirect_uri}"
+        logger.info(f"User not authenticated. Redirecting to {full_login_url}")
+        return RedirectResponse(
+            url=full_login_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT
+        )
+
+    response = await call_next(request)
+    return response
+
 
 if fast_mode:
     logger.info(
@@ -160,6 +253,25 @@ async def start_chat():
     )
 
 
+@cl.on_chat_start
+def set_chainlit_user_on_auth():
+    """Set user info in Chainlit session after successful authentication."""
+    user = cl.user_session.get("user")
+    if user:
+        # Already set
+        return
+    # You should extract user info from your Supabase JWT/session here
+    # For example, you might have user info in a cookie or session
+    jwt_user = None
+    try:
+        jwt_user = cl.user_session.get("supabase_user")
+    except Exception:
+        pass
+    if jwt_user:
+        # Store user info in session for downstream use (no User class needed)
+        cl.user_session.set("user", jwt_user)
+
+
 @cl.on_message
 async def on_message(message: cl.Message) -> None:
     """
@@ -234,5 +346,4 @@ async def on_message(message: cl.Message) -> None:
                 )
                 await handle_reasoning_conversation(message, messages, route_layer)
             else:
-                await handle_conversation(message, messages, route_layer)
                 await handle_conversation(message, messages, route_layer)
