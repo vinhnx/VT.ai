@@ -1,6 +1,5 @@
 // auth-bridge.js
 // Authentication bridge for VT.ai - handles Supabase auth integration with Chainlit
-// Also loads the realtime-voice.js functionality
 
 (function() {
 	'use strict';
@@ -19,7 +18,6 @@
 	// Wait for DOM and Chainlit to be ready
 	document.addEventListener('DOMContentLoaded', function() {
 		initializeAuthBridge();
-		loadRealtimeVoiceScript();
 	});
 
 	function initializeAuthBridge() {
@@ -111,23 +109,6 @@
 			// Validate the new token
 			validateToken(token);
 		}
-	}
-
-	// Load the realtime voice script dynamically
-	function loadRealtimeVoiceScript() {
-		console.log('Auth Bridge - Loading realtime voice functionality...');
-
-		const script = document.createElement('script');
-		script.src = '/public/realtime-voice.js'; // Now served from /public
-		script.async = true;
-		script.onload = function() {
-			console.log('Auth Bridge - Realtime voice script loaded successfully');
-		};
-		script.onerror = function() {
-			console.error('Auth Bridge - Failed to load realtime voice script');
-		};
-
-		document.head.appendChild(script);
 	}
 
 	// Check for token in URL on load
