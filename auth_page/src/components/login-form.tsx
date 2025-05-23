@@ -1,5 +1,3 @@
-import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -10,8 +8,10 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
@@ -20,6 +20,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUri = searchParams.get('redirect_uri')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,13 +30,26 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       if (error) throw error
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push('/protected')
+
+      // Get the session token
+      const session = data.session
+      if (session?.access_token) {
+        // Set the token as a cookie for the Chainlit app
+        document.cookie = `supabase-auth-token=${session.access_token}; path=/; SameSite=Lax; domain=localhost`
+
+        // If there's a redirect_uri, go back to Chainlit, otherwise go to protected page
+        if (redirectUri) {
+          const decodedRedirectUri = decodeURIComponent(redirectUri)
+          window.location.href = decodedRedirectUri
+        } else {
+          router.push('/protected')
+        }
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
