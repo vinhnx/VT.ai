@@ -9,6 +9,7 @@ import os
 import chainlit.server
 import httpx
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware  # Add this import
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -16,6 +17,18 @@ from vtai.app import auth_middleware, logger, supabase_client
 
 # Create a new main FastAPI application
 main_app = FastAPI()
+
+# Add CORS middleware first to allow cross-origin requests from the frontend
+main_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allow your Next.js frontend
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+logger.info(
+    "[SERVER] CORS middleware registered, allowing origin http://localhost:3000."
+)
 
 # Register authentication middleware as the very first middleware for the main_app
 main_app.middleware("http")(auth_middleware)
@@ -26,40 +39,6 @@ public_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "publ
 if os.path.isdir(public_dir):
     main_app.mount("/public", StaticFiles(directory=public_dir), name="public")
     logger.info(f"Mounted public static files at /public from {public_dir} on main_app")
-
-
-@main_app.api_route("/mcp", methods=["POST"])
-async def proxy_mcp(request: Request) -> Response:
-    """
-    Proxy /mcp requests to the MCP server at http://localhost:9393/completion.
-    This is required for compatibility with Chainlit's frontend, which expects /mcp on port 8000.
-    """
-    try:
-        # Forward all headers except host
-        headers = dict(request.headers)
-        headers.pop("host", None)
-        # Read the raw body
-        body = await request.body()
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                "http://localhost:9393/completion",
-                headers=headers,
-                content=body,
-                timeout=30.0,
-            )
-            return Response(
-                content=resp.content,
-                status_code=resp.status_code,
-                headers={
-                    k: v
-                    for k, v in resp.headers.items()
-                    if k.lower() != "content-encoding"
-                },
-            )
-    except Exception as e:
-        return JSONResponse(
-            status_code=502, content={"error": f"MCP proxy error: {str(e)}"}
-        )
 
 
 # Get the Chainlit app

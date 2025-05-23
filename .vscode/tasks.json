@@ -1,0 +1,10 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Remove mcp.md if still present",
+            "command": "rm -f docs/developer/mcp.md"
+        }
+    ]
+}

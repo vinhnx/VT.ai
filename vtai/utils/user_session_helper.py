@@ -4,7 +4,7 @@ User session helper utilities for the VT application.
 Manages user session data and settings access.
 """
 
-from typing import Any
+from typing import Any, Dict, Optional
 
 import chainlit as cl
 
@@ -72,6 +72,56 @@ def get_setting(key: str) -> Any:
         return None
 
     return settings.get(key)
+
+
+def get_user_profile() -> Dict[str, Any]:
+    """
+    Get the current user profile from the session.
+
+    Returns:
+        User profile dictionary or empty dict if not found
+    """
+    return cl.user_session.get("user_profile") or {}
+
+
+def get_user_id() -> str:
+    """
+    Get the current user ID from the session.
+
+    Returns:
+        User ID string or empty string if not found
+    """
+    return cl.user_session.get("user_id") or ""
+
+
+def get_user_email() -> str:
+    """
+    Get the current user email from the session.
+
+    Returns:
+        User email string or empty string if not found
+    """
+    return cl.user_session.get("user_email") or ""
+
+
+def get_user_display_name() -> str:
+    """
+    Get the current user display name from the session.
+
+    Returns:
+        User display name string or empty string if not found
+    """
+    return cl.user_session.get("user_display_name") or ""
+
+
+def get_chainlit_user() -> Optional[Any]:
+    """
+    Get the Chainlit User object from the session.
+
+    Returns:
+        Chainlit User object or None if not found
+    """
+    return cl.user_session.get("user")
 
 
 # Note: is_in_assistant_profile() function has been removed as this feature is no longer supported

@@ -24,6 +24,7 @@ import json
 import shutil
 import sys
 import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -32,11 +33,9 @@ from urllib.parse import quote
 import chainlit as cl
 from fastapi import HTTPException, Request, status
 from fastapi.responses import RedirectResponse
-from jose import JWTError, jwt
 from supabase import Client as SupabaseClient
 from supabase import create_client
 
-# Import only essential modules for startup
 from vtai.utils import constants as const
 from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
@@ -46,6 +45,83 @@ from vtai.utils.user_session_helper import get_setting
 
 # Register cleanup function to ensure resources are properly released
 atexit.register(cleanup)
+
+# Optional JWT imports for enhanced security (not required for basic functionality)
+try:
+    from jose import JWTError, jwt
+
+    JWT_AVAILABLE = True
+except ImportError:
+    JWT_AVAILABLE = False
+    logger.warning("python-jose not available - some JWT features may be limited")
+
+
+# User profile data structure
+class UserProfile:
+    """User profile data class for managing authenticated user information."""
+
+    def __init__(
+        self,
+        user_id: str,
+        email: str,
+        display_name: str = None,
+        metadata: Dict[str, Any] = None,
+    ):
+        self.user_id = user_id
+        self.email = email
+        self.display_name = display_name or email.split("@")[0]
+        self.metadata = metadata or {}
+        self.session_id = str(uuid.uuid4())
+        self.created_at = time.time()
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert user profile to dictionary format."""
+        return {
+            "user_id": self.user_id,
+            "email": self.email,
+            "display_name": self.display_name,
+            "metadata": self.metadata,
+            "session_id": self.session_id,
+            "created_at": self.created_at,
+        }
+
+    @classmethod
+    def from_supabase_user(cls, supabase_user) -> "UserProfile":
+        """Create UserProfile from Supabase user object."""
+        user_id = supabase_user.id
+        email = getattr(supabase_user, "email", f"user_{user_id}")
+
+        # Extract metadata from Supabase user
+        metadata = {}
+        if hasattr(supabase_user, "user_metadata"):
+            metadata.update(supabase_user.user_metadata or {})
+        if hasattr(supabase_user, "app_metadata"):
+            metadata.update(supabase_user.app_metadata or {})
+
+        # Try to get display name from metadata or construct from email
+        display_name = metadata.get("display_name") or metadata.get("full_name")
+        if not display_name and email:
+            display_name = email.split("@")[0]
+
+        return cls(
+            user_id=user_id, email=email, display_name=display_name, metadata=metadata
+        )
+
+
+# Global variable to store current user profile for Chainlit session access
+_current_user_profile: Optional[UserProfile] = None
+
+
+def get_current_user_profile() -> Optional[UserProfile]:
+    """Get the current user profile from global state."""
+    return _current_user_profile
+
+
+def set_current_user_profile(profile: Optional[UserProfile]) -> None:
+    """Set the current user profile in global state."""
+    global _current_user_profile
+    _current_user_profile = profile
+
 
 # Initialize Supabase client
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -87,13 +163,15 @@ async def auth_middleware(request: Request, call_next):
         "/static-files/",  # Chainlit's primary static assets (JS, CSS)
         "/assets/",  # Potentially other assets served by Chainlit
         "/favicon.ico",  # Favicon for the Chainlit app
-        "/ws",  # Chainlit's WebSocket connections (often /ws or /ws/socket.io/)
+        # "/ws",  # Chainlit's WebSocket connections (often /ws or /ws/socket.io/)
         # Add any other Chainlit-specific public paths if identified, e.g., for public file access
     ]
 
     # Allow /ws/socket.io/ for websockets explicitly
     if request.url.path.startswith("/ws/socket.io/"):
-        logger.info(f"Path '{request.url.path}' is a WebSocket connection. Skipping auth for this specific path.")
+        logger.info(
+            f"Path '{request.url.path}' is a WebSocket connection. Skipping auth for this specific path."
+        )
         response = await call_next(request)
         return response
 
@@ -117,6 +195,7 @@ async def auth_middleware(request: Request, call_next):
     if not supabase_client:
         logger.error("Supabase client not available. Authentication cannot proceed.")
         if "websocket" in request.scope.get("type", ""):
+            # For WebSockets, we might not redirect but let Chainlit handle it if no user is set later
             pass
         return RedirectResponse(
             url=f"http://localhost:3000/auth/login?error=supabase_unavailable",
@@ -129,27 +208,39 @@ async def auth_middleware(request: Request, call_next):
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split("Bearer ")[1]
 
-    user = None
+    supabase_user_obj = None  # Use a distinct variable name
     if token:
         try:
             user_response = supabase_client.auth.get_user(token)
-            user = user_response.user
-            if user:
+            supabase_user_obj = user_response.user
+            if supabase_user_obj:
                 logger.info(
-                    f"Authenticated user: {user.email if hasattr(user, 'email') else user}"
+                    f"Authenticated user (FastAPI middleware): {supabase_user_obj.email if hasattr(supabase_user_obj, 'email') else supabase_user_obj.id}"
                 )
+                # Store user profile for Chainlit session access
+                user_profile = UserProfile.from_supabase_user(supabase_user_obj)
+                request.state.authenticated_user = user_profile
+                set_current_user_profile(user_profile)
+                logger.debug(
+                    f"User profile created: {user_profile.display_name} ({user_profile.email})"
+                )
+            # else: supabase_user_obj remains None if token is invalid or no user
         except Exception as e:
-            logger.warning(f"Token validation failed: {e}")
-            user = None
-    if not user:
+            logger.warning(f"Token validation failed (FastAPI middleware): {e}")
+            supabase_user_obj = None  # Ensure it's None on failure
+
+    if not supabase_user_obj:
         login_url = "http://localhost:3000/auth/login"
         redirect_uri = quote(str(request.url), safe="")
         full_login_url = f"{login_url}?redirect_uri={redirect_uri}"
-        logger.info(f"User not authenticated. Redirecting to {full_login_url}")
+        logger.info(
+            f"User not authenticated by FastAPI middleware. Redirecting to {full_login_url}"
+        )
         return RedirectResponse(
             url=full_login_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT
         )
 
+    # If user is authenticated by FastAPI middleware, proceed to the Chainlit app (or other FastAPI handlers)
     response = await call_next(request)
     return response
 
@@ -224,7 +315,8 @@ def ensure_model_prices():
 # App name constant
 APP_NAME = const.APP_NAME
 
-# Deprecated: Chainlit custom authentication. No longer used.
+# Note: Removed @cl.header_auth_callback to prevent infinite redirect loop
+# Authentication is handled by FastAPI middleware, so we trust that validation for Chainlit
 
 
 @cl.set_chat_profiles
@@ -241,57 +333,64 @@ async def build_chat_profile(_=None):
 
 
 @cl.on_chat_start
-async def start_chat():
-    """
-    Initialize the chat session with settings and system message.
-    """
+async def chainlit_chat_start():
+    """Initialize chat session settings and user profile management."""
     start_time = time.time()
 
-    # Load deferred imports now that the user has started a chat
+    # Load deferred imports
     load_deferred_imports()
+
+    # Set up user profile in Chainlit session
+    user_profile = get_current_user_profile()
+    if user_profile:
+        # Store user profile data in Chainlit session
+        cl.user_session.set("user_profile", user_profile.to_dict())
+        cl.user_session.set("user_id", user_profile.user_id)
+        cl.user_session.set("user_email", user_profile.email)
+        cl.user_session.set("user_display_name", user_profile.display_name)
+
+        # Create Chainlit User object for proper session management
+        chainlit_user = cl.User(
+            identifier=user_profile.user_id,
+            metadata={
+                "email": user_profile.email,
+                "display_name": user_profile.display_name,
+                **user_profile.metadata,
+            },
+        )
+        cl.user_session.set("user", chainlit_user)
+
+        logger.info(
+            f"User profile initialized for {user_profile.display_name} ({user_profile.email})"
+        )
+
+        # Send welcome message with user information
+        welcome_msg = f"👋 Welcome back, **{user_profile.display_name}**! How can I help you today?"
+        await cl.Message(content=welcome_msg).send()
+    else:
+        logger.warning(
+            "No user profile found - session may not be properly authenticated"
+        )
 
     # Initialize default settings
     cl.user_session.set(conf.SETTINGS_CHAT_MODEL, conf.DEFAULT_MODEL)
-    # Set default value for web search model
     cl.user_session.set(const.SETTINGS_WEB_SEARCH_MODEL, const.DEFAULT_WEB_SEARCH_MODEL)
 
-    # Build LLM profile with direct icon path instead of using map
+    # Build LLM profile
     build_llm_profile()
 
     # Settings configuration
     settings = await build_settings()
-
-    # Configure chat session with selected model
     await config_chat_session(settings)
-
-    # Initialize commands in the UI
     await set_commands(use_all=True)
 
-    # Ensure model prices are loaded at this point
+    # Ensure model prices are loaded
     ensure_model_prices()
 
+    logger.info("Chat session started - authentication handled by FastAPI middleware")
     logger.debug(
         f"Chat session initialization completed in {time.time() - start_time:.2f} seconds"
     )
-
-
-@cl.on_chat_start
-def set_chainlit_user_on_auth():
-    """Set user info in Chainlit session after successful authentication."""
-    user = cl.user_session.get("user")
-    if user:
-        # Already set
-        return
-    # You should extract user info from your Supabase JWT/session here
-    # For example, you might have user info in a cookie or session
-    jwt_user = None
-    try:
-        jwt_user = cl.user_session.get("supabase_user")
-    except Exception:
-        pass
-    if jwt_user:
-        # Store user info in session for downstream use (no User class needed)
-        cl.user_session.set("user", jwt_user)
 
 
 @cl.on_message

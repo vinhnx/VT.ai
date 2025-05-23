@@ -1,11 +1,10 @@
-"""
-Custom password-based auth page for VT.ai using Supabase.
-On successful login or signup, upserts user profile and redirects to VT.ai frontend.
+// Custom password-based auth page for VT.ai using Supabase.
+// On successful login or signup, upserts user profile and redirects to VT.ai frontend.
+//
+// Follows Google Python Style Guide for docstrings and project conventions.
 
-Follows Google Python Style Guide for docstrings and project conventions.
-"""
-import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { upsertUserProfile } from '../../lib/upsertUserProfile';
 
