@@ -199,7 +199,7 @@ async def chainlit_chat_start():
         )
 
         # Send welcome message with user information
-        welcome_msg = f"👋 Welcome, **{user_name}**! How can I help you today?"
+        welcome_msg = f"Welcome, **{user_name}**! How can I help you today?"
         await cl.Message(content=welcome_msg).send()
     else:
         logger.warning(
@@ -305,6 +305,79 @@ async def on_message(message: cl.Message) -> None:
                 await handle_conversation(message, messages, route_layer)
 
 
+def upsert_user_profile_from_oauth(
+    provider_id: str, raw_user_data: Dict[str, str]
+) -> Optional[Dict[str, str]]:
+    """
+    Upsert user profile in Supabase from OAuth data. Returns stored user row or None.
+    """
+    if not supabase_client:
+        logger.error("Supabase client not available for OAuth callback")
+        return None
+
+    email = raw_user_data.get("email")
+    name = raw_user_data.get("name") or raw_user_data.get("given_name", "")
+    avatar_url = raw_user_data.get("picture")
+    provider_user_id = raw_user_data.get("sub") or raw_user_data.get("id")
+
+    if not email or not provider_user_id:
+        logger.error(
+            "Missing required OAuth data: email=%s, provider_user_id=%s",
+            email,
+            provider_user_id,
+        )
+        return None
+
+    user_id = f"{provider_id}_{provider_user_id}"
+
+    # Try to get existing user from user_profiles table
+    existing_user = None
+    try:
+        response = (
+            supabase_client.table("user_profiles")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if response.data:
+            existing_user = response.data[0]
+            logger.info("Found existing user: %s", email)
+    except Exception as e:
+        logger.warning("Error checking existing user: %s", e)
+
+    user_data = {
+        "user_id": user_id,
+        "email": email,
+        "full_name": name,
+        "avatar_url": avatar_url,
+        "provider": provider_id,
+        "provider_user_id": provider_user_id,
+        "raw_oauth_details": raw_user_data,
+        "updated_at": "now()",
+    }
+    if not existing_user:
+        user_data.update(
+            {"subscription_tier": "free", "tokens_used": 0, "created_at": "now()"}
+        )
+        logger.info("Creating new user profile for %s", email)
+
+    try:
+        upsert_response = (
+            supabase_client.table("user_profiles")
+            .upsert(user_data, on_conflict="user_id")
+            .execute()
+        )
+        if upsert_response.data:
+            logger.info("Successfully upserted user profile for %s", email)
+            return upsert_response.data[0]
+        else:
+            logger.error("Failed to upsert user profile - no data returned")
+            return None
+    except Exception as e:
+        logger.error("Error upserting user profile: %s", e)
+        return None
+
+
 @cl.oauth_callback
 def oauth_callback(
     provider_id: str,
@@ -313,117 +386,31 @@ def oauth_callback(
     default_user: cl.User,  # noqa: ARG001 (unused but required by Chainlit)
 ) -> Optional[cl.User]:
     """
-    Handle OAuth authentication callback and manage user data in Supabase.
-
-    Args:
-        provider_id: OAuth provider (e.g., 'google')
-        token: OAuth access token (unused but required by Chainlit)
-        raw_user_data: Raw user data from OAuth provider
-        default_user: Default Chainlit user object (unused but required by Chainlit)
-
-    Returns:
-        cl.User object if authentication successful, None otherwise
+    Chainlit OAuth callback: upsert user profile and set name/avatar from OAuth.
     """
-    try:
-        logger.info("OAuth callback triggered for provider: %s", provider_id)
-        logger.debug("Raw user data keys: %s", list(raw_user_data.keys()))
-
-        if not supabase_client:
-            logger.error("Supabase client not available for OAuth callback")
-            return None
-
-        # Extract user information from OAuth data
-        email = raw_user_data.get("email")
-        name = raw_user_data.get("name") or raw_user_data.get("given_name", "")
-        avatar_url = raw_user_data.get("picture")
-        provider_user_id = raw_user_data.get("sub") or raw_user_data.get("id")
-
-        if not email or not provider_user_id:
-            logger.error(
-                "Missing required OAuth data: email=%s, provider_user_id=%s",
-                email,
-                provider_user_id,
-            )
-            return None
-
-        logger.info("Processing OAuth login for %s via %s", email, provider_id)
-
-        # Create unique user_id combining provider and provider_user_id
-        user_id = f"{provider_id}_{provider_user_id}"
-
-        # Try to get existing user from user_profiles table
-        existing_user = None
-        try:
-            response = (
-                supabase_client.table("user_profiles")
-                .select("*")
-                .eq("user_id", user_id)
-                .execute()
-            )
-            if response.data:
-                existing_user = response.data[0]
-                logger.info("Found existing user: %s", email)
-        except Exception as e:
-            logger.warning("Error checking existing user: %s", e)
-
-        # Prepare user data for upsert
-        user_data = {
-            "user_id": user_id,
-            "email": email,
-            "full_name": name,
-            "avatar_url": avatar_url,
-            "provider": provider_id,
-            "provider_user_id": provider_user_id,
-            "raw_oauth_details": raw_user_data,
-            "updated_at": "now()",
-        }
-
-        # If new user, set creation timestamp and default values
-        if not existing_user:
-            user_data.update(
-                {"subscription_tier": "free", "tokens_used": 0, "created_at": "now()"}
-            )
-            logger.info("Creating new user profile for %s", email)
-
-        # Upsert user data to Supabase
-        try:
-            upsert_response = (
-                supabase_client.table("user_profiles")
-                .upsert(user_data, on_conflict="user_id")
-                .execute()
-            )
-
-            if upsert_response.data:
-                logger.info("Successfully upserted user profile for %s", email)
-                stored_user = upsert_response.data[0]
-            else:
-                logger.error("Failed to upsert user profile - no data returned")
-                return None
-
-        except Exception as e:
-            logger.error("Error upserting user profile: %s", e)
-            return None
-
-        # Create and return Chainlit User object
-        chainlit_user = cl.User(
-            identifier=user_id,
-            metadata={
-                "email": email,
-                "name": name,
-                "avatar_url": avatar_url,
-                "provider": provider_id,
-                "provider_user_id": provider_user_id,
-                "subscription_tier": stored_user.get("subscription_tier", "free"),
-                "tokens_used": stored_user.get("tokens_used", 0),
-                "created_at": stored_user.get("created_at"),
-                "updated_at": stored_user.get("updated_at"),
-                **raw_user_data,  # Include all raw OAuth data
-            },
-        )
-
-        logger.info("OAuth authentication successful for %s (%s)", email, user_id)
-        return chainlit_user
-
-    except Exception as e:
-        logger.error("Error in OAuth callback: %s: %s", type(e).__name__, str(e))
+    logger.info("OAuth callback triggered for provider: %s", provider_id)
+    logger.debug("Raw user data keys: %s", list(raw_user_data.keys()))
+    logger.info("OAuth raw_user_data: %s", raw_user_data)  # Debug full OAuth response
+    stored_user = upsert_user_profile_from_oauth(provider_id, raw_user_data)
+    if not stored_user:
         return None
+    logger.info(
+        "OAuth avatar_url: %s", stored_user.get("avatar_url")
+    )  # Debug avatar_url
+    return cl.User(
+        identifier=stored_user["user_id"],
+        display_name=stored_user.get("full_name") or stored_user["user_id"],
+        avatar_url=stored_user.get("avatar_url"),  # Set avatar_url directly
+        metadata={
+            "email": stored_user.get("email"),
+            "name": stored_user.get("full_name"),
+            "avatar_url": stored_user.get("avatar_url"),
+            "provider": stored_user.get("provider"),
+            "provider_user_id": stored_user.get("provider_user_id"),
+            "subscription_tier": stored_user.get("subscription_tier", "free"),
+            "tokens_used": stored_user.get("tokens_used", 0),
+            "created_at": stored_user.get("created_at"),
+            "updated_at": stored_user.get("updated_at"),
+            **raw_user_data,
+        },
+    )
