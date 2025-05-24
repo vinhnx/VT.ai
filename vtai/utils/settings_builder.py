@@ -63,8 +63,6 @@ def _create_settings_widgets() -> List[Union[Select, Slider, Switch, TextInput]]
             label="Chat Model",
             description=(
                 "**Security Notice:** Your BYOK (Bring Your Own Key) API keys are never stored on the server. "
-                "They are encrypted and kept only in your local session. For persistent CLI/desktop storage, "
-                "use the [Python keyring package](https://pypi.org/project/keyring/) for secure OS keychain storage.\n\n"
                 "Select the Large Language Model (LLM) for chat conversations. "
                 "Different models have varying capabilities and performance characteristics."
             ),
