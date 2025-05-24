@@ -20,6 +20,7 @@ import chainlit as cl
 
 from vtai.utils import constants as const
 from vtai.utils import llm_providers_config as conf
+from vtai.utils.async_utils import make_async
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
 from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
 from vtai.utils.settings_builder import build_settings
@@ -243,14 +244,8 @@ async def on_message(message: cl.Message) -> None:
         user_id = cl.user_session.get("user_id")
         profile = get_user_profile() or {}
         if not profile and user_id:
-            profile = await cl.make_async(fetch_user_profile_from_supabase)(user_id)
-        if not profile:
-            await cl.Message(content="No user profile found.").send()
-        else:
-            await cl.Message(
-                content="Your profile:",
-                elements=[cl.CustomElement(name="UserProfile", props=profile)],
-            ).send()
+            profile = await make_async(fetch_user_profile_from_supabase)(user_id)
+        await send_user_profile_async(profile)
         return
 
     async with safe_execution(
@@ -355,20 +350,46 @@ def oauth_callback(
     )
 
 
+async def send_user_profile_async(profile: dict) -> None:
+    """Send the user profile as a custom Chainlit element (async context)."""
+    if not profile:
+        await cl.Message(content="No user profile found.").send()
+    else:
+        await cl.Message(
+            content="Your profile:",
+            elements=[cl.CustomElement(name="UserProfile", props=profile)],
+        ).send()
+
+
+def send_user_profile_sync(profile: dict) -> None:
+    """Send the user profile as a custom Chainlit element (sync context)."""
+    import inspect
+
+    if inspect.iscoroutine(profile):
+        profile = cl.run_sync(profile)
+    if not profile:
+        cl.run_sync(cl.Message(content="No user profile found.").send())
+    else:
+        cl.run_sync(
+            cl.Message(
+                content="Your profile:",
+                elements=[cl.CustomElement(name="UserProfile", props=profile)],
+            ).send()
+        )
+
+
 @cl.action_callback("show_user_profile")
 async def show_user_profile_action(action):
     """Show the current user's profile as a custom Chainlit element."""
     try:
         profile = get_user_profile()
         if not profile:
-            await cl.Message(content="No user profile found.").send()
-            return
-        await cl.Message(
-            content="Your profile:",
-            elements=[cl.CustomElement(name="UserProfile", props=profile)],
-        ).send()
+            user_id = cl.user_session.get("user_id")
+            if user_id:
+                profile = await make_async(fetch_user_profile_from_supabase)(user_id)
+        await send_user_profile_async(profile)
     except Exception as e:
-        logger.error(f"Error: {type(e).__name__}: {str(e)}")
+        logger.error("Error: %s: %s", type(e).__name__, str(e))
         await cl.Message(content="Failed to load user profile.").send()
 
 
@@ -380,14 +401,12 @@ async def show_user_profile_select_action(action):
             return
         profile = get_user_profile()
         if not profile:
-            await cl.Message(content="No user profile found.").send()
-            return
-        await cl.Message(
-            content="Your profile:",
-            elements=[cl.CustomElement(name="UserProfile", props=profile)],
-        ).send()
+            user_id = cl.user_session.get("user_id")
+            if user_id:
+                profile = await make_async(fetch_user_profile_from_supabase)(user_id)
+        await send_user_profile_async(profile)
     except Exception as e:
-        logger.error(f"Error: {type(e).__name__}: {str(e)}")
+        logger.error("Error: %s: %s", type(e).__name__, str(e))
         await cl.Message(content="Failed to load user profile.").send()
 
 
@@ -399,16 +418,6 @@ def on_settings_update(settings: dict) -> None:
         profile = get_user_profile() or {}
         if not profile and user_id:
             profile = make_async(fetch_user_profile_from_supabase)(user_id)
-        if not profile:
-            cl.run_sync(cl.Message(content="No user profile found.").send())
-        else:
-            cl.run_sync(
-                cl.Message(
-                    content="Your profile:",
-                    elements=[cl.CustomElement(name="UserProfile", props=profile)],
-                ).send()
-            )
+        send_user_profile_sync(profile)
         # Reset the select to 'No' so user can trigger again
-        settings["show_profile_select"] = "No"
-        settings["show_profile_select"] = "No"
         settings["show_profile_select"] = "No"
