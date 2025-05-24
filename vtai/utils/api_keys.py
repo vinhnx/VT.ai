@@ -44,4 +44,3 @@ def encrypt_api_key(api_key: str) -> str:
 def decrypt_api_key(encrypted_key: str) -> str:
     """Decrypt an API key from local session storage."""
     return cipher_suite.decrypt(encrypted_key.encode()).decode()
-    return cipher_suite.decrypt(encrypted_key.encode()).decode()
