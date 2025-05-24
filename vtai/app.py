@@ -299,50 +299,9 @@ async def on_message(message: cl.Message) -> None:
 
         # --- Local model dynamic config ---
         current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
-        # Ollama
-        if current_model and current_model.lower().startswith("ollama"):
-            ollama_model_name = get_setting("ollama_model_name") or ""
-            ollama_api_base = get_setting("ollama_api_base") or ""
-            if ollama_model_name:
-                current_model = f"ollama/{ollama_model_name}"
-                cl.user_session.set(conf.SETTINGS_CHAT_MODEL, current_model)
-            if ollama_api_base:
-                os.environ["OLLAMA_API_BASE"] = ollama_api_base
-        # LM Studio
-        if current_model and current_model.lower().startswith("lmstudio"):
-            lmstudio_model_name = get_setting("lmstudio_model_name") or ""
-            lmstudio_api_base = get_setting("lmstudio_api_base") or ""
-            if lmstudio_model_name:
-                current_model = f"lmstudio/{lmstudio_model_name}"
-                cl.user_session.set(conf.SETTINGS_CHAT_MODEL, current_model)
-            if lmstudio_api_base:
-                os.environ["LM_STUDIO_API_BASE"] = lmstudio_api_base
-        # llama.cpp
-        if current_model and current_model.lower().startswith("llamacpp"):
-            llamacpp_model_name = get_setting("llamacpp_model_name") or ""
-            llamacpp_api_base = get_setting("llamacpp_api_base") or ""
-            if llamacpp_model_name:
-                current_model = f"llamacpp/{llamacpp_model_name}"
-                cl.user_session.set(conf.SETTINGS_CHAT_MODEL, current_model)
-            if llamacpp_api_base:
-                os.environ["LLAMACPP_API_BASE"] = llamacpp_api_base
 
         # Set litellm API keys from settings (plain text, no encryption)
         set_litellm_api_keys_from_settings(user_keys)
-
-        # Check if current model is a reasoning model that benefits from <think>
-        is_reasoning = conf.is_reasoning_model(current_model)
-
-        # If this is a reasoning model and <think> is not already in content, add it
-        if is_reasoning and "<think>" not in message.content:
-            # Clone the original message content
-            original_content = message.content
-            # Modify the message content to include <think> tag
-            message.content = f"<think>{original_content}"
-            logger.info(
-                "Automatically added <think> tag for reasoning model: %s",
-                current_model,
-            )
 
         if message.elements and len(message.elements) > 0:
             await handle_files_attachment(
