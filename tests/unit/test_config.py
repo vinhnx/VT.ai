@@ -1,6 +1,7 @@
 """
 Unit tests for VT.ai config utilities.
 """
+
 import os
 from unittest.mock import MagicMock, patch
 
@@ -31,12 +32,21 @@ def test_load_api_keys(mock_load_dotenv, mock_find_dotenv, monkeypatch):
 @patch("vtai.utils.config.load_api_keys")
 @patch("vtai.utils.config.create_openai_clients")
 @patch("json.load")  # Patch the correct json module directly
-@patch("vtai.utils.config.open", create=True)  # Use create=True for functions that might not exist in all contexts
+@patch(
+    "vtai.utils.config.open", create=True
+)  # Use create=True for functions that might not exist in all contexts
 @patch("semantic_router.encoders.FastEmbedEncoder")
 @patch("semantic_router.Route")
 @patch("vtai.router.constants.RouteLayer")
-def test_initialize_app(mock_route_layer, mock_route, mock_encoder, mock_open,
-                      mock_json_load, mock_create_clients, mock_load_keys):
+def test_initialize_app(
+    mock_route_layer,
+    mock_route,
+    mock_encoder,
+    mock_open,
+    mock_json_load,
+    mock_create_clients,
+    mock_load_keys,
+):
     """Test application initialization."""
     # Setup mocks
     mock_encoder_instance = MagicMock()
@@ -54,17 +64,14 @@ def test_initialize_app(mock_route_layer, mock_route, mock_encoder, mock_open,
 
     # Mock JSON data
     mock_json_load.return_value = {
-        "routes": [
-            {
-                "name": "test-route",
-                "utterances": ["test utterance"]
-            }
-        ]
+        "routes": [{"name": "test-route", "utterances": ["test utterance"]}]
     }
 
     # Mock importlib.resources.files
     resources_mock = MagicMock()
-    with patch("vtai.utils.config.importlib.resources.files", return_value=resources_mock):
+    with patch(
+        "vtai.utils.config.importlib.resources.files", return_value=resources_mock
+    ):
         # Add enough mocking to make the test run
         mock_file = MagicMock()
         mock_open_result = MagicMock()
@@ -79,7 +86,6 @@ def test_initialize_app(mock_route_layer, mock_route, mock_encoder, mock_open,
 
     # Verify results - should be a 4-tuple
     assert isinstance(result, tuple)
-    assert len(result) == 4  # route_layer, assistant_id, openai_client, async_openai_client
-
-    # Verify API keys were loaded
-    mock_load_keys.assert_called_once()    mock_load_keys.assert_called_once()
+    assert (
+        len(result) == 4
+    )  # route_layer, assistant_id, openai_client, async_openai_client   mock_load_keys.assert_called_once

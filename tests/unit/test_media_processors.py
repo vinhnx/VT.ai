@@ -165,3 +165,4 @@ async def test_handle_trigger_async_image_gen(mock_aimage_generation, mock_cl_me
                                         mock_message_instance.send.call_count >= 1
                                     )  # Verify the message was sent
                                     assert mock_message_instance.send.call_count >= 1
+                                    assert mock_message_instance.send.call_count >= 1

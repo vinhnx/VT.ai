@@ -5,6 +5,7 @@ This module contains constants used throughout the application,
 including names, identifiers, and feature flags.
 """
 
+import os
 from typing import Dict, Final
 
 # Application names and identifiers
@@ -75,3 +76,4 @@ WEB_SEARCH_MODELS = [
 ]
 
 DEFAULT_WEB_SEARCH_MODEL = "gemini/gemini-2.0-flash-lite"
+

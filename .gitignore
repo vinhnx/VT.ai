@@ -125,12 +125,13 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+.env.*
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+/auth_page/.env
 
 # Spyder project settings
 .spyderproject
@@ -180,5 +181,40 @@ imgs/*
 # uv
 uv.lock
 .chainlit.backup
+
+# Node.js/Next.js/Vite/React build artifacts
+node_modules/
+.next/
+dist/
+.vite/
+.cache/
+*.log
+
+# Mac system files
+.DS_Store
+
+# Auth page build artifacts
+/auth_page/node_modules/
+/auth_page/.next/
+/auth_page/dist/
+/auth_page/.cache/
+/auth_page/.DS_Store
+
+# Vite/webpack cache
+.auth_page/vite-cache/
+
+# Yarn
+yarn.lock
+/auth_page/yarn.lock
+
+# npm
+package-lock.json
+/auth_page/package-lock.json
+
+# pnpm
+pnpm-lock.yaml
+/auth_page/pnpm-lock.yaml
+
+# End custom JS/TS ignores
 
 # End of https://www.toptal.com/developers/gitignore/api/python

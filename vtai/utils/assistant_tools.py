@@ -213,3 +213,4 @@ async def process_tool_call(
     else:
         await cl_step.send()
         await cl_step.send()
+        await cl_step.send()

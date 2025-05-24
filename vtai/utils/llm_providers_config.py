@@ -5,21 +5,17 @@ This module defines configuration constants and settings for various LLM provide
 models, and feature-specific settings used throughout the VT.ai application.
 """
 
-import json
+import logging
 import os
-import random
-from datetime import datetime
-from pathlib import Path
-from random import choice, shuffle
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import chainlit as cl
-from litellm import completion
 from pydantic import BaseModel
 
-from vtai.router.trainer import create_routes
-from vtai.utils.chat_profile import AppChatProfileType
-from vtai.utils.starter_prompts import get_shuffled_starters
+from .chat_profile import AppChatProfileType
+from .starter_prompts import get_shuffled_starters
+
+logger = logging.getLogger(__name__)
 
 # ===== MODEL CLASSES =====
 
@@ -79,16 +75,13 @@ SETTINGS_ENABLE_TTS_RESPONSE: str = "settings_enable_tts_response"
 # Web Search Settings
 SETTINGS_SUMMARIZE_SEARCH_RESULTS: str = "settings_summarize_search_results"
 
-# Reasoning Settings
-SETTINGS_REASONING_EFFORT: str = "settings_reasoning_effort"
-
 
 # ===== DEFAULT VALUES =====
 
 # Core Model Defaults
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
-DEFAULT_MODEL: str = "gemini/gemini-2.0-flash"
+DEFAULT_MODEL: str = "openrouter/google/gemma-3-27b-it:free"
 
 # Vision Model Defaults
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
@@ -112,9 +105,6 @@ SETTINGS_TRIMMED_MESSAGES_DEFAULT_VALUE: bool = True
 SETTINGS_ENABLE_TTS_RESPONSE_DEFAULT_VALUE: bool = True
 SETTINGS_USE_THINKING_MODEL_DEFAULT_VALUE: bool = False
 SETTINGS_SUMMARIZE_SEARCH_RESULTS_DEFAULT_VALUE: bool = True
-
-# Default reasoning settings
-DEFAULT_REASONING_EFFORT: str = "medium"
 
 
 # ===== OPTION LISTS =====
@@ -142,24 +132,6 @@ TTS_VOICE_PRESETS: List[str] = [
     "onyx",
     "nova",
     "shimmer",
-]
-
-# Reasoning Options
-REASONING_EFFORT_LEVELS: List[str] = ["low", "medium", "high"]
-
-# Models that benefit from <think> tag for reasoning
-REASONING_MODELS: List[str] = [
-    "deepseek/deepseek-reasoner",
-    "openrouter/deepseek/deepseek-r1:free",
-    "openrouter/deepseek/deepseek-r1",
-    "openrouter/deepseek/deepseek-chat-v3-0324:free",
-    "openrouter/deepseek/deepseek-chat-v3-0324",
-    "ollama/deepseek-r1:1.5b",
-    "ollama/deepseek-r1:7b",
-    "ollama/deepseek-r1:8b",
-    "ollama/deepseek-r1:14b",
-    "ollama/deepseek-r1:32b",
-    "ollama/deepseek-r1:70b",
 ]
 
 
@@ -200,20 +172,24 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "OpenAI - GPT-o1 Mini": "o1-mini",
     "OpenAI - GPT-o1 Pro": "o1-pro",
     # Anthropic models
-    "Anthropic - Claude 3.7 Sonnet": "claude-3-7-sonnet-20250219",
+    "Anthropic - Claude 4 Sonnet": "claude-sonnet-4-20250514",
+    "Anthropic - Claude 4 Opus": "claude-opus-4-20250514",
     "Anthropic - Claude 3.5 Sonnet": "claude-3-5-sonnet-20241022",
     "Anthropic - Claude 3.5 Haiku": "claude-3-5-haiku-20241022",
     # Google models
     "Google - Gemini 2.5 Pro": "gemini/gemini-2.5-pro-exp-03-25",
+    "Google - Gemini 2.5 Flash Preview": "gemini/gemini-2.5-flash-preview-04-17",
     "Google - Gemini 2.0 Flash": "gemini/gemini-2.0-flash",
     "Google - Gemini 2.0 Flash-Lite": "gemini/gemini-2.0-flash-lite",
-    "Google - Gemini 2.5 Flash Preview": "gemini/gemini-2.5-flash-preview-04-17",
     # DeepSeek models
     "DeepSeek R1": "deepseek/deepseek-reasoner",
     "DeepSeek V3": "deepseek/deepseek-chat",
     "DeepSeek Coder": "deepseek/deepseek-coder",
     # OpenRouter models
-    "OpenRouter - Qwen: Qwen3 0.6B (free)": "openrouter/qwen/qwen3-0.6b-04-28:free",
+    "OpenRouter - Mistral nemo (free)": "openrouter/mistralai/mistral-nemo:free",
+    "OpenRouter - Gemma 3": "openrouter/google/gemma-3-27b-it:free",
+    "OpenRouter - Google Gemini 2.0 Flash (free)": "openrouter/google/gemini-2.0-flash-exp:free",
+    "OpenRouter - Qwen: Qwen3 0.6B (free)": "openrouter/mistralai/mistral-nemo:free",
     "OpenRouter - DeepSeek R1 (free)": "openrouter/deepseek/deepseek-r1:free",
     "OpenRouter - DeepSeek R1": "openrouter/deepseek/deepseek-r1",
     "OpenRouter - DeepSeek V3 0324 (free)": "openrouter/deepseek/deepseek-chat-v3-0324:free",
@@ -263,52 +239,81 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
 
 # ===== UTILITY FUNCTIONS =====
 
+# Mapping from provider name to its primary API key environment variable name
+PROVIDER_TO_KEY_ENV_VAR: Dict[str, str] = {
+    "openai": "OPENAI_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
+    "anthropic": "ANTHROPIC_API_KEY",
+    "gemini": "GOOGLE_API_KEY",  # Google Gemini
+    "cohere": "COHERE_API_KEY",
+    "groq": "GROQ_API_KEY",
+    "mistral": "MISTRAL_API_KEY",
+    "deepseek": "DEEPSEEK_API_KEY",  # DeepSeek API
+    # Azure is special and handled separately in get_llm_params
+}
 
-def is_reasoning_model(model_id: str) -> bool:
+# Azure specific key environment variable names and their corresponding param names for LiteLLM
+AZURE_KEY_MAPPINGS: List[Tuple[str, str]] = [
+    ("AZURE_API_KEY", "api_key"),
+    ("AZURE_API_BASE", "api_base"),
+    ("AZURE_API_VERSION", "api_version"),
+]
+
+
+def get_llm_params(
+    model_name: str, user_keys: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     """
-    Check if a model is a reasoning model that benefits from <think> tags.
-
-    Args:
-            model_id: The ID of the model to check
-
-    Returns:
-            bool: True if the model is a reasoning model, False otherwise
+    Constructs the parameters for a LiteLLM API call, including API key management.
+    Priority: user_env (from config.toml UI) > user_keys (from Chat Settings) > os.getenv()
     """
-    return any(reasoning_model in model_id for reasoning_model in REASONING_MODELS)
+    params: Dict[str, Any] = {}
+    user_env = cl.user_session.get("env")  # From config.toml UI
+    provider = model_name.split("/")[0] if "/" in model_name else "openai"
 
+    if provider == "azure":
+        for azure_env_var, lite_llm_param_name in AZURE_KEY_MAPPINGS:
+            key_val_part: Optional[str] = None
 
-def supports_reasoning(model_id: str) -> bool:
-    """
-    Check if a model supports LiteLLM's standardized reasoning capabilities.
+            # 1. Try user_env (from config.toml UI)
+            if isinstance(user_env, dict) and user_env.get(azure_env_var):
+                key_val_part = user_env.get(azure_env_var)
+            # 2. Try user_keys (from Chat Settings UI)
+            elif (
+                isinstance(user_keys, dict)
+                and isinstance(user_keys.get("azure"), dict)
+                and user_keys["azure"].get(azure_env_var)
+            ):
+                key_val_part = user_keys["azure"].get(azure_env_var)
+            # 3. Try os.getenv()
+            elif os.getenv(azure_env_var):
+                key_val_part = os.getenv(azure_env_var)
 
-    This function checks if a model supports the standardized reasoning_content
-    feature in LiteLLM, which works across multiple providers including Anthropic,
-    DeepSeek, Bedrock, Vertex AI, OpenRouter, XAI, and Google AI.
+            if key_val_part:  # Only add to params if a non-empty value was found
+                params[lite_llm_param_name] = key_val_part
 
-    Args:
-        model_id: The ID of the model to check
+    elif provider in PROVIDER_TO_KEY_ENV_VAR:
+        env_var_name = PROVIDER_TO_KEY_ENV_VAR[provider]
+        key_val: Optional[str] = None
 
-    Returns:
-        bool: True if the model supports LiteLLM's reasoning capabilities, False otherwise
-    """
-    try:
-        import litellm
+        # 1. Try user_env (from config.toml UI)
+        if isinstance(user_env, dict) and user_env.get(env_var_name):
+            key_val = user_env.get(env_var_name)
+        # 2. Try user_keys (from Chat Settings UI, keyed by provider name, value is the string key)
+        elif (
+            isinstance(user_keys, dict)
+            and isinstance(user_keys.get(provider), str)
+            and user_keys.get(provider)
+        ):  # Check if it's a non-empty string
+            key_val = user_keys.get(provider)
+        # 3. Try os.getenv()
+        elif os.getenv(env_var_name):
+            key_val = os.getenv(env_var_name)
 
-        return litellm.supports_reasoning(model=model_id)
-    except (ImportError, Exception):
-        # Fall back to string matching if litellm.supports_reasoning is not available
-        reasoning_providers = [
-            "anthropic/",
-            "deepseek/",
-            "bedrock/",
-            "vertexai/",
-            "vertex_ai/",
-            "openrouter/anthropic/",
-            "openrouter/deepseek/",
-            "xai/",
-            "google/",
-        ]
-        return any(provider in model_id for provider in reasoning_providers)
+        if key_val:  # Only add to params if a non-empty value was found
+            params["api_key"] = key_val
+
+    return params
 
 
 # ===== RESOURCE PATHS =====
@@ -357,32 +362,5 @@ CHAT_PROFILES: List[ChatProfile] = [
     for profile in APP_CHAT_PROFILES
 ]
 
-
-# ===== PROVIDER CONFIGURATIONS =====
-
-# Default configuration for different LLM providers
-DEFAULT_PROVIDERS_CONFIG = {
-    "openai": {
-        "model": "gpt-4.1-nano",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-    },
-    "anthropic": {
-        "model": "claude-3-opus-20240229",
-        "temperature": 0.7,
-        "max_tokens": 2000,
-    },
-}
-
-
-def get_provider_config(provider_name: str) -> Dict[str, Any]:
-    """
-    Get the configuration for a specific LLM provider.
-
-    Args:
-            provider_name: The name of the provider (e.g., "openai", "anthropic")
-
-    Returns:
-            Dict[str, Any]: Configuration for the specified provider
-    """
-    return DEFAULT_PROVIDERS_CONFIG.get(provider_name, {})
+# NOTE: All API key handling in this file is via get_llm_params, which expects decrypted keys only.
+# No plain text API keys are stored or handled here. All encryption/decryption is handled upstream.

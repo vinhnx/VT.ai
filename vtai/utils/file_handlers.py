@@ -177,3 +177,4 @@ def validate_image_dimensions(
     except Exception as e:
         logger.error(f"Error validating image dimensions: {e}")
         return False, f"Error validating image: {str(e)}", None
+        return False, f"Error validating image: {str(e)}", None

@@ -12,7 +12,7 @@ import tempfile
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 # Set TOKENIZERS_PARALLELISM explicitly at module level before any imports
 # This prevents the HuggingFace tokenizers warning
@@ -22,11 +22,35 @@ import dotenv
 import httpx
 import litellm
 from dotenv import load_dotenv
-from openai import AsyncOpenAI, OpenAI
 
-# Update imports to use vtai namespace
-from router.constants import RouteLayer
-from utils import constants as const
+from vtai.utils import constants as const
+
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI, OpenAI
+
+# Fix: Ensure RouteLayer is imported before use
+try:
+    from router.constants import RouteLayer
+except ImportError:
+    RouteLayer = None
+    logger = logging.getLogger("vt.ai")
+    logger.error("RouteLayer import failed. Check router.constants module.")
+
+# Fix: Ensure OpenAI and AsyncOpenAI are imported before use in create_openai_clients
+try:
+    from openai import AsyncOpenAI, OpenAI
+except ImportError:
+    OpenAI = None
+    AsyncOpenAI = None
+    logger.error("OpenAI import failed. Please check openai package installation.")
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from openai import AsyncOpenAI, OpenAI
+
+# Feature flags for authentication and Supabase integration
+VT_AUTH_ENABLE = os.environ.get("VT_AUTH_ENABLE", "0") == "1"
+VT_SUPABASE_ENABLE = os.environ.get("VT_SUPABASE_ENABLE", "0") == "1"
 
 # Configure logging - set level based on environment
 log_level = os.environ.get("VT_LOG_LEVEL", "INFO").upper()
@@ -193,7 +217,7 @@ def load_api_keys() -> None:
 
 
 @lru_cache(maxsize=2)
-def create_openai_clients() -> Tuple[OpenAI, AsyncOpenAI]:
+def create_openai_clients() -> Tuple[Any, Any]:
     """
     Create OpenAI clients with optimized connection settings.
     Results are cached to avoid duplicate client creation.
@@ -226,7 +250,7 @@ def create_openai_clients() -> Tuple[OpenAI, AsyncOpenAI]:
     return sync_client, async_client
 
 
-def get_openai_client() -> OpenAI:
+def get_openai_client() -> Any:
     """
     Returns a cached synchronous OpenAI client with optimized connection settings.
 
@@ -477,7 +501,7 @@ def load_routes(encoder=None, use_cache: bool = True) -> list:
         return []
 
 
-def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
+def initialize_app() -> tuple:
     """
     Initialize the application configuration.
 
@@ -499,6 +523,11 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
     # Configure litellm for better timeout handling
     litellm.request_timeout = 60  # 60 seconds timeout
 
+    # Setup LiteLLM Supabase callbacks
+    from utils.supabase_client import setup_litellm_callbacks
+
+    setup_litellm_callbacks()
+
     # Initialize encoder - potentially lazily in fast mode
     encoder = initialize_encoder(lazy_load=fast_start)
 
@@ -506,10 +535,14 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
     if fast_start and not encoder:
         # Create a minimal RouteLayer with empty routes in fast mode
         # The real initialization will happen on first use
-        from semantic_router import RouteLayer as EmptyRouteLayer
-
-        route_layer = EmptyRouteLayer(routes=[])
-        logger.info("Created minimal route layer for fast startup")
+        if RouteLayer:
+            route_layer = RouteLayer(routes=[])
+            logger.info("Created minimal route layer for fast startup")
+        else:
+            route_layer = None
+            logger.error(
+                "RouteLayer is not defined. Fast startup route layer not created."
+            )
     else:
         # Normal initialization with encoder
         from semantic_router import Route
@@ -517,8 +550,12 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
         routes = load_routes(encoder=encoder, use_cache=True)
 
         # Create RouteLayer with the routes
-        route_layer = RouteLayer(routes=routes, encoder=encoder)
-        logger.info(f"Initialized route layer with {len(routes)} routes")
+        if RouteLayer:
+            route_layer = RouteLayer(routes=routes, encoder=encoder)
+            logger.info(f"Initialized route layer with {len(routes)} routes")
+        else:
+            route_layer = None
+            logger.error("RouteLayer is not defined. Route layer not created.")
 
     # Initialize OpenAI clients
     openai_client, async_openai_client = create_openai_clients()

@@ -23,9 +23,11 @@ from openai import OpenAI
 from PIL import Image
 
 # Update imports to use vtai namespace
-from utils import llm_providers_config as conf
-from utils.config import get_openai_client, logger
-from utils.user_session_helper import (
+from vtai.utils import llm_providers_config as conf
+from vtai.utils.config import get_openai_client, logger
+from vtai.utils.conversation_core import handle_conversation
+from vtai.utils.llm_providers_config import get_llm_params
+from vtai.utils.user_session_helper import (
     get_setting,
     get_user_session_id,
     update_message_history_from_assistant,
@@ -300,8 +302,6 @@ async def handle_audio_understanding(path: str, prompt: str = None) -> None:
         logger.info(f"Using prompt: {prompt}")
 
         # Get OpenAI client
-        from utils.config import get_openai_client
-
         openai_client = get_openai_client()
 
         # Check if the model supports direct audio input
@@ -340,6 +340,10 @@ async def handle_audio_understanding(path: str, prompt: str = None) -> None:
                     }
                 ]
 
+                # Get user keys for BYOK support
+                user_keys = cl.user_session.get("user_keys", {})
+                llm_params = get_llm_params(model, user_keys=user_keys)
+
                 # Try with LiteLLM - ensure this is properly awaited
                 completion_coroutine = litellm.acompletion(
                     user=get_user_session_id(),
@@ -347,6 +351,7 @@ async def handle_audio_understanding(path: str, prompt: str = None) -> None:
                     messages=input_messages,
                     modalities=["text", "audio"],
                     timeout=90.0,
+                    **llm_params,
                 )
 
                 response = await asyncio.wait_for(
@@ -472,6 +477,10 @@ async def handle_audio_understanding(path: str, prompt: str = None) -> None:
 
         # Call the API to analyze the transcription - ensure all async calls are properly awaited
         if "gemini" in model.lower():
+            # Get user keys for BYOK support
+            user_keys = cl.user_session.get("user_keys", {})
+            llm_params = get_llm_params(analysis_model, user_keys=user_keys)
+
             # Use LiteLLM for Gemini models
             gemini_completion_coroutine = litellm.acompletion(
                 user=get_user_session_id(),
@@ -484,6 +493,7 @@ async def handle_audio_understanding(path: str, prompt: str = None) -> None:
                     {"role": "user", "content": analysis_prompt},
                 ],
                 temperature=0.3,
+                **llm_params,
             )
 
             analysis_response = await asyncio.wait_for(
@@ -600,8 +610,6 @@ async def speech_to_text(audio_file: BinaryIO) -> str:
     Returns:
         Transcribed text from the audio
     """
-    from utils.config import get_openai_client
-
     openai_client = get_openai_client()
 
     try:
@@ -708,7 +716,6 @@ async def process_audio() -> None:
         cl.user_session.set("message_history", messages)
 
         # Get the current conversation handler based on settings
-        from utils.conversation_handlers import handle_conversation
 
         # Create a message object for processing
         temp_message = cl.Message(content=transcription)
@@ -820,6 +827,11 @@ async def handle_vision(
 
         # Use the Chat Completions API directly instead of trying Response API first
         logger.info(f"Using Chat Completions API for vision model: {vision_model}")
+
+        # Get user keys for BYOK support
+        user_keys = cl.user_session.get("user_keys", {})
+        llm_params = get_llm_params(vision_model, user_keys=user_keys)
+
         vresponse = await asyncio.wait_for(
             litellm.acompletion(
                 user=get_user_session_id(),
@@ -827,6 +839,7 @@ async def handle_vision(
                 messages=input_messages,
                 timeout=45.0,  # Add a specific timeout in litellm
                 response_format={"type": "text"},
+                **llm_params,
             ),
             timeout=60.0,  # Overall operation timeout
         )

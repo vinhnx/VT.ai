@@ -61,28 +61,48 @@ source .venv/bin/activate  # Linux/Mac
 uv pip install -e ".[dev]"  # Install with development dependencies
 ```
 
+For public/shared deployments, use Chainlit's `user_env` config to prompt each user for their own API keys (BYOK). This ensures user keys are never exposed or shared between users.
+
 ### API Key Configuration
 
 Configure API keys to enable specific model capabilities:
 
 ```bash
-# Command-line configuration
+# Command-line configuration (local/private use)
 vtai --api-key openai=sk-your-key-here
 
-# Environment variable configuration
+# Environment variable configuration (local/private use)
 export OPENAI_API_KEY='sk-your-key-here'  # For OpenAI models
 export ANTHROPIC_API_KEY='sk-ant-your-key-here'  # For Claude models
 export GEMINI_API_KEY='your-key-here'  # For Gemini models
+
+# Feature flags for monetization (optional, local/private use only)
+export VT_AUTH_ENABLE=1           # Enable authentication (default: off)
+export VT_SUPABASE_ENABLE=1       # Enable Supabase logging/analytics (default: off)
 ```
 
-API keys are securely stored in `~/.config/vtai/.env` for future use.
+API keys are securely stored in `~/.config/vtai/.env` for future use (local/private only).
+
+**For public/shared deployments:**
+
+- Do NOT put your own API keys in `.env`.
+- Use Chainlit's `user_env` config to prompt each user for their own API keys (BYOK).
+- Access user keys in code with:
+
+```python
+import chainlit as cl
+user_env = cl.user_session.get("env")
+openai_key = user_env.get("OPENAI_API_KEY") if user_env else None
+```
+
+This ensures user keys are never exposed or shared between users.
 
 ## Usage Guide
 
 ### Programmatic Usage
 
 ```python
-from vtai.app import run_app
+from app import run_app
 
 # Basic usage with default settings
 run_app()

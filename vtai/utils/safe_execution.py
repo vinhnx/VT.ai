@@ -52,3 +52,4 @@ async def safe_execution(
     except Exception as e:
         logger.error(f"Error in {operation_name}: {e}")
         await handle_exception(e)
+        await handle_exception(e)

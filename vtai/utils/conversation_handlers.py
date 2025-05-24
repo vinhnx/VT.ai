@@ -1,5 +1,5 @@
 """
-Conversation handling utilities for VT application.
+Conversation handler for VT application.
 
 Handles chat interactions, semantic routing, and message processing.
 """
@@ -13,32 +13,37 @@ from typing import Any, Dict, List
 
 import chainlit as cl
 import litellm
+from chainlit.action import Action
 from litellm.utils import trim_messages
-from openai import AsyncOpenAI
-from utils import llm_providers_config as conf
-from utils.config import logger
-from utils.error_handlers import handle_exception, safe_execution
-from utils.media_processors import (
+
+from vtai.router.constants import SemanticRouterType
+from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
+from vtai.utils import llm_providers_config as conf
+from vtai.utils.config import logger
+from vtai.utils.conversation_core import handle_conversation, handle_trigger_async_chat
+from vtai.utils.error_handlers import safe_execution
+from vtai.utils.media_processors import (
     handle_audio_transcribe,
     handle_audio_understanding,
     handle_trigger_async_image_gen,
     handle_vision,
 )
-from utils.url_extractor import extract_url
-from utils.user_session_helper import (
+from vtai.utils.settings_builder import DEFAULT_SYSTEM_PROMPT
+
+from .supabase_client import log_request_to_supabase
+from .url_extractor import extract_url
+from .user_session_helper import (
     get_setting,
+    get_user_email,
+    get_user_id,
     get_user_session_id,
     update_message_history_from_assistant,
-    update_message_history_from_user,
 )
-
-from vtai.router.constants import SemanticRouterType
-from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
 
 
 def create_message_actions(content: str, model: str) -> List[cl.Action]:
     """
-    Creates standard message actions for chat responses.
+    Creates standard message actions for chat responses, using Lucid icons.
 
     Args:
         content: The message content
@@ -54,7 +59,7 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     if enable_tts_response:
         actions.append(
             cl.Action(
-                icon="speech",
+                icon="lucide:volume-2",
                 name="speak_chat_response_action",
                 payload={"value": content},
                 tooltip="Speak response",
@@ -65,6 +70,7 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     # Add model change action
     actions.append(
         cl.Action(
+            icon="lucide:settings",
             name="change_model_action",
             payload={"value": content},
             label=f"Using: {model}",
@@ -75,6 +81,32 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     return actions
 
 
+@cl.action_callback("change_model_action")
+async def on_change_model_action(action: Action) -> None:
+    """
+    Handle the change model action click.
+    Shows an inline text notification instructing the user how to change the model.
+
+    Args:
+        action: The action that was triggered
+    """
+    try:
+        await action.remove()
+        text_content = (
+            "To change the model, click the settings gear icon in the input bar and select a "
+            "different model from the 'Chat Model' dropdown."
+        )
+        elements = [
+            cl.Text(
+                name="Change Language Model", content=text_content, display="inline"
+            )
+        ]
+        await cl.Message(content="", elements=elements).send()
+    except Exception as e:
+        logger.error("Error in change_model_action: %s: %s", type(e).__name__, str(e))
+        await cl.Message(content="Unable to show model change instructions.").send()
+
+
 async def use_chat_completion_api(
     model: str,
     messages: List[Dict[str, str]],
@@ -82,10 +114,11 @@ async def use_chat_completion_api(
     top_p: float,
     stream_callback,
     timeout: float = 120.0,
+    user_keys: dict = None,
 ) -> None:
     """
-    Uses the Chat Completions API directly instead of trying Responses API first.
-    Handles streaming for the API.
+    Uses the Chat Completions API with enhanced Supabase logging.
+    Handles streaming for the API and logs detailed usage information.
 
     Args:
         model: The LLM model to use
@@ -94,106 +127,98 @@ async def use_chat_completion_api(
         top_p: Top-p parameter for the model
         stream_callback: Callback function to handle streaming tokens
         timeout: Timeout in seconds for the operation
+        user_keys: User-specific keys for BYOK
     """
-    logger.info(f"Using Chat Completions API for model: {model}")
-    stream = await asyncio.wait_for(
-        litellm.acompletion(
-            user=get_user_session_id(),
-            model=model,
-            messages=messages,
-            stream=True,
-            num_retries=3,
-            temperature=temperature,
-            top_p=top_p,
-            timeout=timeout
-            - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
-            response_format={"type": "text"},
-        ),
-        timeout=timeout,
+    logger.info("Using Chat Completions API for model: %s", model)
+
+    # Get both session ID and authenticated user ID
+    session_id = get_user_session_id()
+    auth_user_id = get_user_id()
+    user_email = get_user_email()
+
+    # Use authenticated user ID if available, otherwise fall back to session ID
+    user_for_litellm = auth_user_id if auth_user_id else session_id
+
+    logger.info(
+        "User context: session=%s, auth_user=%s, email=%s, using=%s",
+        session_id[:8] + "..." if session_id else None,
+        auth_user_id,
+        user_email,
+        user_for_litellm[:8] + "..." if user_for_litellm else None,
     )
 
-    # Process Chat Completions API format
-    async for part in stream:
-        if token := part.choices[0].delta.content or "":
-            await stream_callback(token)
+    start_time = time.time()
 
+    # Inject BYOK params if provided
+    if user_keys:
+        set_litellm_api_keys_from_settings(user_keys)
 
-async def handle_trigger_async_chat(
-    llm_model: str, messages: List[Dict[str, str]], current_message: cl.Message
-) -> None:
-    """
-    Triggers an asynchronous chat completion using the specified LLM model.
-    Streams the response back to the user and updates the message history.
-
-    Args:
-        llm_model: The LLM model to use
-        messages: The conversation history messages
-        current_message: The chainlit message object to stream response to
-    """
-    temperature = get_setting(conf.SETTINGS_TEMPERATURE)
-    top_p = get_setting(conf.SETTINGS_TOP_P)
-
-    async def on_timeout():
-        await current_message.stream_token(
-            "\n\nI apologize, but the response timed out. Please try again with a shorter query."
+    try:
+        stream = await asyncio.wait_for(
+            litellm.acompletion(
+                user=user_for_litellm,
+                model=model,
+                messages=messages,
+                stream=True,
+                num_retries=3,
+                temperature=temperature,
+                top_p=top_p,
+                timeout=timeout
+                - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
+                response_format={"type": "text"},
+            ),
+            timeout=timeout,
         )
-        await current_message.update()
 
-    async with safe_execution(
-        operation_name=f"chat completion with model {llm_model}", on_timeout=on_timeout
-    ):
-        # Use the helper function for API calls
-        await use_chat_completion_api(
-            model=llm_model,
+        response_content = ""
+        total_tokens = 0
+        async for part in stream:
+            if token := part.choices[0].delta.content or "":
+                await stream_callback(token)
+                response_content += token
+                total_tokens += 1  # Rough token estimation for streaming
+
+        # Extract provider from model name
+        provider = model.split("/")[0] if "/" in model else "openai"
+
+        # Calculate cost estimate (this will be more accurate with non-streaming)
+        try:
+            cost_estimate = litellm.completion_cost(model=model)
+        except Exception:
+            cost_estimate = None
+
+        # Enhanced logging with token tracking
+        log_request_to_supabase(
+            model=model,
             messages=messages,
-            temperature=temperature,
-            top_p=top_p,
-            stream_callback=current_message.stream_token,
+            response={"content": response_content},
+            end_user=user_for_litellm,
+            status="success",
+            response_time=time.time() - start_time,
+            total_cost=cost_estimate,
+            user_profile_id=(
+                auth_user_id if auth_user_id else None
+            ),  # Use authenticated user ID for profile linking
+            tokens_used=total_tokens,
+            provider=provider,
         )
-
-        # After successful streaming, update the message content and history
-        content = current_message.content
-        update_message_history_from_assistant(content)
-
-        # Set the actions on the message using the helper function
-        current_message.actions = create_message_actions(content, llm_model)
-
-        await current_message.update()
-
-
-async def handle_conversation(
-    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
-) -> None:
-    """
-    Handles text-based conversations with the user.
-    Routes the conversation based on settings and semantic understanding.
-
-    Args:
-        message: The user message object
-        messages: The conversation history
-        route_layer: The semantic router layer
-    """
-    model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    # Use "assistant" as the author name to match the avatar file in /public/avatars/
-    msg = cl.Message(content="")
-    await msg.send()
-
-    query = message.content
-    update_message_history_from_user(query)
-
-    async with safe_execution(operation_name="conversation handling"):
-        use_dynamic_conversation_routing = get_setting(
-            conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
+    except Exception as e:
+        logger.error("Error: %s: %s", type(e).__name__, str(e))
+        # Enhanced error logging
+        provider = model.split("/")[0] if "/" in model else "openai"
+        log_request_to_supabase(
+            model=model,
+            messages=messages,
+            response=None,
+            end_user=user_for_litellm,
+            status="failure",
+            error={"error": str(e)},
+            response_time=time.time() - start_time,
+            user_profile_id=auth_user_id if auth_user_id else None,
+            provider=provider,
         )
-
-        if use_dynamic_conversation_routing and route_layer:
-            await handle_dynamic_conversation_routing(
-                messages, model, msg, query, route_layer
-            )
-        else:
-            await handle_trigger_async_chat(
-                llm_model=model, messages=messages, current_message=msg
-            )
+        # Reraise for upstream error handling
+        raise
 
 
 async def handle_dynamic_conversation_routing(
@@ -202,6 +227,7 @@ async def handle_dynamic_conversation_routing(
     msg: cl.Message,
     query: str,
     route_layer: Any,
+    user_keys: dict = None,
 ) -> None:
     """
     Routes the conversation dynamically based on the semantic understanding of the user's query.
@@ -212,6 +238,7 @@ async def handle_dynamic_conversation_routing(
         msg: The chainlit message object
         query: The user's query
         route_layer: The semantic router layer
+        user_keys: User-specific API keys for BYOK
     """
     async with safe_execution(operation_name="dynamic conversation routing"):
         route_choice = route_layer(query)
@@ -221,39 +248,48 @@ async def handle_dynamic_conversation_routing(
         if should_trimmed_messages:
             messages = trim_messages(messages, model)
 
-        logger.info(f"Query: {query} classified as route: {route_choice_name}")
+        logger.info("Query: %s classified as route: %s", query, route_choice_name)
 
         if route_choice_name == SemanticRouterType.IMAGE_GENERATION:
-            logger.info(f"Processing {route_choice_name} - Image generation")
+            logger.info("Processing %s - Image generation", route_choice_name)
             await handle_trigger_async_image_gen(query)
 
         elif route_choice_name == SemanticRouterType.VISION_IMAGE_PROCESSING:
             urls = extract_url(query)
             if len(urls) > 0:
-                logger.info(f"Processing {route_choice_name} - Vision with URL")
+                logger.info("Processing %s - Vision with URL", route_choice_name)
                 url = urls[0]
                 await handle_vision(input_image=url, prompt=query, is_local=False)
             else:
                 logger.info(
-                    f"Processing {route_choice_name} - No image URL, using chat"
+                    "Processing %s - No image URL, using chat", route_choice_name
                 )
                 await handle_trigger_async_chat(
-                    llm_model=model, messages=messages, current_message=msg
+                    llm_model=model,
+                    messages=messages,
+                    current_message=msg,
+                    user_keys=user_keys,
                 )
 
         elif route_choice_name == SemanticRouterType.WEB_SEARCH:
-            logger.info(f"Processing {route_choice_name} - Web search")
+            logger.info("Processing %s - Web search", route_choice_name)
             await handle_web_search(query=query, current_message=msg)
 
         else:
-            logger.info(f"Processing {route_choice_name} - Default chat")
+            logger.info("Processing %s - Default chat", route_choice_name)
             await handle_trigger_async_chat(
-                llm_model=model, messages=messages, current_message=msg
+                llm_model=model,
+                messages=messages,
+                current_message=msg,
+                user_keys=user_keys,
             )
 
 
 async def handle_files_attachment(
-    message: cl.Message, messages: List[Dict[str, str]], async_openai_client: Any
+    message: cl.Message,
+    messages: List[Dict[str, str]],
+    async_openai_client: Any,
+    user_keys: dict = None,
 ) -> None:
     """
     Handles file attachments from the user.
@@ -262,6 +298,7 @@ async def handle_files_attachment(
         message: The user message with attachments
         messages: The conversation history
         async_openai_client: The AsyncOpenAI client
+        user_keys: User-specific API keys for BYOK
     """
     if not message.elements:
         await cl.Message(content="No file attached").send()
@@ -282,15 +319,19 @@ async def handle_files_attachment(
                     p = pathlib.Path(path)
                     s = p.read_text(encoding="utf-8")
                     message.content = s
-                    await handle_conversation(message, messages, None)
+                    await handle_conversation(
+                        message, messages, None, user_keys=user_keys
+                    )
                 except UnicodeDecodeError:
                     # Try with a different encoding if UTF-8 fails
                     try:
                         s = p.read_text(encoding="latin-1")
                         message.content = s
-                        await handle_conversation(message, messages, None)
+                        await handle_conversation(
+                            message, messages, None, user_keys=user_keys
+                        )
                     except Exception as e:
-                        logger.error(f"Error reading text file: {e}")
+                        logger.error("Error reading text file: %s", e)
                         await cl.Message(
                             content=f"Failed to read text file: {str(e)}"
                         ).send()
@@ -302,7 +343,7 @@ async def handle_files_attachment(
                     or "understand" in prompt.lower()
                     or "explain" in prompt.lower()
                 ):
-                    logger.info(f"Using advanced audio understanding for file: {path}")
+                    logger.info("Using advanced audio understanding for file: %s", path)
                     # Use the new audio understanding with the user's prompt
                     await handle_audio_understanding(path, prompt)
                 else:
@@ -317,7 +358,7 @@ async def handle_files_attachment(
                         ).send()
 
             else:
-                logger.warning(f"Unsupported mime type: {mime_type}")
+                logger.warning("Unsupported mime type: %s", mime_type)
                 await cl.Message(
                     content=f"File type {mime_type} is not supported for direct processing."
                 ).send()
@@ -336,380 +377,17 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
             conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL)
         )
 
-        # Initialize with a standard system message
+        # Use custom system prompt if set, else default
+        custom_prompt = settings.get("custom_system_prompt")
+        if custom_prompt and custom_prompt.strip():
+            system_prompt = custom_prompt.strip()
+        else:
+            system_prompt = DEFAULT_SYSTEM_PROMPT
         system_message = {
             "role": "system",
-            "content": "You are a helpful assistant who tries their best to answer questions: ",
+            "content": system_prompt,
         }
-
         cl.user_session.set("message_history", [system_message])
-
-
-async def handle_thinking_conversation(
-    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
-) -> None:
-    """
-    Handles conversations with visible thinking process.
-    Shows the AI's reasoning before presenting the final answer.
-    Uses <think> and </think> tags within the model's response to toggle between thinking and final answer.
-
-    Args:
-        message: The user message object
-        messages: The conversation history
-        route_layer: The semantic router layer
-    """
-    # Track start time for the thinking duration
-    start = time.time()
-
-    # Get model and settings
-    model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    temperature = get_setting(conf.SETTINGS_TEMPERATURE) or 0.7
-    top_p = get_setting(conf.SETTINGS_TOP_P) or 0.9
-
-    # Remove the <think> tag from the query if it exists in the user message
-    query = message.content.replace("<think>", "").strip()
-    update_message_history_from_user(query)
-
-    # Add special instruction to the model to use <think> tags
-    thinking_messages = [m.copy() for m in messages]
-    # Add a system message with instructions about using <think> tags
-    thinking_messages.append(
-        {
-            "role": "system",
-            "content": "When responding to this query, first use <think> tag to show your reasoning process, then close it with </think> and provide your final answer.",
-        }
-    )
-    # Add the user query
-    thinking_messages.append({"role": "user", "content": query})
-
-    # Create empty objects that will be initialized in the context
-    thinking_step = None
-    final_answer = None
-    thinking = False
-
-    async with safe_execution(
-        operation_name=f"thinking conversation with model {model}"
-    ):
-        # Start with a thinking step
-        async with cl.Step(name="Thinking") as step:
-            thinking_step = step
-            # Create a message for the final answer, but don't send it yet
-            final_answer = cl.Message(content="")
-
-            # Define a custom streaming callback that handles thinking tags
-            async def thinking_stream_callback(content):
-                nonlocal thinking, thinking_step, final_answer
-
-                # Skip if content is None or empty
-                if not content:
-                    return
-
-                # Check for exact <think> tag
-                if content == "<think>":
-                    thinking = True
-                    return
-
-                # Check for exact </think> tag
-                elif content == "</think>":
-                    thinking = False
-                    # Update the thinking step with duration
-                    thought_for = round(time.time() - start)
-                    thinking_step.name = f"Thought for {thought_for}s"
-                    await thinking_step.update()
-                    return
-
-                # Stream content based on thinking flag
-                if thinking:
-                    # Stream to thinking step
-                    await thinking_step.stream_token(content)
-                else:
-                    # Stream to final answer
-                    await final_answer.stream_token(content)
-
-            # Use the API fallback helper
-            await use_chat_completion_api(
-                model=model,
-                messages=thinking_messages,
-                temperature=float(temperature),
-                top_p=float(top_p),
-                stream_callback=thinking_stream_callback,
-                timeout=120.0,
-            )
-
-        # Send the final answer after thinking is complete
-        if not final_answer.content:
-            # If no final answer was provided, create a fallback message
-            await cl.Message(
-                content="I've thought about this but don't have a specific answer to provide."
-            ).send()
-        else:
-            # Update message history and add TTS action
-            content = final_answer.content
-            update_message_history_from_assistant(content)
-
-            # Set the actions on the message using the helper function
-            final_answer.actions = create_message_actions(content, model)
-
-            await final_answer.send()
-
-
-async def handle_deepseek_reasoner_conversation(
-    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
-) -> None:
-    """
-    Handles conversations using DeepSeek Reasoner model with its native reasoning capability.
-    Shows the AI's reasoning process before presenting the final answer.
-    Uses DeepSeek's reasoning_content attribute for the thinking process.
-
-    Args:
-        message: The user message object
-        messages: The conversation history
-        route_layer: The semantic router layer
-    """
-    # Track start time for the thinking duration
-    start = time.time()
-
-    # Get settings
-    deepseek_api_key = os.getenv("DEEP_SEEK_API_KEY")
-    if not deepseek_api_key:
-        await cl.Message(
-            content="DeepSeek API key not found. Please set the DEEP_SEEK_API_KEY environment variable."
-        ).send()
-        return
-
-    model = "deepseek-reasoner"  # DeepSeek Reasoner model
-    query = message.content.strip()
-    update_message_history_from_user(query)
-
-    # Create DeepSeek client
-    client = AsyncOpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
-
-    # Variables that will be initialized in the context
-    thinking_step = None
-    final_answer = None
-    thinking_completed = False
-
-    async with safe_execution(
-        operation_name=f"deepseek reasoner conversation with model {model}"
-    ):
-        # Prepare messages for the API call
-        deepseek_messages = [
-            {"role": "system", "content": "You are a helpful assistant"},
-        ]
-
-        # Add conversation history
-        for msg in messages:
-            if msg["role"] != "system":  # Skip system messages from history
-                deepseek_messages.append(msg)
-
-        # Add the current user query
-        deepseek_messages.append({"role": "user", "content": query})
-
-        # Create the stream
-        stream = await client.chat.completions.create(
-            model=model,
-            messages=deepseek_messages,
-            stream=True,
-        )
-
-        # Start with a thinking step
-        async with cl.Step(name="Thinking") as step:
-            thinking_step = step
-            # Create a message for the final answer, but don't send it yet
-            final_answer = cl.Message(content="")
-
-            # Process the reasoning content first
-            async for chunk in stream:
-                delta = chunk.choices[0].delta
-                reasoning_content = getattr(delta, "reasoning_content", None)
-
-                if reasoning_content is not None and not thinking_completed:
-                    # Stream the reasoning content to the thinking step
-                    await thinking_step.stream_token(reasoning_content)
-                elif not thinking_completed:
-                    # Exit the thinking step when reasoning is complete
-                    thought_for = round(time.time() - start)
-                    thinking_step.name = f"Thought for {thought_for}s"
-                    await thinking_step.update()
-                    thinking_completed = True
-                    break
-
-        # Stream the final answer content
-        async for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta.content:
-                await final_answer.stream_token(delta.content)
-
-        # Send the final answer after thinking is complete
-        if not final_answer.content:
-            # If no final answer was provided, create a fallback message
-            await cl.Message(
-                content="I've thought about this but don't have a specific answer to provide.",
-            ).send()
-        else:
-            # Update message history and add TTS action
-            content = final_answer.content
-            update_message_history_from_assistant(content)
-
-            # Set the actions on the message using the helper function
-            final_answer.actions = create_message_actions(content, model)
-
-            await final_answer.send()
-
-
-async def handle_reasoning_conversation(
-    message: cl.Message, messages: List[Dict[str, str]], route_layer: Any
-) -> None:
-    """
-    Handles conversations with enhanced reasoning capabilities using LiteLLM's standardized reasoning_content.
-
-    Works across multiple providers including Anthropic, DeepSeek, Google AI, Vertex AI, and more.
-    Shows the AI's step-by-step reasoning process before presenting the final answer.
-
-    Args:
-        message: The user message object
-        messages: The conversation history
-        route_layer: The semantic router layer
-    """
-    # Track start time for the thinking duration
-    start = time.time()
-
-    # Get model and settings
-    model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    temperature = get_setting(conf.SETTINGS_TEMPERATURE) or 0.7
-    top_p = get_setting(conf.SETTINGS_TOP_P) or 0.9
-
-    # Get the reasoning effort setting with fallback to medium
-    reasoning_effort = (
-        get_setting(conf.SETTINGS_REASONING_EFFORT) or conf.DEFAULT_REASONING_EFFORT
-    )
-
-    # Extract query from user message
-    query = message.content.strip()
-    update_message_history_from_user(query)
-
-    # Create a copy of messages for reasoning
-    reasoning_messages = [m.copy() for m in messages]
-
-    # Add the user query
-    reasoning_messages.append({"role": "user", "content": query})
-
-    # Create empty objects that will be initialized in the context
-    thinking_step = None
-    final_answer = None
-    thinking_completed = False
-
-    async with safe_execution(
-        operation_name=f"reasoning conversation with model {model}"
-    ):
-        # First check if model supports reasoning
-        if not litellm.supports_reasoning(model=model):
-            logger.info(
-                f"Model {model} does not support reasoning. Falling back to regular chat."
-            )
-            await handle_trigger_async_chat(
-                llm_model=model, messages=reasoning_messages, current_message=message
-            )
-            return
-
-        # Start with a thinking step
-        async with cl.Step(name="Thinking") as step:
-            thinking_step = step
-            # Create a message for the final answer, but don't send it yet
-            final_answer = cl.Message(content="")
-
-            # Define callback to handle streaming the reasoning content
-            async def reasoning_stream_callback(content, is_reasoning=False):
-                nonlocal thinking_step, final_answer
-
-                if is_reasoning:
-                    # Stream to thinking step
-                    await thinking_step.stream_token(content)
-                else:
-                    # Stream to final answer
-                    await final_answer.stream_token(content)
-
-            # Define custom streaming callback to handle streaming response
-            class ReasoningStreamingCallback:
-                def __init__(self):
-                    self.collected_reasoning = ""
-                    self.collected_content = ""
-
-                async def __call__(self, chunk):
-                    if chunk and hasattr(chunk.choices[0].delta, "reasoning_content"):
-                        reasoning_content = chunk.choices[0].delta.reasoning_content
-                        if reasoning_content:
-                            self.collected_reasoning += reasoning_content
-                            await reasoning_stream_callback(
-                                reasoning_content, is_reasoning=True
-                            )
-
-                    if chunk and chunk.choices[0].delta.content:
-                        content = chunk.choices[0].delta.content
-                        self.collected_content += content
-                        await reasoning_stream_callback(content, is_reasoning=False)
-
-            # Initialize streaming callback
-            streaming_callback = ReasoningStreamingCallback()
-
-            # Use litellm with reasoning parameters
-            try:
-                await asyncio.wait_for(
-                    litellm.acompletion(
-                        user=get_user_session_id(),
-                        model=model,
-                        messages=reasoning_messages,
-                        stream=True,
-                        num_retries=3,
-                        temperature=float(temperature),
-                        top_p=float(top_p),
-                        # Add reasoning parameters
-                        reasoning_effort=reasoning_effort,  # Use user-defined reasoning effort
-                        # For Anthropic models, can also use thinking parameter
-                        thinking=(
-                            {"type": "enabled", "budget_tokens": 2048}
-                            if "anthropic" in model.lower()
-                            else None
-                        ),
-                        response_format={"type": "text"},
-                        stream_callback=streaming_callback,
-                    ),
-                    timeout=120.0,
-                )
-
-                # Update the thinking step with duration once reasoning is complete
-                thought_for = round(time.time() - start)
-                thinking_step.name = f"Thought for {thought_for}s"
-                await thinking_step.update()
-
-            except Exception as e:
-                logger.error(f"Error in reasoning conversation: {str(e)}")
-                # If reasoning fails, fall back to regular chat
-                await cl.Message(
-                    content=f"I encountered an issue with reasoning: {str(e)}. Let me try a standard response."
-                ).send()
-                await handle_trigger_async_chat(
-                    llm_model=model,
-                    messages=reasoning_messages,
-                    current_message=message,
-                )
-                return
-
-        # Send the final answer after thinking is complete
-        if not final_answer.content:
-            # If no final answer was provided, create a fallback message
-            await cl.Message(
-                content="I've thought about this but don't have a specific answer to provide."
-            ).send()
-        else:
-            # Update message history and add TTS action
-            content = final_answer.content
-            update_message_history_from_assistant(content)
-
-            # Set the actions on the message using the helper function
-            final_answer.actions = create_message_actions(content, model)
-
-            await final_answer.send()
 
 
 async def handle_web_search(query: str, current_message: cl.Message) -> None:
@@ -721,7 +399,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         query: The search query from the user
         current_message: The chainlit message object to stream response to
     """
-    logger.info(f"Handling web search for query: {query}")
+    logger.info("Handling web search for query: %s", query)
     search_step = None
 
     try:
@@ -732,7 +410,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         async with cl.Step(name="Web Search") as step:
             search_step = step
             # Display a searching message in the step
-            await search_step.stream_token(f"🔍 Searching the web for: {query}")
+            await search_step.stream_token("🔍 Searching the web for: %s" % query)
 
             # Get OpenAI API key from environment
             openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -791,7 +469,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
 
             # Calculate search duration
             search_duration = round(time.time() - start)
-            search_step.name = f"Web Search ({search_duration}s)"
+            search_step.name = "Web Search (%ss)" % search_duration
             await search_step.update()
 
             # Small delay to let the user see the completed step
@@ -806,13 +484,14 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         # Check if search had an error
         if search_status == "error":
             error_message = search_result.get("error", "Unknown error occurred")
-            logger.error(f"Web search error: {error_message}")
+            logger.error("Web search error: %s", error_message)
 
             # Clear the current message content and show error with fallback
             current_message.content = ""
             await current_message.stream_token(
-                f"I encountered an issue while searching the web: {error_message}\n\n"
-                f"Let me try to answer your question about '{query}' based on my knowledge instead."
+                "I encountered an issue while searching the web: %s\n\n"
+                "Let me try to answer your question about '%s' based on my knowledge instead."
+                % (error_message, query)
             )
 
             # Fall back to regular chat completion
@@ -820,8 +499,12 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
             messages = cl.user_session.get("message_history") or []
             messages.append({"role": "user", "content": query})
 
+            user_keys = cl.user_session.get("user_keys", {})
             await handle_trigger_async_chat(
-                llm_model=model, messages=messages, current_message=current_message
+                llm_model=model,
+                messages=messages,
+                current_message=current_message,
+                user_keys=user_keys,
             )
             return
 
@@ -831,11 +514,13 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         # Add a prefix based on whether summarization was used
         if summarize_results:
             await current_message.stream_token(
-                f"Here's a summary of information about '{query}':\n\n{response_content}"
+                "Here's a summary of information about '%s':\n\n%s"
+                % (query, response_content)
             )
         else:
             await current_message.stream_token(
-                f"Here's what I found on the web about '{query}':\n\n{response_content}"
+                "Here's what I found on the web about '%s':\n\n%s"
+                % (query, response_content)
             )
 
         # Try to extract and display sources if available
@@ -848,11 +533,11 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
                     for i, source in enumerate(sources, 1):
                         title = source.get("title", "Untitled")
                         url = source.get("url", "No URL")
-                        source_text += f"{i}. [{title}]({url})\n"
+                        source_text += "%s. [%s](%s)\n" % (i, title, url)
 
                     await current_message.stream_token(source_text)
         except Exception as e:
-            logger.error(f"Error processing sources: {e}")
+            logger.error("Error processing sources: %s", e)
 
         # Update the message content in the message history
         final_content = current_message.content
@@ -866,13 +551,14 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         await current_message.update()
 
     except Exception as e:
-        error_msg = f"Error performing web search: {str(e)}"
+        error_msg = "Error performing web search: %s" % str(e)
         logger.error(error_msg)
 
         # Clear any partial content and show error
         current_message.content = ""
         await current_message.stream_token(
-            f"I encountered an issue while searching the web: {error_msg}\n\nLet me try to answer based on my knowledge instead."
+            "I encountered an issue while searching the web: %s\n\nLet me try to answer based on my knowledge instead."
+            % error_msg
         )
         await current_message.update()
 
@@ -881,6 +567,36 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         messages = cl.user_session.get("message_history") or []
         messages.append({"role": "user", "content": query})
 
+        user_keys = cl.user_session.get("user_keys", {})
         await handle_trigger_async_chat(
-            llm_model=model, messages=messages, current_message=current_message
+            llm_model=model,
+            messages=messages,
+            current_message=current_message,
+            user_keys=user_keys,
         )
+
+
+# --- SINGLE SOURCE OF TRUTH FOR LITELLM API KEY SETUP ---
+def set_litellm_api_keys_from_settings(user_keys: dict) -> None:
+    """
+    Set the correct API key for each provider in litellm from plain text settings.
+    This is the only place this logic should exist (import and use everywhere else).
+    """
+    if "openai" in user_keys:
+        litellm.api_key = user_keys["openai"]
+    if "openrouter" in user_keys:
+        litellm.api_key = user_keys["openrouter"]
+    if "anthropic" in user_keys:
+        litellm.api_key = user_keys["anthropic"]
+    if "cohere" in user_keys:
+        litellm.api_key = user_keys["cohere"]
+    if "mistral" in user_keys:
+        litellm.api_key = user_keys["mistral"]
+    if "groq" in user_keys:
+        litellm.api_key = user_keys["groq"]
+    if "deepseek" in user_keys:
+        litellm.api_key = user_keys["deepseek"]
+    if "gemini" in user_keys:
+        litellm.api_key = user_keys["gemini"]
+    if "gemini" in user_keys:
+        litellm.api_key = user_keys["gemini"]
