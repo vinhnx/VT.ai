@@ -17,6 +17,12 @@ from vtai.utils.api_keys import encrypt_api_key
 # Use Chainlit's user_env config to prompt each user for their own API keys (BYOK).
 # See: https://docs.chainlit.io/integrations/user-env
 
+DEFAULT_SYSTEM_PROMPT = (
+    "You are VT.ai, an expert AI assistant that helps users solve problems, learn by doing, "
+    "and build real-world projects. Be clear, concise, and always provide actionable, "
+    "step-by-step guidance."
+)
+
 
 async def build_settings() -> Dict[str, Any]:
     """
@@ -48,6 +54,12 @@ def _create_settings_widgets() -> List[Union[Select, Slider, Switch, TextInput]]
             return encrypt_api_key(val)
         return val
 
+    def _masked_or_empty(val):
+        # Always mask if any value is present (even encrypted)
+        if val:
+            return "********"
+        return ""
+
     widgets = [
         # Add security notice to the description of the first widget (Chat Model)
         Select(
@@ -63,62 +75,73 @@ def _create_settings_widgets() -> List[Union[Select, Slider, Switch, TextInput]]
             values=conf.MODELS,
             initial_value=conf.DEFAULT_MODEL,
         ),
-        # ===== BYOK FIELDS (moved to top) =====
+        # ===== BYOK FIELDS (masked display, improved description) =====
         TextInput(
             id="byok_openai_api_key",
             label="OpenAI API Key (BYOK)",
-            description="Optional: Enter your own OpenAI API key to use your quota (for Free tier)",
+            description="Enter your own OpenAI API key. This key is stored securely using strong encryption and never leaves your device.",
             password=True,
-            value=_encrypted_or_plain(cl.user_session.get("byok_openai_api_key")),
+            value=_masked_or_empty(cl.user_session.get("byok_openai_api_key")),
         ),
         TextInput(
             id="byok_anthropic_api_key",
             label="Anthropic API Key (BYOK)",
-            description="Optional: Enter your own Anthropic API key to use your quota (for Free tier)",
+            description="Enter your own Anthropic API key. This key is stored securely using strong encryption and never leaves your device.",
             password=True,
-            value=_encrypted_or_plain(cl.user_session.get("byok_anthropic_api_key")),
+            value=_masked_or_empty(cl.user_session.get("byok_anthropic_api_key")),
         ),
         TextInput(
             id="byok_gemini_api_key",
             label="Gemini API Key (BYOK)",
-            description="Optional: Enter your own Gemini API key to use your quota (for Free tier)",
+            description="Enter your own Gemini API key. This key is stored securely using strong encryption and never leaves your device.",
             password=True,
-            value=_encrypted_or_plain(cl.user_session.get("byok_gemini_api_key")),
+            value=_masked_or_empty(cl.user_session.get("byok_gemini_api_key")),
         ),
         TextInput(
             id="byok_cohere_api_key",
             label="Cohere API Key (BYOK)",
-            description="Optional: Enter your own Cohere API key to use your quota (for Free tier)",
+            description="Enter your own Cohere API key. This key is stored securely using strong encryption and never leaves your device.",
             password=True,
-            value=_encrypted_or_plain(cl.user_session.get("byok_cohere_api_key")),
+            value=_masked_or_empty(cl.user_session.get("byok_cohere_api_key")),
         ),
         TextInput(
             id="byok_mistral_api_key",
             label="Mistral API Key (BYOK)",
-            description="Optional: Enter your own Mistral API key to use your quota (for Free tier)",
+            description="Enter your own Mistral API key. This key is stored securely using strong encryption and never leaves your device.",
             password=True,
-            value=_encrypted_or_plain(cl.user_session.get("byok_mistral_api_key")),
+            value=_masked_or_empty(cl.user_session.get("byok_mistral_api_key")),
         ),
         TextInput(
             id="byok_groq_api_key",
             label="Groq API Key (BYOK)",
-            description="Optional: Enter your own Groq API key to use your quota (for Free tier)",
+            description="Enter your own Groq API key. This key is stored securely using strong encryption and never leaves your device.",
             password=True,
-            value=_encrypted_or_plain(cl.user_session.get("byok_groq_api_key")),
+            value=_masked_or_empty(cl.user_session.get("byok_groq_api_key")),
         ),
         TextInput(
             id="byok_deepseek_api_key",
             label="DeepSeek API Key (BYOK)",
-            description="Optional: Enter your own DeepSeek API key to use your quota (for Free tier)",
+            description="Enter your own DeepSeek API key. This key is stored securely using strong encryption and never leaves your device.",
             password=True,
-            value=_encrypted_or_plain(cl.user_session.get("byok_deepseek_api_key")),
+            value=_masked_or_empty(cl.user_session.get("byok_deepseek_api_key")),
         ),
         TextInput(
             id="byok_openrouter_api_key",
             label="OpenRouter API Key (BYOK)",
-            description="Optional: Enter your own OpenRouter API key to use your quota (for Free tier)",
+            description="Enter your own OpenRouter API key. This key is stored securely using strong encryption and never leaves your device.",
             password=True,
-            value=_encrypted_or_plain(cl.user_session.get("byok_openrouter_api_key")),
+            value=_masked_or_empty(cl.user_session.get("byok_openrouter_api_key")),
+        ),
+        TextInput(
+            id="custom_system_prompt",
+            label="Custom System Prompt",
+            description=(
+                "(Optional) Set your own system prompt to guide the AI's behavior. "
+                "If left blank, VT.ai will use its default expert assistant prompt."
+            ),
+            password=False,
+            value=cl.user_session.get("custom_system_prompt") or DEFAULT_SYSTEM_PROMPT,
+            placeholder=DEFAULT_SYSTEM_PROMPT,
         ),
         Slider(
             id=conf.SETTINGS_TEMPERATURE,

@@ -30,6 +30,7 @@ from vtai.utils.media_processors import (
     handle_trigger_async_image_gen,
     handle_vision,
 )
+from vtai.utils.settings_builder import DEFAULT_SYSTEM_PROMPT
 
 from .supabase_logger import log_request_to_supabase, setup_litellm_callbacks
 from .url_extractor import extract_url
@@ -80,6 +81,34 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     )
 
     return actions
+
+
+def check_valid_key(model: str, api_key: str) -> bool:
+    """
+    Check if a user-submitted API key is valid for the model they're trying to call.
+    Returns True if the key is valid, False otherwise.
+    """
+    if not api_key or not isinstance(api_key, str):
+        return False
+    # Simple heuristic: OpenAI keys start with 'sk-', Anthropic with 'sk-ant-', etc.
+    if model.lower().startswith("gpt") or "openai" in model.lower():
+        return api_key.startswith("sk-") and len(api_key) > 20
+    if "anthropic" in model.lower():
+        return api_key.startswith("sk-ant-") and len(api_key) > 20
+    if "cohere" in model.lower():
+        return api_key.startswith("C4") and len(api_key) > 20
+    if "mistral" in model.lower():
+        return api_key.startswith("mistral-") and len(api_key) > 20
+    if "groq" in model.lower():
+        return api_key.startswith("gsk_") and len(api_key) > 20
+    if "deepseek" in model.lower():
+        return api_key.startswith("sk-") and len(api_key) > 20
+    if "gemini" in model.lower():
+        return api_key.startswith("AIza") and len(api_key) > 20
+    if "openrouter" in model.lower():
+        return api_key.startswith("sk-or-") and len(api_key) > 20
+    # Fallback: must be at least 20 chars
+    return len(api_key) > 20
 
 
 async def use_chat_completion_api(
@@ -136,6 +165,26 @@ async def use_chat_completion_api(
     # Set LiteLLM API key(s) from user_keys (BYOK, decrypt if needed)
     if user_keys:
         set_litellm_api_keys_from_settings(user_keys)
+
+    # === Check for valid key before making API call ===
+    api_key = None
+    if user_keys and isinstance(user_keys, dict):
+        for provider in user_keys:
+            if provider in model.lower():
+                api_key = user_keys[provider]
+                break
+    if not api_key:
+        await stream_callback(
+            "❌ No API key found for this model. "
+            "Please add your BYOK API key in settings (gear button below the chat input bar)."
+        )
+        return
+    if not check_valid_key(model, api_key):
+        await stream_callback(
+            "❌ The API key you provided for this model appears invalid. "
+            "Please check your BYOK configuration in settings (gear button below the chat input bar)."
+        )
+        return
 
     try:
         stream = await asyncio.wait_for(
@@ -280,6 +329,23 @@ async def handle_conversation(
 
     query = message.content
     update_message_history_from_user(query)
+
+    current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
+    api_key = None
+    if user_keys and isinstance(user_keys, dict):
+        # Try to get the key for the current model/provider
+        for provider in user_keys:
+            if provider in current_model.lower():
+                api_key = user_keys[provider]
+                break
+    if api_key and not check_valid_key(current_model, api_key):
+        await cl.Message(
+            content=(
+                "❌ The API key you provided for this model appears invalid. "
+                "Please check your BYOK configuration in settings (gear button below the chat input bar)."
+            )
+        ).send()
+        return
 
     async with safe_execution(operation_name="conversation handling"):
         use_dynamic_conversation_routing = get_setting(
@@ -462,12 +528,16 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
             conf.SETTINGS_CHAT_MODEL, settings.get(conf.SETTINGS_CHAT_MODEL)
         )
 
-        # Initialize with a standard system message
+        # Use custom system prompt if set, else default
+        custom_prompt = settings.get("custom_system_prompt")
+        if custom_prompt and custom_prompt.strip():
+            system_prompt = custom_prompt.strip()
+        else:
+            system_prompt = DEFAULT_SYSTEM_PROMPT
         system_message = {
             "role": "system",
-            "content": "You are a helpful assistant who tries their best to answer questions: ",
+            "content": system_prompt,
         }
-
         cl.user_session.set("message_history", [system_message])
 
 
