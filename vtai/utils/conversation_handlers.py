@@ -101,7 +101,9 @@ async def on_change_model_action(action: Action) -> None:
             "different model from the 'Chat Model' dropdown."
         )
         elements = [
-            cl.Text(name="Change Language Model", content=text_content, display="inline")
+            cl.Text(
+                name="Change Language Model", content=text_content, display="inline"
+            )
         ]
         await cl.Message(content="", elements=elements).send()
     except Exception as e:
