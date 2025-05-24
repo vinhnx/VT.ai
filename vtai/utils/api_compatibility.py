@@ -2,19 +2,13 @@
 API compatibility utilities for handling different LLM provider APIs.
 """
 
-import asyncio
-import functools
-import inspect
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any, Dict, List
 
 import litellm
-from litellm.exceptions import (
-    AuthenticationError,
-    BadRequestError,
-    ServiceUnavailableError,
-)
 
 from vtai.utils.config import logger
+from vtai.utils.supabase_logger import log_request_to_supabase
 
 
 def is_openai_model(model: str) -> bool:
@@ -38,10 +32,7 @@ async def try_chat_completion(
     model: str, messages: List[Dict[str, Any]], **kwargs
 ) -> Any:
     """
-    Use the Chat Completions API directly.
-
-    This replaces the previous try_responses_api_with_fallback function
-    that tried Response API first.
+    Use the Chat Completions API directly and log to Supabase.
 
     Args:
         model: The model to use
@@ -51,17 +42,36 @@ async def try_chat_completion(
     Returns:
         The response from the Chat Completions API
     """
-    logger.info(f"Using Chat Completion API for model: {model}")
-
-    # Prepare kwargs for acompletion
-    acompletion_kwargs = kwargs.copy()
-
-    # Add text response format for consistency
-    if "response_format" not in acompletion_kwargs:
-        acompletion_kwargs["response_format"] = {"type": "text"}
-
-    # Use messages directly with acompletion
-    return await litellm.acompletion(
-        model=model, messages=messages, **acompletion_kwargs
-    )
-    )
+    logger.info("Using Chat Completion API for model: %s", model)
+    user_id = kwargs.get("user") or "anonymous"
+    start_time = time.time()
+    try:
+        acompletion_kwargs = kwargs.copy()
+        if "response_format" not in acompletion_kwargs:
+            acompletion_kwargs["response_format"] = {"type": "text"}
+        response = await litellm.acompletion(
+            model=model, messages=messages, **acompletion_kwargs
+        )
+        # Log success to Supabase
+        log_request_to_supabase(
+            model=model,
+            messages=messages,
+            response=response,
+            end_user=user_id,
+            status="success",
+            response_time=time.time() - start_time,
+        )
+        return response
+    except Exception as e:
+        logger.error("Error: %s: %s", type(e).__name__, str(e))
+        # Log failure to Supabase
+        log_request_to_supabase(
+            model=model,
+            messages=messages,
+            response=None,
+            end_user=user_id,
+            status="failure",
+            error={"error": str(e)},
+            response_time=time.time() - start_time,
+        )
+        raise

@@ -498,6 +498,10 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
 
     # Configure litellm for better timeout handling
     litellm.request_timeout = 60  # 60 seconds timeout
+    
+    # Setup LiteLLM Supabase callbacks
+    from vtai.utils.supabase_logger import setup_litellm_callbacks
+    setup_litellm_callbacks()
 
     # Initialize encoder - potentially lazily in fast mode
     encoder = initialize_encoder(lazy_load=fast_start)

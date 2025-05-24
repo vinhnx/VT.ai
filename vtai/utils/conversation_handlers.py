@@ -27,6 +27,7 @@ from vtai.utils.media_processors import (
     handle_trigger_async_image_gen,
     handle_vision,
 )
+from vtai.utils.supabase_logger import log_request_to_supabase, setup_litellm_callbacks
 from vtai.utils.url_extractor import extract_url
 from vtai.utils.user_session_helper import (
     get_setting,
@@ -84,8 +85,8 @@ async def use_chat_completion_api(
     timeout: float = 120.0,
 ) -> None:
     """
-    Uses the Chat Completions API directly instead of trying Responses API first.
-    Handles streaming for the API.
+    Uses the Chat Completions API with enhanced Supabase logging.
+    Handles streaming for the API and logs detailed usage information.
 
     Args:
         model: The LLM model to use
@@ -95,27 +96,80 @@ async def use_chat_completion_api(
         stream_callback: Callback function to handle streaming tokens
         timeout: Timeout in seconds for the operation
     """
-    logger.info(f"Using Chat Completions API for model: {model}")
-    stream = await asyncio.wait_for(
-        litellm.acompletion(
-            user=get_user_session_id(),
+    logger.info("Using Chat Completions API for model: %s", model)
+    user_id = get_user_session_id()
+    start_time = time.time()
+    
+    # LiteLLM callbacks should already be set up in config.py
+    
+    try:
+        stream = await asyncio.wait_for(
+            litellm.acompletion(
+                user=user_id,
+                model=model,
+                messages=messages,
+                stream=True,
+                num_retries=3,
+                temperature=temperature,
+                top_p=top_p,
+                timeout=timeout
+                - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
+                response_format={"type": "text"},
+            ),
+            timeout=timeout,
+        )
+
+        response_content = ""
+        total_tokens = 0
+        async for part in stream:
+            if token := part.choices[0].delta.content or "":
+                await stream_callback(token)
+                response_content += token
+                total_tokens += 1  # Rough token estimation for streaming
+
+        # Extract provider from model name
+        provider = model.split("/")[0] if "/" in model else "openai"
+        
+        # Calculate cost estimate (this will be more accurate with non-streaming)
+        try:
+            cost_estimate = litellm.completion_cost(
+                model=model,
+                prompt_tokens=len(str(messages)) // 4,  # Rough estimation
+                completion_tokens=total_tokens
+            )
+        except Exception:
+            cost_estimate = None
+
+        # Enhanced logging with token tracking
+        log_request_to_supabase(
             model=model,
             messages=messages,
-            stream=True,
-            num_retries=3,
-            temperature=temperature,
-            top_p=top_p,
-            timeout=timeout
-            - 30.0,  # Set LiteLLM timeout slightly less than our overall timeout
-            response_format={"type": "text"},
-        ),
-        timeout=timeout,
-    )
-
-    # Process Chat Completions API format
-    async for part in stream:
-        if token := part.choices[0].delta.content or "":
-            await stream_callback(token)
+            response={"content": response_content},
+            end_user=user_id,
+            status="success",
+            response_time=time.time() - start_time,
+            total_cost=cost_estimate,
+            user_profile_id=user_id,
+            tokens_used=total_tokens,
+            provider=provider
+        )
+    except Exception as e:
+        logger.error("Error: %s: %s", type(e).__name__, str(e))
+        # Enhanced error logging
+        provider = model.split("/")[0] if "/" in model else "openai"
+        log_request_to_supabase(
+            model=model,
+            messages=messages,
+            response=None,
+            end_user=user_id,
+            status="failure",
+            error={"error": str(e)},
+            response_time=time.time() - start_time,
+            user_profile_id=user_id,
+            provider=provider
+        )
+        # Reraise for upstream error handling
+        raise
 
 
 async def handle_trigger_async_chat(
@@ -221,32 +275,32 @@ async def handle_dynamic_conversation_routing(
         if should_trimmed_messages:
             messages = trim_messages(messages, model)
 
-        logger.info(f"Query: {query} classified as route: {route_choice_name}")
+        logger.info("Query: %s classified as route: %s", query, route_choice_name)
 
         if route_choice_name == SemanticRouterType.IMAGE_GENERATION:
-            logger.info(f"Processing {route_choice_name} - Image generation")
+            logger.info("Processing %s - Image generation", route_choice_name)
             await handle_trigger_async_image_gen(query)
 
         elif route_choice_name == SemanticRouterType.VISION_IMAGE_PROCESSING:
             urls = extract_url(query)
             if len(urls) > 0:
-                logger.info(f"Processing {route_choice_name} - Vision with URL")
+                logger.info("Processing %s - Vision with URL", route_choice_name)
                 url = urls[0]
                 await handle_vision(input_image=url, prompt=query, is_local=False)
             else:
                 logger.info(
-                    f"Processing {route_choice_name} - No image URL, using chat"
+                    "Processing %s - No image URL, using chat", route_choice_name
                 )
                 await handle_trigger_async_chat(
                     llm_model=model, messages=messages, current_message=msg
                 )
 
         elif route_choice_name == SemanticRouterType.WEB_SEARCH:
-            logger.info(f"Processing {route_choice_name} - Web search")
+            logger.info("Processing %s - Web search", route_choice_name)
             await handle_web_search(query=query, current_message=msg)
 
         else:
-            logger.info(f"Processing {route_choice_name} - Default chat")
+            logger.info("Processing %s - Default chat", route_choice_name)
             await handle_trigger_async_chat(
                 llm_model=model, messages=messages, current_message=msg
             )
@@ -290,7 +344,7 @@ async def handle_files_attachment(
                         message.content = s
                         await handle_conversation(message, messages, None)
                     except Exception as e:
-                        logger.error(f"Error reading text file: {e}")
+                        logger.error("Error reading text file: %s", e)
                         await cl.Message(
                             content=f"Failed to read text file: {str(e)}"
                         ).send()
@@ -302,7 +356,7 @@ async def handle_files_attachment(
                     or "understand" in prompt.lower()
                     or "explain" in prompt.lower()
                 ):
-                    logger.info(f"Using advanced audio understanding for file: {path}")
+                    logger.info("Using advanced audio understanding for file: %s", path)
                     # Use the new audio understanding with the user's prompt
                     await handle_audio_understanding(path, prompt)
                 else:
@@ -317,7 +371,7 @@ async def handle_files_attachment(
                         ).send()
 
             else:
-                logger.warning(f"Unsupported mime type: {mime_type}")
+                logger.warning("Unsupported mime type: %s", mime_type)
                 await cl.Message(
                     content=f"File type {mime_type} is not supported for direct processing."
                 ).send()
@@ -605,7 +659,8 @@ async def handle_reasoning_conversation(
         # First check if model supports reasoning
         if not litellm.supports_reasoning(model=model):
             logger.info(
-                f"Model {model} does not support reasoning. Falling back to regular chat."
+                "Model %s does not support reasoning. Falling back to regular chat.",
+                model,
             )
             await handle_trigger_async_chat(
                 llm_model=model, messages=reasoning_messages, current_message=message
@@ -683,7 +738,7 @@ async def handle_reasoning_conversation(
                 await thinking_step.update()
 
             except Exception as e:
-                logger.error(f"Error in reasoning conversation: {str(e)}")
+                logger.error("Error in reasoning conversation: %s", e)
                 # If reasoning fails, fall back to regular chat
                 await cl.Message(
                     content=f"I encountered an issue with reasoning: {str(e)}. Let me try a standard response."
@@ -721,7 +776,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         query: The search query from the user
         current_message: The chainlit message object to stream response to
     """
-    logger.info(f"Handling web search for query: {query}")
+    logger.info("Handling web search for query: %s", query)
     search_step = None
 
     try:
@@ -806,7 +861,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         # Check if search had an error
         if search_status == "error":
             error_message = search_result.get("error", "Unknown error occurred")
-            logger.error(f"Web search error: {error_message}")
+            logger.error("Web search error: %s", error_message)
 
             # Clear the current message content and show error with fallback
             current_message.content = ""
@@ -852,7 +907,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
 
                     await current_message.stream_token(source_text)
         except Exception as e:
-            logger.error(f"Error processing sources: {e}")
+            logger.error("Error processing sources: %s", e)
 
         # Update the message content in the message history
         final_content = current_message.content
@@ -866,7 +921,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         await current_message.update()
 
     except Exception as e:
-        error_msg = f"Error performing web search: {str(e)}"
+        error_msg = "Error performing web search: %s" % str(e)
         logger.error(error_msg)
 
         # Clear any partial content and show error

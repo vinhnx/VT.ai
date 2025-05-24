@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from vtai.router.trainer import create_routes
 from vtai.utils.chat_profile import AppChatProfileType
 from vtai.utils.starter_prompts import get_shuffled_starters
+from vtai.utils.supabase_logger import log_request_to_supabase
 
 # ===== MODEL CLASSES =====
 
