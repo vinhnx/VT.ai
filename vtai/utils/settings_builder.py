@@ -17,11 +17,7 @@ from vtai.utils.api_keys import encrypt_api_key
 # Use Chainlit's user_env config to prompt each user for their own API keys (BYOK).
 # See: https://docs.chainlit.io/integrations/user-env
 
-DEFAULT_SYSTEM_PROMPT = (
-    "You are VT.ai, an expert AI assistant that helps users solve problems, learn by doing, "
-    "and build real-world projects. Be clear, concise, and always provide actionable, "
-    "step-by-step guidance."
-)
+DEFAULT_SYSTEM_PROMPT = "You are VT.ai, an helpful AI assistant that helps users solve problems. Be clear, concise, and always provide actionable, step-by-step guidance."
 
 
 async def build_settings() -> Dict[str, Any]:
@@ -142,6 +138,54 @@ def _create_settings_widgets() -> List[Union[Select, Slider, Switch, TextInput]]
             password=False,
             value=cl.user_session.get("custom_system_prompt") or DEFAULT_SYSTEM_PROMPT,
             placeholder=DEFAULT_SYSTEM_PROMPT,
+        ),
+        TextInput(
+            id="ollama_model_name",
+            label="Ollama Model Name",
+            description="Enter the model name for your local Ollama instance (e.g. 'llama3', 'deepseek-r1:7b', etc).",
+            password=False,
+            value=cl.user_session.get("ollama_model_name") or "",
+            placeholder="llama3",
+        ),
+        TextInput(
+            id="ollama_api_base",
+            label="Ollama API Base URL",
+            description="(Optional) Set the base URL for your Ollama server (e.g. http://localhost:11434). Leave blank for default.",
+            password=False,
+            value=cl.user_session.get("ollama_api_base") or "",
+            placeholder="http://localhost:11434",
+        ),
+        TextInput(
+            id="lmstudio_model_name",
+            label="LM Studio Model Name",
+            description="Enter the model name for your local LM Studio instance (e.g. 'phi3', 'llama3', etc).",
+            password=False,
+            value=cl.user_session.get("lmstudio_model_name") or "",
+            placeholder="phi3",
+        ),
+        TextInput(
+            id="lmstudio_api_base",
+            label="LM Studio API Base URL",
+            description="(Optional) Set the base URL for your LM Studio server (e.g. http://localhost:1234). Leave blank for default.",
+            password=False,
+            value=cl.user_session.get("lmstudio_api_base") or "",
+            placeholder="http://localhost:1234",
+        ),
+        TextInput(
+            id="llamacpp_model_name",
+            label="llama.cpp Model Name",
+            description="Enter the model name for your local llama.cpp instance (e.g. 'llama-3', 'phi3', etc).",
+            password=False,
+            value=cl.user_session.get("llamacpp_model_name") or "",
+            placeholder="llama-3",
+        ),
+        TextInput(
+            id="llamacpp_api_base",
+            label="llama.cpp API Base URL",
+            description="(Optional) Set the base URL for your llama.cpp server (e.g. http://localhost:8080). Leave blank for default.",
+            password=False,
+            value=cl.user_session.get("llamacpp_api_base") or "",
+            placeholder="http://localhost:8080",
         ),
         Slider(
             id=conf.SETTINGS_TEMPERATURE,

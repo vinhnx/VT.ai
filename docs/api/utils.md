@@ -111,18 +111,6 @@ async def handle_conversation(message, messages, route_layer):
     """
     # ...
 
-# Handle thinking mode conversation
-async def handle_thinking_conversation(message, messages, route_layer):
-    """
-    Handle a thinking mode conversation message.
-
-    Args:
-        message: The user message
-        messages: Message history
-        route_layer: Semantic routing layer
-    """
-    # ...
-
 # Configure chat session
 async def config_chat_session(settings):
     """
@@ -312,15 +300,10 @@ route_layer, assistant_id, openai_client, async_openai_client = config.initializ
 ### Conversation Handling Example
 
 ```python
-from utils.conversation_handlers import handle_conversation, handle_thinking_conversation
+from utils.conversation_handlers import handle_conversation
 
 # Handle standard query
 await handle_conversation(message, message_history, route_layer)
-
-# Handle thinking mode query
-if "<think>" in message.content:
-    await handle_thinking_conversation(message, message_history, route_layer)
-```
 
 ### Media Processing Example
 

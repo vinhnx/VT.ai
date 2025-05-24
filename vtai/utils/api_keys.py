@@ -14,7 +14,8 @@ Handles encryption and retrieval of user LLM API keys locally (not stored in Sup
 import os
 
 from cryptography.fernet import Fernet
-from utils.config import logger
+
+from vtai.utils.config import logger
 
 
 # Encryption key for Fernet (should be set in env and kept secret)
@@ -22,7 +23,10 @@ def get_encryption_key() -> bytes:
     key = os.environ.get("ENCRYPTION_KEY")
     if not key:
         key = Fernet.generate_key()
-        logger.warning("ENCRYPTION_KEY not set, generated new key (not safe for prod)")
+        logger.warning(
+            "ENCRYPTION_KEY not set. Generated a new key for this session. "
+            "This is NOT safe for production. Please set ENCRYPTION_KEY in your environment for secure, persistent encryption."
+        )
         os.environ["ENCRYPTION_KEY"] = key.decode()
     else:
         key = key.encode()
@@ -39,4 +43,5 @@ def encrypt_api_key(api_key: str) -> str:
 
 def decrypt_api_key(encrypted_key: str) -> str:
     """Decrypt an API key from local session storage."""
+    return cipher_suite.decrypt(encrypted_key.encode()).decode()
     return cipher_suite.decrypt(encrypted_key.encode()).decode()

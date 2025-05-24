@@ -77,6 +77,3 @@ WEB_SEARCH_MODELS = [
 
 DEFAULT_WEB_SEARCH_MODEL = "gemini/gemini-2.0-flash-lite"
 
-# Auth URLs
-AUTH_BASE_URL = os.environ.get("NEXT_PUBLIC_APP_URL", "http://localhost:3000")
-AUTH_LOGIN_URL = f"{AUTH_BASE_URL}/auth/login"

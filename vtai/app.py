@@ -32,6 +32,8 @@ atexit.register(cleanup)
 
 # Optional JWT imports for enhanced security (not required for basic functionality)
 try:
+    from jose import jwt
+
     JWT_AVAILABLE = True
 except ImportError:
     JWT_AVAILABLE = False
@@ -77,8 +79,6 @@ subprocess = None
 config_chat_session = None
 handle_conversation = None
 handle_files_attachment = None
-handle_reasoning_conversation = None
-handle_thinking_conversation = None
 DictToObject = None
 process_files = None
 build_llm_profile = None
@@ -94,7 +94,7 @@ def load_deferred_imports() -> None:
     """Load modules only when needed to speed up initial startup."""
     # Globals required for lazy import pattern
     global _imports_loaded, numpy, subprocess
-    global config_chat_session, handle_conversation, handle_files_attachment, handle_reasoning_conversation, handle_thinking_conversation
+    global config_chat_session, handle_conversation, handle_files_attachment
     global DictToObject, process_files, build_llm_profile, handle_tts_response, safe_execution
     global get_command_route, get_command_template, set_commands
     if _imports_loaded:
@@ -111,12 +111,6 @@ def load_deferred_imports() -> None:
     )
     from vtai.utils.conversation_handlers import (
         handle_files_attachment as _handle_files_attachment,
-    )
-    from vtai.utils.conversation_handlers import (
-        handle_reasoning_conversation as _handle_reasoning_conversation,
-    )
-    from vtai.utils.conversation_handlers import (
-        handle_thinking_conversation as _handle_thinking_conversation,
     )
     from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
     from vtai.utils.conversation_handlers import (
@@ -136,8 +130,6 @@ def load_deferred_imports() -> None:
     config_chat_session = _config_chat_session
     handle_conversation = _handle_conversation
     handle_files_attachment = _handle_files_attachment
-    handle_reasoning_conversation = _handle_reasoning_conversation
-    handle_thinking_conversation = _handle_thinking_conversation
     DictToObject = _DictToObject
     process_files = _process_files
     build_llm_profile = _build_llm_profile
@@ -165,6 +157,9 @@ APP_NAME = const.APP_NAME
 
 # Note: Removed @cl.header_auth_callback to prevent infinite redirect loop
 # Authentication is handled by FastAPI middleware, so we trust that validation for Chainlit
+
+# Track emitted log events to prevent duplicates in this process
+_emitted_log_events = set()
 
 
 @cl.set_chat_profiles
@@ -202,9 +197,12 @@ async def chainlit_chat_start():
         cl.user_session.set("user_display_name", user_name)
         cl.user_session.set("user_metadata", user_metadata)
 
-        logger.info(
-            "User session initialized for %s (%s) via OAuth", user_name, user_email
-        )
+        log_key = f"user_session_{user_name}_{user_email}"
+        if log_key not in _emitted_log_events:
+            logger.info(
+                "User session initialized for %s (%s) via OAuth", user_name, user_email
+            )
+            _emitted_log_events.add(log_key)
 
         # Send welcome message with user information
         welcome_msg = f"Welcome, **{user_name}**! How can I help you today?"
@@ -229,7 +227,9 @@ async def chainlit_chat_start():
     # Ensure model prices are loaded
     ensure_model_prices()
 
-    logger.info("Chat session started with Chainlit OAuth authentication")
+    if "chat_session_started" not in _emitted_log_events:
+        logger.info("Chat session started with Chainlit OAuth authentication")
+        _emitted_log_events.add("chat_session_started")
     logger.debug(
         "Chat session initialization completed in %.2f seconds",
         time.time() - start_time,
@@ -290,17 +290,47 @@ async def on_message(message: cl.Message) -> None:
             "ollama",
             "deepseek",
             "openrouter",
+            "lmstudio",
         ]:
             key_setting = f"byok_{provider}_api_key"
             api_key = get_setting(key_setting)
             if api_key:
                 user_keys[provider] = api_key
 
+        # --- Local model dynamic config ---
+        current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
+        # Ollama
+        if current_model and current_model.lower().startswith("ollama"):
+            ollama_model_name = get_setting("ollama_model_name") or ""
+            ollama_api_base = get_setting("ollama_api_base") or ""
+            if ollama_model_name:
+                current_model = f"ollama/{ollama_model_name}"
+                cl.user_session.set(conf.SETTINGS_CHAT_MODEL, current_model)
+            if ollama_api_base:
+                os.environ["OLLAMA_API_BASE"] = ollama_api_base
+        # LM Studio
+        if current_model and current_model.lower().startswith("lmstudio"):
+            lmstudio_model_name = get_setting("lmstudio_model_name") or ""
+            lmstudio_api_base = get_setting("lmstudio_api_base") or ""
+            if lmstudio_model_name:
+                current_model = f"lmstudio/{lmstudio_model_name}"
+                cl.user_session.set(conf.SETTINGS_CHAT_MODEL, current_model)
+            if lmstudio_api_base:
+                os.environ["LM_STUDIO_API_BASE"] = lmstudio_api_base
+        # llama.cpp
+        if current_model and current_model.lower().startswith("llamacpp"):
+            llamacpp_model_name = get_setting("llamacpp_model_name") or ""
+            llamacpp_api_base = get_setting("llamacpp_api_base") or ""
+            if llamacpp_model_name:
+                current_model = f"llamacpp/{llamacpp_model_name}"
+                cl.user_session.set(conf.SETTINGS_CHAT_MODEL, current_model)
+            if llamacpp_api_base:
+                os.environ["LLAMACPP_API_BASE"] = llamacpp_api_base
+
         # Set litellm API keys from settings (plain text, no encryption)
         set_litellm_api_keys_from_settings(user_keys)
 
         # Check if current model is a reasoning model that benefits from <think>
-        current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
         is_reasoning = conf.is_reasoning_model(current_model)
 
         # If this is a reasoning model and <think> is not already in content, add it
@@ -319,27 +349,9 @@ async def on_message(message: cl.Message) -> None:
                 message, messages, async_openai_client, user_keys=user_keys
             )
         else:
-            # Check for <think> tag directly in user request
-            if "<think>" in message.content.lower():
-                logger.info(
-                    "Processing message with <think> tag using thinking conversation handler"
-                )
-                await handle_thinking_conversation(
-                    message, messages, route_layer, user_keys=user_keys
-                )
-            # Check if selected model supports LiteLLM's reasoning capabilities
-            elif conf.supports_reasoning(current_model):
-                logger.info(
-                    "Using enhanced reasoning with LiteLLM for model: %s",
-                    current_model,
-                )
-                await handle_reasoning_conversation(
-                    message, messages, route_layer, user_keys=user_keys
-                )
-            else:
-                await handle_conversation(
-                    message, messages, route_layer, user_keys=user_keys
-                )
+            await handle_conversation(
+                message, messages, route_layer, user_keys=user_keys
+            )
 
 
 def upsert_user_profile_from_oauth(

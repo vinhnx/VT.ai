@@ -166,6 +166,12 @@ def success_callback_supabase(
 ) -> None:
     """Success callback for LiteLLM to log successful requests with detailed cost breakdown."""
     try:
+        # Only log if HTTP status is 200 (success)
+        status_code = getattr(completion_response, "status_code", 200)
+        if status_code != 200:
+            logger.info("Skipping Supabase log: non-200 status (%s)", status_code)
+            return
+
         model = kwargs.get("model", "")
         messages = kwargs.get("messages", [])
         user = kwargs.get("user", "")

@@ -83,34 +83,6 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     return actions
 
 
-def check_valid_key(model: str, api_key: str) -> bool:
-    """
-    Check if a user-submitted API key is valid for the model they're trying to call.
-    Returns True if the key is valid, False otherwise.
-    """
-    if not api_key or not isinstance(api_key, str):
-        return False
-    # Simple heuristic: OpenAI keys start with 'sk-', Anthropic with 'sk-ant-', etc.
-    if model.lower().startswith("gpt") or "openai" in model.lower():
-        return api_key.startswith("sk-") and len(api_key) > 20
-    if "anthropic" in model.lower():
-        return api_key.startswith("sk-ant-") and len(api_key) > 20
-    if "cohere" in model.lower():
-        return api_key.startswith("C4") and len(api_key) > 20
-    if "mistral" in model.lower():
-        return api_key.startswith("mistral-") and len(api_key) > 20
-    if "groq" in model.lower():
-        return api_key.startswith("gsk_") and len(api_key) > 20
-    if "deepseek" in model.lower():
-        return api_key.startswith("sk-") and len(api_key) > 20
-    if "gemini" in model.lower():
-        return api_key.startswith("AIza") and len(api_key) > 20
-    if "openrouter" in model.lower():
-        return api_key.startswith("sk-or-") and len(api_key) > 20
-    # Fallback: must be at least 20 chars
-    return len(api_key) > 20
-
-
 async def use_chat_completion_api(
     model: str,
     messages: List[Dict[str, str]],
@@ -173,19 +145,6 @@ async def use_chat_completion_api(
             if provider in model.lower():
                 api_key = user_keys[provider]
                 break
-    if not api_key:
-        await stream_callback(
-            "❌ No API key found for this model. "
-            "Please add your BYOK API key in settings (gear button below the chat input bar)."
-        )
-        return
-    if not check_valid_key(model, api_key):
-        await stream_callback(
-            "❌ The API key you provided for this model appears invalid. "
-            "Please check your BYOK configuration in settings (gear button below the chat input bar)."
-        )
-        return
-
     try:
         stream = await asyncio.wait_for(
             litellm.acompletion(
@@ -338,14 +297,6 @@ async def handle_conversation(
             if provider in current_model.lower():
                 api_key = user_keys[provider]
                 break
-    if api_key and not check_valid_key(current_model, api_key):
-        await cl.Message(
-            content=(
-                "❌ The API key you provided for this model appears invalid. "
-                "Please check your BYOK configuration in settings (gear button below the chat input bar)."
-            )
-        ).send()
-        return
 
     async with safe_execution(operation_name="conversation handling"):
         use_dynamic_conversation_routing = get_setting(
@@ -541,269 +492,6 @@ async def config_chat_session(settings: Dict[str, Any]) -> None:
         cl.user_session.set("message_history", [system_message])
 
 
-async def handle_thinking_conversation(
-    message: cl.Message,
-    messages: List[Dict[str, str]],
-    route_layer: Any,
-    user_keys: dict = None,
-) -> None:
-    """
-    Handles conversations with visible thinking process.
-    Shows the AI's reasoning before presenting the final answer.
-    Uses <think> and </think> tags within the model's response to toggle between thinking and final answer.
-
-    Args:
-        message: The user message object
-        messages: The conversation history
-        route_layer: The semantic router layer
-        user_keys: User-specific API keys for BYOK
-    """
-    # Track start time for the thinking duration
-    start = time.time()
-
-    # Get model and settings
-    model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    temperature = get_setting(conf.SETTINGS_TEMPERATURE) or 0.7
-    top_p = get_setting(conf.SETTINGS_TOP_P) or 0.9
-
-    # Remove the <think> tag from the query if it exists in the user message
-    query = message.content.replace("<think>", "").strip()
-    update_message_history_from_user(query)
-
-    # Add special instruction to the model to use <think> tags
-    thinking_messages = [m.copy() for m in messages]
-    # Add a system message with instructions about using <think> tags
-    thinking_messages.append(
-        {
-            "role": "system",
-            "content": "When responding to this query, first use <think> tag to show your reasoning process, then close it with </think> and provide your final answer.",
-        }
-    )
-    # Add the user query
-    thinking_messages.append({"role": "user", "content": query})
-
-    # Create empty objects that will be initialized in the context
-    thinking_step = None
-    final_answer = None
-    thinking = False
-
-    async with safe_execution(
-        operation_name=f"thinking conversation with model {model}"
-    ):
-        # Start with a thinking step
-        async with cl.Step(name="Thinking") as step:
-            thinking_step = step
-            # Create a message for the final answer, but don't send it yet
-            final_answer = cl.Message(content="")
-
-            # Define a custom streaming callback that handles thinking tags
-            async def thinking_stream_callback(content):
-                nonlocal thinking, thinking_step, final_answer
-
-                # Skip if content is None or empty
-                if not content:
-                    return
-
-                # Check for exact <think> tag
-                if content == "<think>":
-                    thinking = True
-                    return
-
-                # Check for exact </think> tag
-                elif content == "</think>":
-                    thinking = False
-                    # Update the thinking step with duration
-                    thought_for = round(time.time() - start)
-                    thinking_step.name = f"Thought for {thought_for}s"
-                    await thinking_step.update()
-                    return
-
-                # Stream content based on thinking flag
-                if thinking:
-                    await thinking_step.stream_token(content)
-                else:
-                    await final_answer.stream_token(content)
-
-            # Use the API fallback helper
-            await use_chat_completion_api(
-                model=model,
-                messages=thinking_messages,
-                temperature=float(temperature),
-                top_p=float(top_p),
-                stream_callback=thinking_stream_callback,
-                timeout=120.0,
-                user_keys=user_keys,
-            )
-
-        # Send the final answer after thinking is complete
-        if not final_answer.content:
-            # If no final answer was provided, create a fallback message
-            await cl.Message(
-                content="I've thought about this but don't have a specific answer to provide."
-            ).send()
-        else:
-            # Update message history and add TTS action
-            content = final_answer.content
-            update_message_history_from_assistant(content)
-
-            # Set the actions on the message using the helper function
-            final_answer.actions = create_message_actions(content, model)
-
-            await final_answer.send()
-
-
-async def handle_reasoning_conversation(
-    message: cl.Message,
-    messages: List[Dict[str, str]],
-    route_layer: Any,
-    user_keys: dict = None,
-) -> None:
-    """
-    Handles conversations with models that support native reasoning capabilities.
-    Uses LiteLLM's reasoning features for enhanced step-by-step responses.
-
-    Args:
-        message: The user message object
-        messages: The conversation history
-        route_layer: The semantic router layer
-        user_keys: User-specific API keys for BYOK
-    """
-    # Get model and settings
-    model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    temperature = get_setting(conf.SETTINGS_TEMPERATURE) or 0.7
-    top_p = get_setting(conf.SETTINGS_TOP_P) or 0.9
-
-    query = message.content.strip()
-    update_message_history_from_user(query)
-
-    # Prepare messages for reasoning
-    reasoning_messages = [m.copy() for m in messages]
-    reasoning_messages.append({"role": "user", "content": query})
-
-    async with safe_execution(
-        operation_name=f"reasoning conversation with model {model}"
-    ):
-        async with cl.Step(name="Reasoning") as step:
-            # Create a message for the final answer
-            final_answer = cl.Message(content="")
-
-            try:
-                # Use LiteLLM with reasoning-enabled parameters
-                response = await use_chat_completion_api(
-                    model=model,
-                    messages=reasoning_messages,
-                    temperature=float(temperature),
-                    top_p=float(top_p),
-                    stream_callback=lambda content: final_answer.stream_token(content),
-                    timeout=120.0,
-                    user_keys=user_keys,
-                    reasoning=True,
-                )
-
-                # Send the final answer
-                if final_answer.content:
-                    content = final_answer.content
-                    update_message_history_from_assistant(content)
-                    final_answer.actions = create_message_actions(content, model)
-                    await final_answer.send()
-                else:
-                    await cl.Message(
-                        content="I processed your request but don't have a specific response to provide."
-                    ).send()
-
-            except Exception as e:
-                logger.error(
-                    "Error in reasoning conversation: %s: %s", type(e).__name__, str(e)
-                )
-                await cl.Message(
-                    content="I encountered an error while processing your reasoning request. Please try again."
-                ).send()
-
-
-async def handle_deepseek_reasoner_conversation(
-    message: cl.Message, messages: List[Dict[str, str]], user_keys: dict = None
-) -> None:
-    """
-    Handles a DeepSeek Reasoner conversation using the user's BYOK (Bring Your Own Key) securely.
-    API key is always decrypted in memory, never handled in plain text or via environment variable.
-
-    Args:
-        message: The user message object
-        messages: The conversation history
-        user_keys: Optional dict of decrypted user API keys
-    """
-    start = time.time()
-
-    # Get decrypted DeepSeek API key from user_keys or settings
-    deepseek_api_key = None
-    if user_keys and "deepseek" in user_keys:
-        deepseek_api_key = user_keys["deepseek"]
-    if not deepseek_api_key:
-        deepseek_api_key = get_setting("byok_deepseek_api_key")
-    if not deepseek_api_key:
-        await cl.Message(
-            content="DeepSeek API key not found. Please set your BYOK DeepSeek key in settings."
-        ).send()
-        return
-
-    model = "deepseek-reasoner"
-    query = message.content.strip()
-    update_message_history_from_user(query)
-
-    client = AsyncOpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
-
-    thinking_step = None
-    final_answer = None
-    thinking_completed = False
-
-    async with safe_execution(
-        operation_name=f"deepseek reasoner conversation with model {model}"
-    ):
-        deepseek_messages = [
-            {"role": "system", "content": "You are a helpful assistant"},
-        ]
-        for msg in messages:
-            if msg["role"] != "system":
-                deepseek_messages.append(msg)
-        deepseek_messages.append({"role": "user", "content": query})
-
-        stream = await client.chat.completions.create(
-            model=model,
-            messages=deepseek_messages,
-            stream=True,
-        )
-
-        async with cl.Step(name="Thinking") as step:
-            thinking_step = step
-            final_answer = cl.Message(content="")
-            async for chunk in stream:
-                delta = chunk.choices[0].delta
-                reasoning_content = getattr(delta, "reasoning_content", None)
-                if reasoning_content is not None and not thinking_completed:
-                    await thinking_step.stream_token(reasoning_content)
-                elif not thinking_completed:
-                    thought_for = round(time.time() - start)
-                    thinking_step.name = f"Thought for {thought_for}s"
-                    await thinking_step.update()
-                    thinking_completed = True
-                    break
-
-        async for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta.content:
-                await final_answer.stream_token(delta.content)
-
-        if not final_answer.content:
-            await cl.Message(
-                content="I've thought about this but don't have a specific answer to provide."
-            ).send()
-        else:
-            content = final_answer.content
-            update_message_history_from_assistant(content)
-            final_answer.actions = create_message_actions(content, model)
-            await final_answer.send()
-
-
 async def handle_web_search(query: str, current_message: cl.Message) -> None:
     """
     Handles web search requests by using the WebSearchTool.
@@ -986,41 +674,6 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         )
 
 
-@step(name="Extended Thinking", show_input=False)
-async def thinking_step(
-    user_message: str,
-    messages: List[Dict[str, str]],
-    route_layer: Any,
-    user_keys: dict = None,
-):
-    """
-    Reasoning/Thinking step for reasoning models, using handle_reasoning_conversation logic.
-
-    Args:
-        user_message: The user message content
-        messages: The conversation history
-        route_layer: The semantic router layer
-        user_keys: User-specific API keys for BYOK
-
-    Returns:
-        has_thinking: bool, True if reasoning/step-by-step was streamed
-        response: the streamed response (if any)
-    """
-    current_step = cl.context.current_step
-    has_thinking = False
-    # Use the existing handle_reasoning_conversation logic
-    await handle_reasoning_conversation(
-        cl.Message(content=user_message),
-        messages,
-        route_layer,
-        user_keys=user_keys,
-    )
-    has_thinking = (
-        True  # If handle_reasoning_conversation completes, we assume thinking shown
-    )
-    return has_thinking, []
-
-
 # --- SINGLE SOURCE OF TRUTH FOR LITELLM API KEY SETUP ---
 def set_litellm_api_keys_from_settings(user_keys: dict) -> None:
     """
@@ -1039,8 +692,6 @@ def set_litellm_api_keys_from_settings(user_keys: dict) -> None:
         litellm.api_key = user_keys["mistral"]
     if "groq" in user_keys:
         litellm.api_key = user_keys["groq"]
-    if "ollama" in user_keys:
-        litellm.api_key = user_keys["ollama"]
     if "deepseek" in user_keys:
         litellm.api_key = user_keys["deepseek"]
     if "gemini" in user_keys:
