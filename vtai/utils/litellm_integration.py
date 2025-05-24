@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import litellm
 from litellm import completion
 from utils.config import logger
-from utils.supabase_logger import setup_litellm_callbacks
+from utils.supabase_client import setup_litellm_callbacks
 
 
 class LiteLLMClient:

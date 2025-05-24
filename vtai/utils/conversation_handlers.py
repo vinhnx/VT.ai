@@ -33,7 +33,7 @@ from vtai.utils.media_processors import (
 )
 from vtai.utils.settings_builder import DEFAULT_SYSTEM_PROMPT
 
-from .supabase_logger import log_request_to_supabase, setup_litellm_callbacks
+from .supabase_client import log_request_to_supabase, setup_litellm_callbacks
 from .url_extractor import extract_url
 from .user_session_helper import (
     get_setting,

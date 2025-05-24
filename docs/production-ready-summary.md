@@ -136,7 +136,7 @@ GOOGLE_API_KEY=your-google-key
 ### **Code Changes Applied**
 
 1. ✅ Updated `conversation_handlers.py` for proper user ID handling
-2. ✅ Enhanced `supabase_logger.py` with custom callbacks
+2. ✅ Enhanced `supabase_client.py` with custom callbacks
 3. ✅ Removed redundant token update logic
 4. ✅ Added debugging and logging improvements
 
@@ -145,7 +145,7 @@ GOOGLE_API_KEY=your-google-key
 ### **Available Analytics**
 
 ```python
-from utils.supabase_logger import (
+from utils.supabase_client import (
     get_user_analytics,
     get_user_request_history,
     get_user_token_breakdown,

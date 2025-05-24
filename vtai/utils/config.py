@@ -500,7 +500,7 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
     litellm.request_timeout = 60  # 60 seconds timeout
 
     # Setup LiteLLM Supabase callbacks
-    from utils.supabase_logger import setup_litellm_callbacks
+    from utils.supabase_client import setup_litellm_callbacks
 
     setup_litellm_callbacks()
 

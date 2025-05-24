@@ -68,10 +68,10 @@ Both tables have comprehensive RLS policies:
 
 ## Implementation Components
 
-### 1. Enhanced Supabase Logger (`vtai/utils/supabase_logger.py`)
+### 1. Enhanced Supabase Logger (`vtai/utils/supabase_client.py`)
 
 ```python
-from utils.supabase_logger import setup_litellm_callbacks
+from utils.supabase_client import setup_litellm_callbacks
 
 # Setup LiteLLM callbacks
 setup_litellm_callbacks()
@@ -112,7 +112,7 @@ The existing conversation handlers in `vtai/utils/conversation_handlers.py` now 
 
 ```python
 import litellm
-from utils.supabase_logger import setup_litellm_callbacks
+from utils.supabase_client import setup_litellm_callbacks
 
 # Setup callbacks once
 setup_litellm_callbacks()

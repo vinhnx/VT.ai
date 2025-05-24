@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 import litellm
 from utils.config import logger
 from utils.llm_providers_config import get_llm_params
-from utils.supabase_logger import log_request_to_supabase
+from utils.supabase_client import log_request_to_supabase
 
 
 def is_openai_model(model: str) -> bool:

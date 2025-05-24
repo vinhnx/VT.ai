@@ -25,7 +25,7 @@ from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
 from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
 from vtai.utils.settings_builder import build_settings
-from vtai.utils.supabase_logger import fetch_user_profile_from_supabase
+from vtai.utils.supabase_client import fetch_user_profile_from_supabase
 from vtai.utils.user_session_helper import get_setting, get_user_profile
 
 # Register cleanup function to ensure resources are properly released
@@ -408,7 +408,7 @@ def upsert_user_profile_from_oauth(
 
 async def fetch_user_profile_from_supabase(user_id: str) -> dict:
     """Fetch user profile from Supabase database by user_id."""
-    from vtai.utils.supabase_logger import supabase_client
+    from vtai.utils.supabase_client import supabase_client
 
     if not supabase_client:
         return {}

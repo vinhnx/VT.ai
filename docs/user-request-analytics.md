@@ -104,7 +104,7 @@ SELECT * FROM get_user_token_breakdown('user_123');
 ### Analytics Functions
 
 ```python
-from utils.supabase_logger import (
+from utils.supabase_client import (
     get_user_analytics,
     get_user_request_history,
     get_user_token_breakdown,
