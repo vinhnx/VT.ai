@@ -25,7 +25,7 @@ os.environ["SUPABASE_KEY"] = os.environ.get("SUPABASE_ANON_KEY", "your-supabase-
 os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY", "")
 
 # Import the existing Supabase logger from VT.ai
-from vtai.utils.supabase_logger import log_request_to_supabase
+from utils.supabase_logger import log_request_to_supabase
 
 
 def supabase_success_callback(

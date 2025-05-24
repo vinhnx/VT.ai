@@ -25,8 +25,8 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 
 # Update imports to use vtai namespace
-from vtai.router.constants import RouteLayer
-from vtai.utils import constants as const
+from router.constants import RouteLayer
+from utils import constants as const
 
 # Configure logging - set level based on environment
 log_level = os.environ.get("VT_LOG_LEVEL", "INFO").upper()
@@ -498,9 +498,10 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
 
     # Configure litellm for better timeout handling
     litellm.request_timeout = 60  # 60 seconds timeout
-    
+
     # Setup LiteLLM Supabase callbacks
-    from vtai.utils.supabase_logger import setup_litellm_callbacks
+    from utils.supabase_logger import setup_litellm_callbacks
+
     setup_litellm_callbacks()
 
     # Initialize encoder - potentially lazily in fast mode

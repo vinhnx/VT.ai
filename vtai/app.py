@@ -1,12 +1,8 @@
-"""
-VT - Main application entry p# Register cleanup function to ensure resources are properly released
-atexit.register(cleanup)ltimodal AI chat application with dynamic conversation routing.
-"""
-
 import os
 import time
 
 import dotenv
+import litellm
 
 
 def ensure_env_loaded():
@@ -27,6 +23,7 @@ from supabase import create_client
 from vtai.utils import constants as const
 from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
+from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
 from vtai.utils.settings_builder import build_settings
 from vtai.utils.user_session_helper import get_setting
 
@@ -35,8 +32,6 @@ atexit.register(cleanup)
 
 # Optional JWT imports for enhanced security (not required for basic functionality)
 try:
-    from jose import JWTError, jwt
-
     JWT_AVAILABLE = True
 except ImportError:
     JWT_AVAILABLE = False
@@ -78,67 +73,80 @@ _imports_loaded = False
 
 # Global variables for deferred imports
 numpy = None
-audioop = None
 subprocess = None
-build_llm_profile = None
+config_chat_session = None
+handle_conversation = None
+handle_files_attachment = None
+handle_reasoning_conversation = None
+handle_thinking_conversation = None
+DictToObject = None
 process_files = None
+build_llm_profile = None
 handle_tts_response = None
 safe_execution = None
 get_command_route = None
 get_command_template = None
 set_commands = None
-handle_conversation = None
-handle_files_attachment = None
-handle_thinking_conversation = None
-handle_reasoning_conversation = None
-DictToObject = None
-config_chat_session = None
 
 
 # Lazy import function to defer module importing
-def load_deferred_imports():
-    """Load modules only when needed to speed up initial startup"""
-    global _imports_loaded
-    global numpy, audioop, subprocess, build_llm_profile
-    global process_files, handle_tts_response, safe_execution, get_command_route, get_command_template
-    global set_commands, handle_conversation, handle_files_attachment, handle_thinking_conversation, handle_reasoning_conversation, DictToObject
-    global config_chat_session
-
+def load_deferred_imports() -> None:
+    """Load modules only when needed to speed up initial startup."""
+    # Globals required for lazy import pattern
+    global _imports_loaded, numpy, subprocess
+    global config_chat_session, handle_conversation, handle_files_attachment, handle_reasoning_conversation, handle_thinking_conversation
+    global DictToObject, process_files, build_llm_profile, handle_tts_response, safe_execution
+    global get_command_route, get_command_template, set_commands
     if _imports_loaded:
         return
-
-    import_start = time.time()
-
-    # Import modules that are not needed during initial startup
-    import audioop as _audioop
-    import subprocess as _subprocess
+    import subprocess as sp
 
     import numpy as np
 
     from vtai.utils.conversation_handlers import (
-        config_chat_session,
-        handle_conversation,
-        handle_files_attachment,
-        handle_reasoning_conversation,
-        handle_thinking_conversation,
+        config_chat_session as _config_chat_session,
     )
-    from vtai.utils.dict_to_object import DictToObject
-    from vtai.utils.file_handlers import process_files
-    from vtai.utils.llm_profile_builder import build_llm_profile
-    from vtai.utils.media_processors import handle_tts_response
-    from vtai.utils.safe_execution import safe_execution
-    from vtai.utils.starter_prompts import (
-        get_command_route,
-        get_command_template,
-        set_commands,
+    from vtai.utils.conversation_handlers import (
+        handle_conversation as _handle_conversation,
     )
+    from vtai.utils.conversation_handlers import (
+        handle_files_attachment as _handle_files_attachment,
+    )
+    from vtai.utils.conversation_handlers import (
+        handle_reasoning_conversation as _handle_reasoning_conversation,
+    )
+    from vtai.utils.conversation_handlers import (
+        handle_thinking_conversation as _handle_thinking_conversation,
+    )
+    from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
+    from vtai.utils.conversation_handlers import (
+        set_litellm_api_keys_from_settings as _set_litellm_api_keys_from_settings,
+    )
+    from vtai.utils.dict_to_object import DictToObject as _DictToObject
+    from vtai.utils.file_handlers import process_files as _process_files
+    from vtai.utils.llm_profile_builder import build_llm_profile as _build_llm_profile
+    from vtai.utils.media_processors import handle_tts_response as _handle_tts_response
+    from vtai.utils.safe_execution import safe_execution as _safe_execution
+    from vtai.utils.starter_prompts import get_command_route as _get_command_route
+    from vtai.utils.starter_prompts import get_command_template as _get_command_template
+    from vtai.utils.starter_prompts import set_commands as _set_commands
 
-    # Assign modules to global namespace
     numpy = np
-    audioop = _audioop
-    subprocess = _subprocess
-
-    logger.debug("Deferred imports loaded in %.2f seconds", time.time() - import_start)
+    subprocess = sp
+    config_chat_session = _config_chat_session
+    handle_conversation = _handle_conversation
+    handle_files_attachment = _handle_files_attachment
+    handle_reasoning_conversation = _handle_reasoning_conversation
+    handle_thinking_conversation = _handle_thinking_conversation
+    DictToObject = _DictToObject
+    process_files = _process_files
+    build_llm_profile = _build_llm_profile
+    handle_tts_response = _handle_tts_response
+    safe_execution = _safe_execution
+    get_command_route = _get_command_route
+    get_command_template = _get_command_template
+    set_commands = _set_commands
+    logger.debug("Deferred imports loaded.")
     _imports_loaded = True
 
 
@@ -270,6 +278,27 @@ async def on_message(message: cl.Message) -> None:
         # Get message history
         messages = cl.user_session.get("message_history") or []
 
+        # Retrieve BYOK API keys from settings (plain text, no encryption)
+        user_keys = {}
+        for provider in [
+            "openai",
+            "anthropic",
+            "gemini",
+            "cohere",
+            "mistral",
+            "groq",
+            "ollama",
+            "deepseek",
+            "openrouter",
+        ]:
+            key_setting = f"byok_{provider}_api_key"
+            api_key = get_setting(key_setting)
+            if api_key:
+                user_keys[provider] = api_key
+
+        # Set litellm API keys from settings (plain text, no encryption)
+        set_litellm_api_keys_from_settings(user_keys)
+
         # Check if current model is a reasoning model that benefits from <think>
         current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
         is_reasoning = conf.is_reasoning_model(current_model)
@@ -286,23 +315,31 @@ async def on_message(message: cl.Message) -> None:
             )
 
         if message.elements and len(message.elements) > 0:
-            await handle_files_attachment(message, messages, async_openai_client)
+            await handle_files_attachment(
+                message, messages, async_openai_client, user_keys=user_keys
+            )
         else:
             # Check for <think> tag directly in user request
             if "<think>" in message.content.lower():
                 logger.info(
                     "Processing message with <think> tag using thinking conversation handler"
                 )
-                await handle_thinking_conversation(message, messages, route_layer)
+                await handle_thinking_conversation(
+                    message, messages, route_layer, user_keys=user_keys
+                )
             # Check if selected model supports LiteLLM's reasoning capabilities
             elif conf.supports_reasoning(current_model):
                 logger.info(
                     "Using enhanced reasoning with LiteLLM for model: %s",
                     current_model,
                 )
-                await handle_reasoning_conversation(message, messages, route_layer)
+                await handle_reasoning_conversation(
+                    message, messages, route_layer, user_keys=user_keys
+                )
             else:
-                await handle_conversation(message, messages, route_layer)
+                await handle_conversation(
+                    message, messages, route_layer, user_keys=user_keys
+                )
 
 
 def upsert_user_profile_from_oauth(
@@ -343,7 +380,7 @@ def upsert_user_profile_from_oauth(
             existing_user = response.data[0]
             logger.info("Found existing user: %s", email)
     except Exception as e:
-        logger.warning("Error checking existing user: %s", e)
+        logger.error("Error checking existing user: %s: %s", type(e).__name__, str(e))
 
     user_data = {
         "user_id": user_id,
@@ -374,16 +411,16 @@ def upsert_user_profile_from_oauth(
             logger.error("Failed to upsert user profile - no data returned")
             return None
     except Exception as e:
-        logger.error("Error upserting user profile: %s", e)
+        logger.error("Error upserting user profile: %s: %s", type(e).__name__, str(e))
         return None
 
 
 @cl.oauth_callback
 def oauth_callback(
     provider_id: str,
-    token: str,  # noqa: ARG001 (unused but required by Chainlit)
+    _token: str,  # noqa: ARG001 (unused but required by Chainlit)
     raw_user_data: Dict[str, str],
-    default_user: cl.User,  # noqa: ARG001 (unused but required by Chainlit)
+    _default_user: cl.User,  # noqa: ARG001 (unused but required by Chainlit)
 ) -> Optional[cl.User]:
     """
     Chainlit OAuth callback: upsert user profile and set name/avatar from OAuth.

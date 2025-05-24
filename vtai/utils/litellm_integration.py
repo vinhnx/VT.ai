@@ -10,27 +10,26 @@ from typing import Any, Dict, List, Optional
 
 import litellm
 from litellm import completion
-
-from vtai.utils.config import logger
-from vtai.utils.supabase_logger import setup_litellm_callbacks
+from utils.config import logger
+from utils.supabase_logger import setup_litellm_callbacks
 
 
 class LiteLLMClient:
     """Unified LLM client using LiteLLM with Supabase logging."""
-    
+
     def __init__(self):
         """Initialize the LiteLLM client with callbacks."""
         self.setup_environment()
         setup_litellm_callbacks()
-        
+
     def setup_environment(self):
         """Setup environment variables for LiteLLM providers."""
         # Set default API base URLs if not already set
         if not os.environ.get("LITELLM_LOG"):
             os.environ["LITELLM_LOG"] = "DEBUG"
-            
+
         logger.info("LiteLLM client initialized with environment setup")
-    
+
     def chat_completion(
         self,
         model: str,
@@ -39,11 +38,11 @@ class LiteLLMClient:
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
         stream: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """
         Make a chat completion request using LiteLLM.
-        
+
         Args:
             model: Model name (e.g., "gpt-4o-mini", "claude-3-sonnet", "gemini-pro")
             messages: List of message dictionaries
@@ -52,7 +51,7 @@ class LiteLLMClient:
             max_tokens: Maximum tokens to generate
             stream: Whether to stream the response
             **kwargs: Additional arguments for litellm.completion
-            
+
         Returns:
             Completion response from LiteLLM
         """
@@ -64,13 +63,15 @@ class LiteLLMClient:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 stream=stream,
-                **kwargs
+                **kwargs,
             )
             return response
         except Exception as e:
-            logger.error("Error in LiteLLM completion: %s: %s", type(e).__name__, str(e))
+            logger.error(
+                "Error in LiteLLM completion: %s: %s", type(e).__name__, str(e)
+            )
             raise
-    
+
     def image_generation(
         self,
         prompt: str,
@@ -78,11 +79,11 @@ class LiteLLMClient:
         user: Optional[str] = None,
         size: str = "1024x1024",
         quality: str = "standard",
-        **kwargs
+        **kwargs,
     ) -> Any:
         """
         Generate an image using LiteLLM.
-        
+
         Args:
             prompt: Image generation prompt
             model: Image model to use
@@ -90,7 +91,7 @@ class LiteLLMClient:
             size: Image size
             quality: Image quality
             **kwargs: Additional arguments
-            
+
         Returns:
             Image generation response
         """
@@ -101,11 +102,13 @@ class LiteLLMClient:
                 user=user,
                 size=size,
                 quality=quality,
-                **kwargs
+                **kwargs,
             )
             return response
         except Exception as e:
-            logger.error("Error in LiteLLM image generation: %s: %s", type(e).__name__, str(e))
+            logger.error(
+                "Error in LiteLLM image generation: %s: %s", type(e).__name__, str(e)
+            )
             raise
 
 
@@ -119,15 +122,9 @@ def get_llm_client() -> LiteLLMClient:
 
 
 def quick_completion(
-    model: str,
-    messages: List[Dict[str, str]],
-    user: Optional[str] = None,
-    **kwargs
+    model: str, messages: List[Dict[str, str]], user: Optional[str] = None, **kwargs
 ) -> Any:
     """Quick completion function for convenience."""
     return llm_client.chat_completion(
-        model=model,
-        messages=messages,
-        user=user,
-        **kwargs
+        model=model, messages=messages, user=user, **kwargs
     )

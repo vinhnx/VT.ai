@@ -1,19 +1,18 @@
 """
 server.py - FastAPI/Chainlit server setup for VT.ai
 
-This module initializes the FastAPI app, mounts static files, and adds authentication middleware.
+This module initializes the FastAPI app, mounts static files, and adds authentication (if any).
 """
 
 import os
 
 import chainlit.server
 import httpx
+from app import logger, supabase_client
 from fastapi import FastAPI, Request, Response
-from fastapi.middleware.cors import CORSMiddleware  # Add this import
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-
-from vtai.app import logger, supabase_client
 
 # Create a new main FastAPI application
 main_app = FastAPI()

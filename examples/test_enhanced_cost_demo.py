@@ -12,8 +12,8 @@ from datetime import datetime
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from vtai.utils.config import logger
-from vtai.utils.supabase_logger import (
+from utils.config import logger
+from utils.supabase_logger import (
     calculate_token_costs,
     get_model_info,
     get_user_analytics,

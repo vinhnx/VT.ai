@@ -1,4 +1,8 @@
 #!/bin/bash
-# Run the VT.ai FastAPI backend for the custom frontend
-cd "$(dirname "$0")/../vtai-server"
-uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
+# This script is deprecated. To run the VT.ai app, use:
+# chainlit run vtai/app.py
+# or
+# ./scripts/run_vtai_app.sh
+
+echo "This script is deprecated. Use 'chainlit run vtai/app.py' or './scripts/run_vtai_app.sh' to run the app."
+exit 1

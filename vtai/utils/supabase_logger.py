@@ -11,8 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import litellm
 from supabase import Client as SupabaseClient
 from supabase import create_client
-
-from vtai.utils.config import logger
+from utils.config import logger
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY")

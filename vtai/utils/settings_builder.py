@@ -7,10 +7,15 @@ This module provides functions to build and configure user settings for the chat
 from typing import Any, Dict, List, Union
 
 import chainlit as cl
-from chainlit.input_widget import Select, Slider, Switch
+from chainlit.input_widget import Select, Slider, Switch, TextInput
+from utils import constants as const
+from utils import llm_providers_config as conf
 
-from vtai.utils import constants as const
-from vtai.utils import llm_providers_config as conf
+from vtai.utils.api_keys import encrypt_api_key
+
+# NOTE: For public/shared deployments, do NOT put your own API keys in .env.
+# Use Chainlit's user_env config to prompt each user for their own API keys (BYOK).
+# See: https://docs.chainlit.io/integrations/user-env
 
 
 async def build_settings() -> Dict[str, Any]:
@@ -19,31 +24,101 @@ async def build_settings() -> Dict[str, Any]:
 
     Creates a complete settings panel with all configurable options for the VT.ai
     application, including model selection, conversation parameters, and media settings.
+    Adds BYOK fields for free users.
 
     Returns:
             Dict[str, Any]: The configured user settings as a dictionary
     """
     settings_widgets = _create_settings_widgets()
+
     settings = await cl.ChatSettings(settings_widgets).send()
     return settings
 
 
-def _create_settings_widgets() -> List[Union[Select, Slider, Switch]]:
+def _create_settings_widgets() -> List[Union[Select, Slider, Switch, TextInput]]:
     """
     Creates the list of settings widgets for the chat interface.
 
     Returns:
-            List[Union[Select, Slider, Switch]]: A list of input widgets for the settings panel
+            List[Union[Select, Slider, Switch, TextInput]]: A list of input widgets for the settings panel
     """
-    return [
-        # ===== CORE CONVERSATION SETTINGS =====
+
+    def _encrypted_or_plain(val):
+        if val and not val.startswith("gAAAA"):
+            return encrypt_api_key(val)
+        return val
+
+    widgets = [
+        # Add security notice to the description of the first widget (Chat Model)
         Select(
             id=conf.SETTINGS_CHAT_MODEL,
             label="Chat Model",
-            description="Select the Large Language Model (LLM) for chat conversations. "
-            "Different models have varying capabilities and performance characteristics.",
+            description=(
+                "**Security Notice:** Your BYOK (Bring Your Own Key) API keys are never stored on the server. "
+                "They are encrypted and kept only in your local session. For persistent CLI/desktop storage, "
+                "use the [Python keyring package](https://pypi.org/project/keyring/) for secure OS keychain storage.\n\n"
+                "Select the Large Language Model (LLM) for chat conversations. "
+                "Different models have varying capabilities and performance characteristics."
+            ),
             values=conf.MODELS,
             initial_value=conf.DEFAULT_MODEL,
+        ),
+        # ===== BYOK FIELDS (moved to top) =====
+        TextInput(
+            id="byok_openai_api_key",
+            label="OpenAI API Key (BYOK)",
+            description="Optional: Enter your own OpenAI API key to use your quota (for Free tier)",
+            password=True,
+            value=_encrypted_or_plain(cl.user_session.get("byok_openai_api_key")),
+        ),
+        TextInput(
+            id="byok_anthropic_api_key",
+            label="Anthropic API Key (BYOK)",
+            description="Optional: Enter your own Anthropic API key to use your quota (for Free tier)",
+            password=True,
+            value=_encrypted_or_plain(cl.user_session.get("byok_anthropic_api_key")),
+        ),
+        TextInput(
+            id="byok_gemini_api_key",
+            label="Gemini API Key (BYOK)",
+            description="Optional: Enter your own Gemini API key to use your quota (for Free tier)",
+            password=True,
+            value=_encrypted_or_plain(cl.user_session.get("byok_gemini_api_key")),
+        ),
+        TextInput(
+            id="byok_cohere_api_key",
+            label="Cohere API Key (BYOK)",
+            description="Optional: Enter your own Cohere API key to use your quota (for Free tier)",
+            password=True,
+            value=_encrypted_or_plain(cl.user_session.get("byok_cohere_api_key")),
+        ),
+        TextInput(
+            id="byok_mistral_api_key",
+            label="Mistral API Key (BYOK)",
+            description="Optional: Enter your own Mistral API key to use your quota (for Free tier)",
+            password=True,
+            value=_encrypted_or_plain(cl.user_session.get("byok_mistral_api_key")),
+        ),
+        TextInput(
+            id="byok_groq_api_key",
+            label="Groq API Key (BYOK)",
+            description="Optional: Enter your own Groq API key to use your quota (for Free tier)",
+            password=True,
+            value=_encrypted_or_plain(cl.user_session.get("byok_groq_api_key")),
+        ),
+        TextInput(
+            id="byok_deepseek_api_key",
+            label="DeepSeek API Key (BYOK)",
+            description="Optional: Enter your own DeepSeek API key to use your quota (for Free tier)",
+            password=True,
+            value=_encrypted_or_plain(cl.user_session.get("byok_deepseek_api_key")),
+        ),
+        TextInput(
+            id="byok_openrouter_api_key",
+            label="OpenRouter API Key (BYOK)",
+            description="Optional: Enter your own OpenRouter API key to use your quota (for Free tier)",
+            password=True,
+            value=_encrypted_or_plain(cl.user_session.get("byok_openrouter_api_key")),
         ),
         Slider(
             id=conf.SETTINGS_TEMPERATURE,
@@ -185,14 +260,6 @@ def _create_settings_widgets() -> List[Union[Select, Slider, Switch]]:
             values=const.WEB_SEARCH_MODELS,
             initial_value=const.DEFAULT_WEB_SEARCH_MODEL,
         ),
-        # ===== REASONING SETTINGS =====
-        Select(
-            id=conf.SETTINGS_REASONING_EFFORT,
-            label="Reasoning Depth",
-            description="Control how much reasoning effort models use when thinking through complex problems. "
-            "'Low' is faster but less thorough, 'Medium' balances speed and depth, while 'High' provides "
-            "the most detailed reasoning but may take longer to generate responses.",
-            values=conf.REASONING_EFFORT_LEVELS,
-            initial_value=conf.DEFAULT_REASONING_EFFORT,
-        ),
     ]
+
+    return widgets

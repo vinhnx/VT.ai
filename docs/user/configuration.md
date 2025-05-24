@@ -61,6 +61,15 @@ Manage your API keys for different providers:
 - Google
 - Other providers
 
+**For public/shared deployments:**
+
+- Do NOT put your own API keys in `.env`.
+- Use Chainlit's `user_env` config to prompt each user for their own API keys (BYOK).
+- Access user keys in code with `cl.user_session.get("env")`.
+- This ensures user keys are never stored on the server or shared between users.
+
+For local/private use, you can still use environment variables or `.env` as described in the Getting Started guide.
+
 ## UI Customization
 
 Customize the user interface to your preferences:

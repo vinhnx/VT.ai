@@ -9,9 +9,8 @@ import contextlib
 from typing import Any, Callable, Optional
 
 import chainlit as cl
-
-from vtai.utils.config import logger
-from vtai.utils.error_handlers import handle_exception
+from utils.config import logger
+from utils.error_handlers import handle_exception
 
 
 @contextlib.asynccontextmanager

@@ -8,6 +8,8 @@ from typing import Any, Dict, Optional
 
 import chainlit as cl
 
+from vtai.utils.api_keys import decrypt_api_key
+
 # Note: Import of AppChatProfileType removed as assistant profile is no longer used
 
 
@@ -59,7 +61,7 @@ def get_user_session_id() -> str:
 
 def get_setting(key: str) -> Any:
     """
-    Retrieves a specific setting value from the user session
+    Retrieves a specific setting value from the user session, decrypting if needed.
 
     Args:
         key: The settings key to retrieve
@@ -71,7 +73,15 @@ def get_setting(key: str) -> Any:
     if settings is None:
         return None
 
-    return settings.get(key)
+    value = settings.get(key)
+    # Decrypt API key fields if present
+    if key.endswith("_api_key") and value:
+        try:
+            return decrypt_api_key(value)
+        except Exception:
+            # If not encrypted, just return as is
+            return value
+    return value
 
 
 def get_user_profile() -> Dict[str, Any]:
@@ -124,4 +134,5 @@ def get_chainlit_user() -> Optional[Any]:
     return cl.user_session.get("user")
 
 
+# Note: is_in_assistant_profile() function has been removed as this feature is no longer supported
 # Note: is_in_assistant_profile() function has been removed as this feature is no longer supported

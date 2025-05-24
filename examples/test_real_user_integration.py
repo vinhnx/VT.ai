@@ -10,12 +10,12 @@ from datetime import datetime
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from vtai.utils.supabase_logger import (
-    log_request_to_supabase,
+from utils.config import logger
+from utils.supabase_logger import (
     get_user_analytics,
-    setup_litellm_callbacks
+    log_request_to_supabase,
+    setup_litellm_callbacks,
 )
-from vtai.utils.config import logger
 
 
 def test_real_user_logging():
@@ -34,14 +34,17 @@ def test_real_user_logging():
     log_request_to_supabase(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": "Test with real authenticated user"}],
-        response={"content": "Test response from authenticated user", "usage": {"total_tokens": 45}},
+        response={
+            "content": "Test response from authenticated user",
+            "usage": {"total_tokens": 45},
+        },
         end_user=real_user_id,  # This would be the session ID in practice
         status="success",
         tokens_used=45,
         total_cost=0.002,
         user_profile_id=real_user_id,  # This is the key - linking to the authenticated user
         provider="openai",
-        litellm_call_id="test_call_12345"
+        litellm_call_id="test_call_12345",
     )
 
     # Check if the user's token count was updated
@@ -88,14 +91,17 @@ def test_session_to_user_mapping():
         tokens_used=30,
         total_cost=0.001,
         user_profile_id=auth_user_id,  # What we use for linking
-        provider="openai"
+        provider="openai",
     )
 
     # Verify the mapping worked
     analytics = get_user_analytics(auth_user_id)
     if analytics and analytics.get("total_requests", 0) > 0:
         logger.info("✅ Session to user mapping working!")
-        logger.info("  Requests logged under authenticated user: %s", analytics.get("total_requests"))
+        logger.info(
+            "  Requests logged under authenticated user: %s",
+            analytics.get("total_requests"),
+        )
         return True
     else:
         logger.error("❌ Session to user mapping failed")
@@ -131,7 +137,9 @@ def main():
         logger.info("- ✅ Automatic token counter updates via database triggers")
     else:
         logger.warning("⚠️  Some tests failed (%d/%d)", passed, total)
-        logger.info("Check the conversation_handlers.py updates for proper user ID handling")
+        logger.info(
+            "Check the conversation_handlers.py updates for proper user ID handling"
+        )
 
     return passed == total
 

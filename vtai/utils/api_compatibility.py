@@ -3,12 +3,12 @@ API compatibility utilities for handling different LLM provider APIs.
 """
 
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import litellm
-
-from vtai.utils.config import logger
-from vtai.utils.supabase_logger import log_request_to_supabase
+from utils.config import logger
+from utils.llm_providers_config import get_llm_params
+from utils.supabase_logger import log_request_to_supabase
 
 
 def is_openai_model(model: str) -> bool:
@@ -29,7 +29,10 @@ def is_openai_model(model: str) -> bool:
 
 
 async def try_chat_completion(
-    model: str, messages: List[Dict[str, Any]], **kwargs
+    model: str,
+    messages: List[Dict[str, Any]],
+    user_keys: Optional[Dict[str, Any]] = None,
+    **kwargs,
 ) -> Any:
     """
     Use the Chat Completions API directly and log to Supabase.
@@ -37,6 +40,7 @@ async def try_chat_completion(
     Args:
         model: The model to use
         messages: The messages list for the chat completion
+        user_keys: Optional user keys for BYOK support
         **kwargs: Additional arguments to pass to the API calls
 
     Returns:
@@ -49,6 +53,11 @@ async def try_chat_completion(
         acompletion_kwargs = kwargs.copy()
         if "response_format" not in acompletion_kwargs:
             acompletion_kwargs["response_format"] = {"type": "text"}
+
+        # Get LLM parameters with API keys
+        llm_params = get_llm_params(model, user_keys=user_keys)
+        acompletion_kwargs.update(llm_params)
+
         response = await litellm.acompletion(
             model=model, messages=messages, **acompletion_kwargs
         )

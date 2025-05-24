@@ -17,8 +17,8 @@ from typing import Dict, List
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from vtai.utils.config import logger
-from vtai.utils.litellm_integration import get_llm_client, quick_completion
+from utils.config import logger
+from utils.litellm_integration import get_llm_client, quick_completion
 
 
 def setup_environment():

@@ -233,7 +233,7 @@ async def process_tool_call(step_references, step, tool_call, name, input, outpu
 ### Creating an Assistant Session
 
 ```python
-from vtai.utils.assistant_tools import process_thread_message, process_tool_call
+from utils.assistant_tools import process_thread_message, process_tool_call
 
 # Setup assistant session
 async def setup_assistant_session():

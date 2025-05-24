@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import litellm
 
-from vtai.utils.config import logger
-from vtai.utils.supabase_logger import (
+from utils.config import logger
+from utils.supabase_logger import (
     calculate_prompt_tokens,
     calculate_token_costs,
     get_model_info,
