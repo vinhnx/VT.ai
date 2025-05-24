@@ -25,7 +25,8 @@ from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
 from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
 from vtai.utils.settings_builder import build_settings
-from vtai.utils.user_session_helper import get_setting
+from vtai.utils.supabase_logger import fetch_user_profile_from_supabase
+from vtai.utils.user_session_helper import get_setting, get_user_profile
 
 # Register cleanup function to ensure resources are properly released
 atexit.register(cleanup)
@@ -203,7 +204,15 @@ async def chainlit_chat_start():
             _emitted_log_events.add(log_key)
 
         # Send welcome message with user information
-        welcome_msg = f"Welcome, **{user_name}**! How can I help you today?"
+        welcome_msg = f"""
+👋 Hi **{user_name}**, welcome to VT.ai!
+
+I'm here to help you brainstorm, answer questions, and get things done—just ask me anything.
+
+✨ **Tip:** You can type `show profile` at any time to view your user profile and usage stats.
+
+Need ideas? Try asking for a summary, code snippet, or creative suggestion!
+"""
         await cl.Message(content=welcome_msg).send()
     else:
         logger.warning(
@@ -244,6 +253,23 @@ async def on_message(message: cl.Message) -> None:
     """
     # Make sure all imports are loaded before processing messages
     load_deferred_imports()
+
+    content = message.content.strip()
+    if content == "show profile":
+        user_id = cl.user_session.get("user_id")
+        profile = get_user_profile() or {}
+        if not profile and user_id:
+            profile = cl.run_sync(fetch_user_profile_from_supabase(user_id))
+        if not profile:
+            cl.run_sync(cl.Message(content="No user profile found.").send())
+        else:
+            cl.run_sync(
+                cl.Message(
+                    content="Your profile:",
+                    elements=[cl.CustomElement(name="UserProfile", props=profile)],
+                ).send()
+            )
+        return
 
     async with safe_execution(
         operation_name="message processing",
@@ -380,6 +406,29 @@ def upsert_user_profile_from_oauth(
         return None
 
 
+async def fetch_user_profile_from_supabase(user_id: str) -> dict:
+    """Fetch user profile from Supabase database by user_id."""
+    from vtai.utils.supabase_logger import supabase_client
+
+    if not supabase_client:
+        return {}
+    try:
+        response = (
+            supabase_client.table("user_profiles")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if response.data and len(response.data) > 0:
+            return response.data[0]
+        return {}
+    except Exception as e:
+        from vtai.utils.config import logger
+
+        logger.error("Error fetching user profile: %s: %s", type(e).__name__, str(e))
+        return {}
+
+
 @cl.oauth_callback
 def oauth_callback(
     provider_id: str,
@@ -414,3 +463,77 @@ def oauth_callback(
             **raw_user_data,
         },
     )
+
+
+@cl.action_callback("show_user_profile")
+async def show_user_profile_action(action):
+    """Show the current user's profile as a custom Chainlit element."""
+    try:
+        profile = get_user_profile()
+        if not profile:
+            await cl.Message(content="No user profile found.").send()
+            return
+        await cl.Message(
+            content="Your profile:",
+            elements=[cl.CustomElement(name="UserProfile", props=profile)],
+        ).send()
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {str(e)}")
+        await cl.Message(content="Failed to load user profile.").send()
+
+
+@cl.action_callback("show_profile_action")
+async def show_profile_action_handler(action):
+    """Show the current user's profile as a custom Chainlit element (settings action)."""
+    try:
+        profile = get_user_profile()
+        if not profile:
+            await cl.Message(content="No user profile found.").send()
+            return
+        await cl.Message(
+            content="Your profile:",
+            elements=[cl.CustomElement(name="UserProfile", props=profile)],
+        ).send()
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {str(e)}")
+        await cl.Message(content="Failed to load user profile.").send()
+
+
+@cl.action_callback("show_user_profile_select")
+async def show_user_profile_select_action(action):
+    """Show the current user's profile when the Select widget is set to 'Yes'."""
+    try:
+        if action.value != "Yes":
+            return
+        profile = get_user_profile()
+        if not profile:
+            await cl.Message(content="No user profile found.").send()
+            return
+        await cl.Message(
+            content="Your profile:",
+            elements=[cl.CustomElement(name="UserProfile", props=profile)],
+        ).send()
+    except Exception as e:
+        logger.error(f"Error: {type(e).__name__}: {str(e)}")
+        await cl.Message(content="Failed to load user profile.").send()
+
+
+@cl.on_settings_update
+def on_settings_update(settings: dict) -> None:
+    """Detect if the user set 'Show Profile' to 'Yes' in settings and show the profile."""
+    if settings.get("show_profile_select") == "Yes":
+        user_id = cl.user_session.get("user_id")
+        profile = get_user_profile() or {}
+        if not profile and user_id:
+            profile = cl.run_sync(fetch_user_profile_from_supabase(user_id))
+        if not profile:
+            cl.run_sync(cl.Message(content="No user profile found.").send())
+        else:
+            cl.run_sync(
+                cl.Message(
+                    content="Your profile:",
+                    elements=[cl.CustomElement(name="UserProfile", props=profile)],
+                ).send()
+            )
+        # Reset the select to 'No' so user can trigger again
+        settings["show_profile_select"] = "No"

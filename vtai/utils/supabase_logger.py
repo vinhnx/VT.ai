@@ -157,6 +157,26 @@ def update_user_token_usage(
     )
 
 
+def fetch_user_profile_from_supabase(user_id: str) -> dict:
+    """Fetch user profile from Supabase database by user_id."""
+    if not supabase_client:
+        return {}
+    try:
+        response = (
+            supabase_client.table("user_profiles")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if response.data and len(response.data) > 0:
+            return response.data[0]
+        return {}
+    # ruff: noqa: E722 - bare except required for external API/DB robustness
+    except Exception as e:
+        logger.error("Error fetching user profile: %s: %s", type(e).__name__, str(e))
+        return {}
+
+
 # LiteLLM callback functions
 def success_callback_supabase(
     kwargs: Dict[str, Any],
