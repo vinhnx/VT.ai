@@ -199,9 +199,7 @@ async def chainlit_chat_start():
 
         log_key = f"user_session_{user_name}"
         if log_key not in _emitted_log_events:
-            logger.info(
-                "User session initialized for %s via OAuth", user_name
-            )
+            logger.info("User session initialized for %s via OAuth", user_name)
             _emitted_log_events.add(log_key)
 
         # Send welcome message with user information
@@ -329,9 +327,7 @@ def upsert_user_profile_from_oauth(
     provider_user_id = raw_user_data.get("sub") or raw_user_data.get("id")
 
     if not email or not provider_user_id:
-        logger.error(
-            "Missing required OAuth data: email or provider_user_id missing"
-        )
+        logger.error("Missing required OAuth data: email or provider_user_id missing")
         return None
 
     user_id = f"{provider_id}_{provider_user_id}"
@@ -400,9 +396,7 @@ def oauth_callback(
     stored_user = upsert_user_profile_from_oauth(provider_id, raw_user_data)
     if not stored_user:
         return None
-    logger.info(
-        "OAuth avatar_url set for user_id: %s", stored_user.get("user_id")
-    )
+    logger.info("OAuth avatar_url set for user_id: %s", stored_user.get("user_id"))
     return cl.User(
         identifier=stored_user["user_id"],
         display_name=stored_user.get("full_name") or stored_user["user_id"],

@@ -13,6 +13,7 @@ from typing import Any, Dict, List
 
 import chainlit as cl
 import litellm
+from chainlit.action import Action
 from chainlit.step import step
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI
@@ -46,7 +47,7 @@ from .user_session_helper import (
 
 def create_message_actions(content: str, model: str) -> List[cl.Action]:
     """
-    Creates standard message actions for chat responses.
+    Creates standard message actions for chat responses, using Lucid icons.
 
     Args:
         content: The message content
@@ -62,7 +63,7 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     if enable_tts_response:
         actions.append(
             cl.Action(
-                icon="speech",
+                icon="lucide:volume-2",
                 name="speak_chat_response_action",
                 payload={"value": content},
                 tooltip="Speak response",
@@ -73,6 +74,7 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     # Add model change action
     actions.append(
         cl.Action(
+            icon="lucide:settings",
             name="change_model_action",
             payload={"value": content},
             label=f"Using: {model}",
@@ -81,6 +83,30 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
     )
 
     return actions
+
+
+@cl.action_callback("change_model_action")
+async def on_change_model_action(action: Action) -> None:
+    """
+    Handle the change model action click.
+    Shows an inline text notification instructing the user how to change the model.
+
+    Args:
+        action: The action that was triggered
+    """
+    try:
+        await action.remove()
+        text_content = (
+            "To change the model, click the settings gear icon in the input bar and select a "
+            "different model from the 'Chat Model' dropdown."
+        )
+        elements = [
+            cl.Text(name="Change Language Model", content=text_content, display="inline")
+        ]
+        await cl.Message(content="", elements=elements).send()
+    except Exception as e:
+        logger.error(f"Error in change_model_action: {type(e).__name__}: {str(e)}")
+        await cl.Message(content="Unable to show model change instructions.").send()
 
 
 async def use_chat_completion_api(
