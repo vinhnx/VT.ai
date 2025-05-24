@@ -17,14 +17,17 @@ import atexit
 from typing import Dict, Optional
 
 import chainlit as cl
-from supabase import Client as SupabaseClient
-from supabase import create_client
 
 from vtai.utils import constants as const
 from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
 from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
 from vtai.utils.settings_builder import build_settings
+from vtai.utils.supabase_client import (
+    fetch_user_profile_from_supabase,
+    supabase_client,
+    upsert_user_profile_from_oauth,
+)
 from vtai.utils.user_session_helper import get_setting, get_user_profile
 
 # Register cleanup function to ensure resources are properly released
@@ -39,20 +42,6 @@ except ImportError:
     JWT_AVAILABLE = False
     logger.warning("python-jose not available - some JWT features may be limited")
 
-
-# Initialize Supabase client
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
-
-if not SUPABASE_URL or not SUPABASE_ANON_KEY:
-    logger.warning(
-        "SUPABASE_URL and SUPABASE_ANON_KEY environment variables are not set. Authentication will not work."
-    )
-    supabase_client: Optional[SupabaseClient] = None
-else:
-    supabase_client: Optional[SupabaseClient] = create_client(
-        SUPABASE_URL, SUPABASE_ANON_KEY
-    )
 
 # Flag to track if we're in fast mode
 fast_mode = os.environ.get("VT_FAST_START") == "1"
@@ -254,7 +243,7 @@ async def on_message(message: cl.Message) -> None:
         user_id = cl.user_session.get("user_id")
         profile = get_user_profile() or {}
         if not profile and user_id:
-            profile = cl.run_sync(fetch_user_profile_from_supabase(user_id))
+            profile = await cl.make_async(fetch_user_profile_from_supabase)(user_id)
         if not profile:
             await cl.Message(content="No user profile found.").send()
         else:
@@ -328,98 +317,6 @@ async def on_message(message: cl.Message) -> None:
             await handle_conversation(
                 message, messages, route_layer, user_keys=user_keys
             )
-
-
-def upsert_user_profile_from_oauth(
-    provider_id: str, raw_user_data: Dict[str, str]
-) -> Optional[Dict[str, str]]:
-    """
-    Upsert user profile in Supabase from OAuth data. Returns stored user row or None.
-    """
-    if not supabase_client:
-        logger.error("Supabase client not available for OAuth callback")
-        return None
-
-    email = raw_user_data.get("email")
-    name = raw_user_data.get("name") or raw_user_data.get("given_name", "")
-    avatar_url = raw_user_data.get("picture")
-    provider_user_id = raw_user_data.get("sub") or raw_user_data.get("id")
-
-    if not email or not provider_user_id:
-        logger.error("Missing required OAuth data: email or provider_user_id missing")
-        return None
-
-    user_id = f"{provider_id}_{provider_user_id}"
-
-    # Try to get existing user from user_profiles table
-    existing_user = None
-    try:
-        response = (
-            supabase_client.table("user_profiles")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
-        )
-        if response.data:
-            existing_user = response.data[0]
-            logger.info("Found existing user profile for user_id: %s", user_id)
-    except Exception as e:
-        logger.error("Error checking existing user: %s: %s", type(e).__name__, str(e))
-
-    user_data = {
-        "user_id": user_id,
-        "email": email,
-        "full_name": name,
-        "avatar_url": avatar_url,
-        "provider": provider_id,
-        "provider_user_id": provider_user_id,
-        "raw_oauth_details": raw_user_data,
-        "updated_at": "now()",
-    }
-    if not existing_user:
-        user_data.update(
-            {"subscription_tier": "free", "tokens_used": 0, "created_at": "now()"}
-        )
-        logger.info("Creating new user profile for user_id: %s", user_id)
-
-    try:
-        upsert_response = (
-            supabase_client.table("user_profiles")
-            .upsert(user_data, on_conflict="user_id")
-            .execute()
-        )
-        if upsert_response.data:
-            logger.info("Successfully upserted user profile for user_id: %s", user_id)
-            return upsert_response.data[0]
-        else:
-            logger.error("Failed to upsert user profile - no data returned")
-            return None
-    except Exception as e:
-        logger.error("Error upserting user profile: %s: %s", type(e).__name__, str(e))
-        return None
-
-
-async def fetch_user_profile_from_supabase(user_id: str) -> dict:
-    """Fetch user profile from Supabase database by user_id."""
-    from vtai.utils.supabase_client import supabase_client
-
-    if not supabase_client:
-        return {}
-    try:
-        response = (
-            supabase_client.table("user_profiles")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
-        )
-        if response.data and len(response.data) > 0:
-            return response.data[0]
-        return {}
-    except Exception as e:
-        from vtai.utils.config import logger
-
-        logger.error("Error fetching user profile: %s: %s", type(e).__name__, str(e))
-        return {}
 
 
 @cl.oauth_callback
@@ -501,7 +398,7 @@ def on_settings_update(settings: dict) -> None:
         user_id = cl.user_session.get("user_id")
         profile = get_user_profile() or {}
         if not profile and user_id:
-            profile = cl.run_sync(fetch_user_profile_from_supabase(user_id))
+            profile = make_async(fetch_user_profile_from_supabase)(user_id)
         if not profile:
             cl.run_sync(cl.Message(content="No user profile found.").send())
         else:
@@ -512,4 +409,6 @@ def on_settings_update(settings: dict) -> None:
                 ).send()
             )
         # Reset the select to 'No' so user can trigger again
+        settings["show_profile_select"] = "No"
+        settings["show_profile_select"] = "No"
         settings["show_profile_select"] = "No"

@@ -5,18 +5,102 @@ from typing import Any, Dict, List, Optional, Tuple
 import litellm
 from supabase import Client as SupabaseClient
 from supabase import create_client
-from utils.config import logger
+
+from vtai.utils.config import logger
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
-
-# We'll use custom callback functions instead of LiteLLM's built-in Supabase integration
 
 supabase_client: Optional[SupabaseClient] = None
 if SUPABASE_URL and SUPABASE_KEY:
     supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
 else:
     logger.warning("Supabase credentials not set. Logging will be disabled.")
+
+
+def upsert_user_profile_from_oauth(
+    provider_id: str, raw_user_data: Dict[str, str]
+) -> Optional[Dict[str, str]]:
+    """
+    Upsert user profile in Supabase from OAuth data. Returns stored user row or None.
+    """
+    if not supabase_client:
+        logger.error("Supabase client not available for OAuth callback")
+        return None
+
+    email = raw_user_data.get("email")
+    name = raw_user_data.get("name") or raw_user_data.get("given_name", "")
+    avatar_url = raw_user_data.get("picture")
+    provider_user_id = raw_user_data.get("sub") or raw_user_data.get("id")
+
+    if not email or not provider_user_id:
+        logger.error("Missing required OAuth data: email or provider_user_id missing")
+        return None
+
+    user_id = f"{provider_id}_{provider_user_id}"
+
+    # Try to get existing user from user_profiles table
+    existing_user = None
+    try:
+        response = (
+            supabase_client.table("user_profiles")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if response.data:
+            existing_user = response.data[0]
+    except Exception as e:  # ruff: noqa: E722
+        logger.error("Error checking existing user: %s: %s", type(e).__name__, str(e))
+
+    user_data = {
+        "user_id": user_id,
+        "email": email,
+        "full_name": name,
+        "avatar_url": avatar_url,
+        "provider": provider_id,
+        "provider_user_id": provider_user_id,
+        "raw_oauth_details": raw_user_data,
+        "updated_at": "now()",
+    }
+    if not existing_user:
+        user_data.update(
+            {"subscription_tier": "free", "tokens_used": 0, "created_at": "now()"}
+        )
+        logger.info("Creating new user profile for user_id: %s", user_id)
+
+    try:
+        upsert_response = (
+            supabase_client.table("user_profiles")
+            .upsert(user_data, on_conflict="user_id")
+            .execute()
+        )
+        if upsert_response.data:
+            return upsert_response.data[0]
+        else:
+            return None
+    except Exception as e:  # ruff: noqa: E722
+        logger.error("Error upserting user profile: %s: %s", type(e).__name__, str(e))
+        return None
+
+
+def fetch_user_profile_from_supabase(user_id: str) -> dict:
+    """Fetch user profile from Supabase database by user_id."""
+    if not supabase_client:
+        return {}
+    try:
+        response = (
+            supabase_client.table("user_profiles")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        if response.data and len(response.data) > 0:
+            return response.data[0]
+        return {}
+    except Exception as e:  # ruff: noqa: E722
+        logger.error("Error fetching user profile: %s: %s", type(e).__name__, str(e))
+        return {}
 
 
 def calculate_token_costs(
@@ -155,26 +239,6 @@ def update_user_token_usage(
         "Token usage update handled automatically by database trigger for user %s",
         user_profile_id,
     )
-
-
-def fetch_user_profile_from_supabase(user_id: str) -> dict:
-    """Fetch user profile from Supabase database by user_id."""
-    if not supabase_client:
-        return {}
-    try:
-        response = (
-            supabase_client.table("user_profiles")
-            .select("*")
-            .eq("user_id", user_id)
-            .execute()
-        )
-        if response.data and len(response.data) > 0:
-            return response.data[0]
-        return {}
-    # ruff: noqa: E722 - bare except required for external API/DB robustness
-    except Exception as e:
-        logger.error("Error fetching user profile: %s: %s", type(e).__name__, str(e))
-        return {}
 
 
 # LiteLLM callback functions
