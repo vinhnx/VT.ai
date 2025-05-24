@@ -475,23 +475,6 @@ async def show_user_profile_action(action):
         await cl.Message(content="Failed to load user profile.").send()
 
 
-@cl.action_callback("show_profile_action")
-async def show_profile_action_handler(action):
-    """Show the current user's profile as a custom Chainlit element (settings action)."""
-    try:
-        profile = get_user_profile()
-        if not profile:
-            await cl.Message(content="No user profile found.").send()
-            return
-        await cl.Message(
-            content="Your profile:",
-            elements=[cl.CustomElement(name="UserProfile", props=profile)],
-        ).send()
-    except Exception as e:
-        logger.error(f"Error: {type(e).__name__}: {str(e)}")
-        await cl.Message(content="Failed to load user profile.").send()
-
-
 @cl.action_callback("show_user_profile_select")
 async def show_user_profile_select_action(action):
     """Show the current user's profile when the Select widget is set to 'Yes'."""
