@@ -197,10 +197,10 @@ async def chainlit_chat_start():
         cl.user_session.set("user_display_name", user_name)
         cl.user_session.set("user_metadata", user_metadata)
 
-        log_key = f"user_session_{user_name}_{user_email}"
+        log_key = f"user_session_{user_name}"
         if log_key not in _emitted_log_events:
             logger.info(
-                "User session initialized for %s (%s) via OAuth", user_name, user_email
+                "User session initialized for %s via OAuth", user_name
             )
             _emitted_log_events.add(log_key)
 
@@ -330,9 +330,7 @@ def upsert_user_profile_from_oauth(
 
     if not email or not provider_user_id:
         logger.error(
-            "Missing required OAuth data: email=%s, provider_user_id=%s",
-            email,
-            provider_user_id,
+            "Missing required OAuth data: email or provider_user_id missing"
         )
         return None
 
@@ -349,7 +347,7 @@ def upsert_user_profile_from_oauth(
         )
         if response.data:
             existing_user = response.data[0]
-            logger.info("Found existing user: %s", email)
+            logger.info("Found existing user profile for user_id: %s", user_id)
     except Exception as e:
         logger.error("Error checking existing user: %s: %s", type(e).__name__, str(e))
 
@@ -367,7 +365,7 @@ def upsert_user_profile_from_oauth(
         user_data.update(
             {"subscription_tier": "free", "tokens_used": 0, "created_at": "now()"}
         )
-        logger.info("Creating new user profile for %s", email)
+        logger.info("Creating new user profile for user_id: %s", user_id)
 
     try:
         upsert_response = (
@@ -376,7 +374,7 @@ def upsert_user_profile_from_oauth(
             .execute()
         )
         if upsert_response.data:
-            logger.info("Successfully upserted user profile for %s", email)
+            logger.info("Successfully upserted user profile for user_id: %s", user_id)
             return upsert_response.data[0]
         else:
             logger.error("Failed to upsert user profile - no data returned")
@@ -398,13 +396,13 @@ def oauth_callback(
     """
     logger.info("OAuth callback triggered for provider: %s", provider_id)
     logger.debug("Raw user data keys: %s", list(raw_user_data.keys()))
-    logger.info("OAuth raw_user_data: %s", raw_user_data)  # Debug full OAuth response
+    # Do not log raw_user_data or any sensitive info
     stored_user = upsert_user_profile_from_oauth(provider_id, raw_user_data)
     if not stored_user:
         return None
     logger.info(
-        "OAuth avatar_url: %s", stored_user.get("avatar_url")
-    )  # Debug avatar_url
+        "OAuth avatar_url set for user_id: %s", stored_user.get("user_id")
+    )
     return cl.User(
         identifier=stored_user["user_id"],
         display_name=stored_user.get("full_name") or stored_user["user_id"],
