@@ -250,4 +250,3 @@ async def test_handle_web_search_without_summarization(
     assert (
         len(prefix_call_args) > 0
     ), "Did not find the raw results prefix in the response"
-    ), "Did not find the raw results prefix in the response"

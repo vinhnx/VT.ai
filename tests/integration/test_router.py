@@ -1,6 +1,7 @@
 """
 Integration tests for VT.ai router functionality.
 """
+
 import pytest
 from semantic_router import Route
 from semantic_router.encoders import FastEmbedEncoder
@@ -17,7 +18,7 @@ def test_router_initialization():
         test_route = Route(
             name="test-route",
             utterances=["Hello, how are you?", "What is the weather like today?"],
-            encoder=encoder
+            encoder=encoder,
         )
 
         # Create a router with the test route
@@ -36,4 +37,4 @@ def test_router_initialization():
         assert hasattr(route, "name")
         assert isinstance(route.name, str)
     except Exception as e:
-        pytest.fail(f"Router initialization failed with exception: {e}")        pytest.fail(f"Router initialization failed with exception: {e}")
+        pytest.fail(f"Router initialization failed with exception: {e}")
