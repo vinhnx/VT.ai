@@ -14,17 +14,14 @@ from typing import Any, Dict, List
 import chainlit as cl
 import litellm
 from chainlit.action import Action
-from chainlit.step import step
 from litellm.utils import trim_messages
-from openai import AsyncOpenAI
 
 from vtai.router.constants import SemanticRouterType
 from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
 from vtai.utils import llm_providers_config as conf
-from vtai.utils.api_keys import decrypt_api_key
 from vtai.utils.config import logger
-from vtai.utils.error_handlers import handle_exception, safe_execution
-from vtai.utils.llm_providers_config import get_llm_params
+from vtai.utils.conversation_core import handle_conversation, handle_trigger_async_chat
+from vtai.utils.error_handlers import safe_execution
 from vtai.utils.media_processors import (
     handle_audio_transcribe,
     handle_audio_understanding,
@@ -33,7 +30,7 @@ from vtai.utils.media_processors import (
 )
 from vtai.utils.settings_builder import DEFAULT_SYSTEM_PROMPT
 
-from .supabase_client import log_request_to_supabase, setup_litellm_callbacks
+from .supabase_client import log_request_to_supabase
 from .url_extractor import extract_url
 from .user_session_helper import (
     get_setting,
@@ -41,7 +38,6 @@ from .user_session_helper import (
     get_user_id,
     get_user_session_id,
     update_message_history_from_assistant,
-    update_message_history_from_user,
 )
 
 
@@ -107,7 +103,7 @@ async def on_change_model_action(action: Action) -> None:
         ]
         await cl.Message(content="", elements=elements).send()
     except Exception as e:
-        logger.error(f"Error in change_model_action: {type(e).__name__}: {str(e)}")
+        logger.error("Error in change_model_action: %s: %s", type(e).__name__, str(e))
         await cl.Message(content="Unable to show model change instructions.").send()
 
 
@@ -119,7 +115,6 @@ async def use_chat_completion_api(
     stream_callback,
     timeout: float = 120.0,
     user_keys: dict = None,
-    reasoning: bool = False,
 ) -> None:
     """
     Uses the Chat Completions API with enhanced Supabase logging.
@@ -133,7 +128,6 @@ async def use_chat_completion_api(
         stream_callback: Callback function to handle streaming tokens
         timeout: Timeout in seconds for the operation
         user_keys: User-specific keys for BYOK
-        reasoning: Whether to enable reasoning features
     """
     logger.info("Using Chat Completions API for model: %s", model)
 
@@ -155,24 +149,10 @@ async def use_chat_completion_api(
 
     start_time = time.time()
 
-    # LiteLLM callbacks should already be set up in config.py
-
-    litellm._turn_on_debug()
-
     # Inject BYOK params if provided
-    llm_params = get_llm_params(model, user_keys=user_keys)
-
-    # Set LiteLLM API key(s) from user_keys (BYOK, decrypt if needed)
     if user_keys:
         set_litellm_api_keys_from_settings(user_keys)
 
-    # === Check for valid key before making API call ===
-    api_key = None
-    if user_keys and isinstance(user_keys, dict):
-        for provider in user_keys:
-            if provider in model.lower():
-                api_key = user_keys[provider]
-                break
     try:
         stream = await asyncio.wait_for(
             litellm.acompletion(
@@ -203,11 +183,7 @@ async def use_chat_completion_api(
 
         # Calculate cost estimate (this will be more accurate with non-streaming)
         try:
-            cost_estimate = litellm.completion_cost(
-                model=model,
-                prompt_tokens=len(str(messages)) // 4,  # Rough estimation
-                completion_tokens=total_tokens,
-            )
+            cost_estimate = litellm.completion_cost(model=model)
         except Exception:
             cost_estimate = None
 
@@ -243,110 +219,6 @@ async def use_chat_completion_api(
         )
         # Reraise for upstream error handling
         raise
-
-
-async def handle_trigger_async_chat(
-    llm_model: str,
-    messages: List[Dict[str, str]],
-    current_message: cl.Message,
-    user_keys: dict = None,
-) -> None:
-    """
-    Triggers an asynchronous chat completion using the specified LLM model.
-    Streams the response back to the user and updates the message history.
-
-    Args:
-        llm_model: The LLM model to use
-        messages: The conversation history messages
-        current_message: The chainlit message object to stream response to
-        user_keys: User-specific keys for BYOK
-    """
-    temperature = get_setting(conf.SETTINGS_TEMPERATURE)
-    top_p = get_setting(conf.SETTINGS_TOP_P)
-
-    async def on_timeout():
-        await current_message.stream_token(
-            "\n\nI apologize, but the response timed out. Please try again with a shorter query."
-        )
-        await current_message.update()
-
-    async with safe_execution(
-        operation_name=f"chat completion with model {llm_model}", on_timeout=on_timeout
-    ):
-        # Use the helper function for API calls
-        await use_chat_completion_api(
-            model=llm_model,
-            messages=messages,
-            temperature=temperature,
-            top_p=top_p,
-            stream_callback=current_message.stream_token,
-            user_keys=user_keys,
-        )
-
-        # After successful streaming, update the message content and history
-        content = current_message.content
-        update_message_history_from_assistant(content)
-
-        # Set the actions on the message using the helper function
-        current_message.actions = create_message_actions(content, llm_model)
-
-        await current_message.update()
-
-
-async def handle_conversation(
-    message: cl.Message,
-    messages: List[Dict[str, str]],
-    route_layer: Any,
-    user_keys: dict = None,
-) -> None:
-    """
-    Handles text-based conversations with the user.
-    Routes the conversation based on settings and semantic understanding.
-
-    Args:
-        message: The user message object
-        messages: The conversation history
-        route_layer: The semantic router layer
-        user_keys: User-specific API keys for BYOK
-    """
-    model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    # Use "assistant" as the author name to match the avatar file in /public/avatars/
-    msg = cl.Message(content="")
-    await msg.send()
-
-    query = message.content
-    update_message_history_from_user(query)
-
-    current_model = get_setting(conf.SETTINGS_CHAT_MODEL)
-    api_key = None
-    if user_keys and isinstance(user_keys, dict):
-        # Try to get the key for the current model/provider
-        for provider in user_keys:
-            if provider in current_model.lower():
-                api_key = user_keys[provider]
-                break
-
-    async with safe_execution(operation_name="conversation handling"):
-        use_dynamic_conversation_routing = get_setting(
-            conf.SETTINGS_USE_DYNAMIC_CONVERSATION_ROUTING
-        )
-
-        if use_dynamic_conversation_routing and route_layer:
-            await handle_dynamic_conversation_routing(
-                messages,
-                model,
-                msg,
-                query,
-                route_layer,
-                user_keys=user_keys,
-            )
-        else:
-            await handle_trigger_async_chat(
-                llm_model=model,
-                messages=messages,
-                current_message=msg,
-                user_keys=user_keys,
-            )
 
 
 async def handle_dynamic_conversation_routing(
@@ -440,9 +312,7 @@ async def handle_files_attachment(
             mime_type = file.mime or ""
 
             if "image" in mime_type:
-                await handle_vision(
-                    path, prompt=prompt, is_local=True, user_keys=user_keys
-                )
+                await handle_vision(path, prompt=prompt, is_local=True)
 
             elif "text" in mime_type:
                 try:
@@ -540,7 +410,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         async with cl.Step(name="Web Search") as step:
             search_step = step
             # Display a searching message in the step
-            await search_step.stream_token(f"🔍 Searching the web for: {query}")
+            await search_step.stream_token("🔍 Searching the web for: %s" % query)
 
             # Get OpenAI API key from environment
             openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -599,7 +469,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
 
             # Calculate search duration
             search_duration = round(time.time() - start)
-            search_step.name = f"Web Search ({search_duration}s)"
+            search_step.name = "Web Search (%ss)" % search_duration
             await search_step.update()
 
             # Small delay to let the user see the completed step
@@ -619,8 +489,9 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
             # Clear the current message content and show error with fallback
             current_message.content = ""
             await current_message.stream_token(
-                f"I encountered an issue while searching the web: {error_message}\n\n"
-                f"Let me try to answer your question about '{query}' based on my knowledge instead."
+                "I encountered an issue while searching the web: %s\n\n"
+                "Let me try to answer your question about '%s' based on my knowledge instead."
+                % (error_message, query)
             )
 
             # Fall back to regular chat completion
@@ -643,11 +514,13 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         # Add a prefix based on whether summarization was used
         if summarize_results:
             await current_message.stream_token(
-                f"Here's a summary of information about '{query}':\n\n{response_content}"
+                "Here's a summary of information about '%s':\n\n%s"
+                % (query, response_content)
             )
         else:
             await current_message.stream_token(
-                f"Here's what I found on the web about '{query}':\n\n{response_content}"
+                "Here's what I found on the web about '%s':\n\n%s"
+                % (query, response_content)
             )
 
         # Try to extract and display sources if available
@@ -660,7 +533,7 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
                     for i, source in enumerate(sources, 1):
                         title = source.get("title", "Untitled")
                         url = source.get("url", "No URL")
-                        source_text += f"{i}. [{title}]({url})\n"
+                        source_text += "%s. [%s](%s)\n" % (i, title, url)
 
                     await current_message.stream_token(source_text)
         except Exception as e:
@@ -684,7 +557,8 @@ async def handle_web_search(query: str, current_message: cl.Message) -> None:
         # Clear any partial content and show error
         current_message.content = ""
         await current_message.stream_token(
-            f"I encountered an issue while searching the web: {error_msg}\n\nLet me try to answer based on my knowledge instead."
+            "I encountered an issue while searching the web: %s\n\nLet me try to answer based on my knowledge instead."
+            % error_msg
         )
         await current_message.update()
 
@@ -722,5 +596,7 @@ def set_litellm_api_keys_from_settings(user_keys: dict) -> None:
         litellm.api_key = user_keys["groq"]
     if "deepseek" in user_keys:
         litellm.api_key = user_keys["deepseek"]
+    if "gemini" in user_keys:
+        litellm.api_key = user_keys["gemini"]
     if "gemini" in user_keys:
         litellm.api_key = user_keys["gemini"]

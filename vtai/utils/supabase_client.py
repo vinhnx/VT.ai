@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 import litellm
@@ -520,3 +520,29 @@ def get_recent_user_activity(limit: int = 20) -> List[Dict[str, Any]]:
             "Error getting recent user activity: %s: %s", type(e).__name__, str(e)
         )
         return []
+
+
+def get_user_successful_requests_today(user_id: str) -> int:
+    """Return the number of successful requests for the user for the current UTC day."""
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase is disabled or not initialized. Returning 0.")
+        return 0
+    try:
+        today = datetime.now(timezone.utc).date().isoformat()
+        result = (
+            supabase_client.table("request_logs")
+            .select("id")
+            .eq("user_profile_id", user_id)
+            .eq("status", "success")
+            .gte("created_at", f"{today}T00:00:00+00:00")
+            .lte("created_at", f"{today}T23:59:59.999999+00:00")
+            .execute()
+        )
+        count = len(result.data) if result.data else 0
+        logger.info(f"[CREDITS] user_id={user_id} successful_requests_today={count}")
+        return count
+    except Exception as e:
+        logger.error(
+            f"Error getting today's successful requests: {type(e).__name__}: {str(e)}"
+        )
+        return 0

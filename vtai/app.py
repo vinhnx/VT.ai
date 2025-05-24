@@ -23,6 +23,7 @@ from vtai.utils import llm_providers_config as conf
 from vtai.utils.async_utils import make_async
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
 from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
+from vtai.utils.credits import get_user_credits, get_user_credits_info
 from vtai.utils.settings_builder import build_settings
 from vtai.utils.user_session_helper import get_setting, get_user_profile
 
@@ -373,10 +374,14 @@ def oauth_callback(
 
 
 async def send_user_profile_async(profile: dict) -> None:
-    """Send the user profile as a custom Chainlit element (async context)."""
+    """Send the user profile as a custom Chainlit element (async context), always including credits info."""
     if not profile:
         await cl.Message(content="No user profile found.").send()
     else:
+        user_id = profile.get("user_id")
+        if user_id:
+            credits = get_user_credits_info(user_id)
+            profile = {**profile, **credits}
         await cl.Message(
             content="Your profile:",
             elements=[cl.CustomElement(name="UserProfile", props=profile)],
