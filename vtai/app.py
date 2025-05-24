@@ -205,13 +205,7 @@ async def chainlit_chat_start():
 
         # Send welcome message with user information
         welcome_msg = f"""
-👋 Hi **{user_name}**, welcome to VT.ai!
-
-I'm here to help you brainstorm, answer questions, and get things done—just ask me anything.
-
-✨ **Tip:** You can type `show profile` at any time to view your user profile and usage stats.
-
-Need ideas? Try asking for a summary, code snippet, or creative suggestion!
+Hi **{user_name}**, welcome to VT.ai! You can type `view profile` at any time to view your user profile. Feel free to ask me anything.
 """
         await cl.Message(content=welcome_msg).send()
     else:
@@ -255,20 +249,11 @@ async def on_message(message: cl.Message) -> None:
     load_deferred_imports()
 
     content = message.content.strip()
-    if content == "show profile":
-        user_id = cl.user_session.get("user_id")
-        profile = get_user_profile() or {}
-        if not profile and user_id:
-            profile = cl.run_sync(fetch_user_profile_from_supabase(user_id))
-        if not profile:
-            cl.run_sync(cl.Message(content="No user profile found.").send())
-        else:
-            cl.run_sync(
-                cl.Message(
-                    content="Your profile:",
-                    elements=[cl.CustomElement(name="UserProfile", props=profile)],
-                ).send()
-            )
+    # Accept both text and command triggers for profile/usage
+    if content == "view profile" or (
+        hasattr(message, "command") and message.command == "view_profile"
+    ):
+        UserProfileService.show_user_profile_action()
         return
 
     async with safe_execution(

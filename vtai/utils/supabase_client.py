@@ -3,12 +3,13 @@ Supabase client utilities and user profile helpers for VT.ai.
 """
 
 import os
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from chainlit import CustomElement, Message, run_sync, user_session
 from supabase import Client as SupabaseClient
 from supabase import create_client
-from utils.config import logger
+
+from vtai.utils.config import logger
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
@@ -45,16 +46,30 @@ class UserProfileService:
 
     @staticmethod
     def show_user_profile_action() -> None:
-        from chainlit import CustomElement, Message, run_sync, user_session
-
         from vtai.utils.user_session_helper import get_user_profile
 
         user_id = user_session.get("user_id")
         profile = get_user_profile() or {}
         if not profile and user_id:
-            profile = run_sync(
-                UserProfileService.fetch_user_profile_from_supabase(user_id)
+            profile = UserProfileService.fetch_user_profile_from_supabase(user_id)
+        if not profile:
+            run_sync(Message(content="No user profile found.").send())
+        else:
+            run_sync(
+                Message(
+                    content="Your profile:",
+                    elements=[CustomElement(name="UserProfile", props=profile)],
+                ).send()
             )
+
+    @staticmethod
+    def show_user_profile_action() -> None:
+        from vtai.utils.user_session_helper import get_user_profile
+
+        user_id = user_session.get("user_id")
+        profile = get_user_profile() or {}
+        if not profile and user_id:
+            profile = UserProfileService.fetch_user_profile_from_supabase(user_id)
         if not profile:
             run_sync(Message(content="No user profile found.").send())
         else:
@@ -66,14 +81,12 @@ class UserProfileService:
             )
 
 
-def log_request_to_supabase(*args, **kwargs) -> None:
-    from vtai.utils.supabase_client import supabase_client
-
-    # ...actual implementation should be restored here if needed...
-    pass
+def log_request_to_supabase(*_args, **_kwargs) -> None:
+    """Stub for logging requests to Supabase (no-op)."""
+    return
 
 
 def setup_litellm_callbacks() -> None:
-    # ...actual implementation should be restored here if needed...
-    pass
-    pass
+    """Stub for setting up LiteLLM callbacks (no-op)."""
+    return
+    return
