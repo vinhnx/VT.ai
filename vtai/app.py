@@ -24,12 +24,23 @@ from vtai.utils.async_utils import make_async
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
 from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
 from vtai.utils.settings_builder import build_settings
-from vtai.utils.supabase_client import (
-    fetch_user_profile_from_supabase,
-    supabase_client,
-    upsert_user_profile_from_oauth,
-)
 from vtai.utils.user_session_helper import get_setting, get_user_profile
+
+# Feature flags for authentication and Supabase integration
+VT_AUTH_ENABLE = os.environ.get("VT_AUTH_ENABLE", "0") == "1"
+VT_SUPABASE_ENABLE = os.environ.get("VT_SUPABASE_ENABLE", "0") == "1"
+
+# Only import and use Supabase/auth features if enabled
+if VT_SUPABASE_ENABLE:
+    from vtai.utils.supabase_client import (
+        fetch_user_profile_from_supabase,
+        supabase_client,
+        upsert_user_profile_from_oauth,
+    )
+else:
+    fetch_user_profile_from_supabase = None
+    supabase_client = None
+    upsert_user_profile_from_oauth = None
 
 # Register cleanup function to ensure resources are properly released
 atexit.register(cleanup)
@@ -174,33 +185,40 @@ async def chainlit_chat_start():
     load_deferred_imports()
 
     # Get current authenticated user from Chainlit OAuth
-    current_user = cl.user_session.get("user")
-    if current_user:
-        # Extract user information from Chainlit user metadata
-        user_metadata = current_user.metadata or {}
-        user_email = user_metadata.get("email", "Unknown")
-        user_name = user_metadata.get("name", user_email.split("@")[0])
+    if VT_AUTH_ENABLE:
+        logger.info("Authentication features are enabled (VT_AUTH_ENABLE=1)")
+        current_user = cl.user_session.get("user")
+        if current_user:
+            # Extract user information from Chainlit user metadata
+            user_metadata = current_user.metadata or {}
+            user_email = user_metadata.get("email")
+            if user_email is None:
+                user_name = user_metadata.get("name", "Unknown")
+            else:
+                user_name = user_metadata.get("name", user_email.split("@")[0])
 
-        # Store user information in Chainlit session
-        cl.user_session.set("user_id", current_user.identifier)
-        cl.user_session.set("user_email", user_email)
-        cl.user_session.set("user_display_name", user_name)
-        cl.user_session.set("user_metadata", user_metadata)
+            # Store user information in Chainlit session
+            cl.user_session.set("user_id", current_user.identifier)
+            cl.user_session.set("user_email", user_email)
+            cl.user_session.set("user_display_name", user_name)
+            cl.user_session.set("user_metadata", user_metadata)
 
-        log_key = f"user_session_{user_name}"
-        if log_key not in _emitted_log_events:
-            logger.info("User session initialized for %s via OAuth", user_name)
-            _emitted_log_events.add(log_key)
+            log_key = f"user_session_{user_name}"
+            if log_key not in _emitted_log_events:
+                logger.info("User session initialized for %s via OAuth", user_name)
+                _emitted_log_events.add(log_key)
 
-        # Send welcome message with user information
-        welcome_msg = f"""
+            # Send welcome message with user information
+            welcome_msg = f"""
 Hi **{user_name}**, welcome to VT.ai! You can type `my profile` at any time to view your user profile. Feel free to ask me anything.
 """
-        await cl.Message(content=welcome_msg).send()
+            await cl.Message(content=welcome_msg).send()
+        else:
+            logger.warning(
+                "No authenticated user found - OAuth authentication may have failed"
+            )
     else:
-        logger.warning(
-            "No authenticated user found - OAuth authentication may have failed"
-        )
+        logger.info("Authentication features are disabled (VT_AUTH_ENABLE=0)")
 
     # Initialize default settings
     cl.user_session.set(conf.SETTINGS_CHAT_MODEL, conf.DEFAULT_MODEL)
@@ -243,7 +261,7 @@ async def on_message(message: cl.Message) -> None:
     if content == "my profile":
         user_id = cl.user_session.get("user_id")
         profile = get_user_profile() or {}
-        if not profile and user_id:
+        if not profile and user_id and VT_SUPABASE_ENABLE:
             profile = await make_async(fetch_user_profile_from_supabase)(user_id)
         await send_user_profile_async(profile)
         return
@@ -324,6 +342,10 @@ def oauth_callback(
     """
     Chainlit OAuth callback: upsert user profile and set name/avatar from OAuth.
     """
+    if not VT_SUPABASE_ENABLE:
+        logger.info("Supabase features are disabled (VT_SUPABASE_ENABLE=0)")
+        return None
+
     logger.info("OAuth callback triggered for provider: %s", provider_id)
     logger.debug("Raw user data keys: %s", list(raw_user_data.keys()))
     # Do not log raw_user_data or any sensitive info
@@ -385,7 +407,7 @@ async def show_user_profile_action(action):
         profile = get_user_profile()
         if not profile:
             user_id = cl.user_session.get("user_id")
-            if user_id:
+            if user_id and VT_SUPABASE_ENABLE:
                 profile = await make_async(fetch_user_profile_from_supabase)(user_id)
         await send_user_profile_async(profile)
     except Exception as e:
@@ -402,7 +424,7 @@ async def show_user_profile_select_action(action):
         profile = get_user_profile()
         if not profile:
             user_id = cl.user_session.get("user_id")
-            if user_id:
+            if user_id and VT_SUPABASE_ENABLE:
                 profile = await make_async(fetch_user_profile_from_supabase)(user_id)
         await send_user_profile_async(profile)
     except Exception as e:
@@ -416,7 +438,7 @@ def on_settings_update(settings: dict) -> None:
     if settings.get("show_profile_select") == "Yes":
         user_id = cl.user_session.get("user_id")
         profile = get_user_profile() or {}
-        if not profile and user_id:
+        if not profile and user_id and VT_SUPABASE_ENABLE:
             profile = make_async(fetch_user_profile_from_supabase)(user_id)
         send_user_profile_sync(profile)
         # Reset the select to 'No' so user can trigger again

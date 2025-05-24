@@ -1,3 +1,11 @@
+# Recent Updates (May 2025)
+
+- Refactored user profile fetching and response handling in Chainlit actions for more robust and streamlined user management.
+- Improved Supabase client initialization and user profile upsert logic for reliability.
+- Enhanced logging in Supabase callbacks to skip non-success statuses and provide clearer error messages.
+- Removed redundant return in `decrypt_api_key` for code clarity.
+- All analytics and logging now use the authenticated user ID for accurate tracking.
+
 # Production-Ready LiteLLM + Supabase Integration
 
 ## ✅ **Fixed Issues & Production Readiness**

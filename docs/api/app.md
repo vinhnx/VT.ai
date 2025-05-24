@@ -6,6 +6,8 @@ This page documents the main application module of VT.ai (`vtai/app.py`), which 
 
 The app module coordinates the entire VT.ai application, handling user interactions, routing queries, processing responses, and managing the Chainlit web interface. It initializes the application, sets up chat profiles, processes user messages, and manages assistant tools.
 
+**Recent improvements:** User profile fetching, upserting, and response handling are now streamlined and robust. All analytics and logging use the authenticated user ID for accuracy and security.
+
 ## Key Functions
 
 ### Application Initialization
@@ -32,7 +34,10 @@ Defines and sets available chat profiles for the Chainlit interface. This functi
 ```python
 @cl.on_chat_start
 async def start_chat():
-    """Initialize the chat session with settings and system message."""
+    """
+    Initialize the chat session with settings and system message.
+    Robust user profile management and logging are now handled automatically.
+    """
     # ...
 ```
 

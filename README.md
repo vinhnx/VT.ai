@@ -75,6 +75,10 @@ vtai --api-key openai=sk-your-key-here
 export OPENAI_API_KEY='sk-your-key-here'  # For OpenAI models
 export ANTHROPIC_API_KEY='sk-ant-your-key-here'  # For Claude models
 export GEMINI_API_KEY='your-key-here'  # For Gemini models
+
+# Feature flags for monetization (optional, local/private use only)
+export VT_AUTH_ENABLE=1           # Enable authentication (default: off)
+export VT_SUPABASE_ENABLE=1       # Enable Supabase logging/analytics (default: off)
 ```
 
 API keys are securely stored in `~/.config/vtai/.env` for future use (local/private only).

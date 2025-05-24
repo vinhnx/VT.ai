@@ -3,19 +3,27 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 import litellm
-from supabase import Client as SupabaseClient
-from supabase import create_client
 
 from vtai.utils.config import logger
+
+# Feature flag: Only enable Supabase if VT_SUPABASE_ENABLE=1
+VT_SUPABASE_ENABLE = os.environ.get("VT_SUPABASE_ENABLE", "0") == "1"
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
 
-supabase_client: Optional[SupabaseClient] = None
-if SUPABASE_URL and SUPABASE_KEY:
-    supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+if VT_SUPABASE_ENABLE:
+    from supabase import Client as SupabaseClient
+    from supabase import create_client
+
+    supabase_client: Optional[SupabaseClient] = None
+    if SUPABASE_URL and SUPABASE_KEY:
+        supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    else:
+        logger.warning("Supabase credentials not set. Logging will be disabled.")
 else:
-    logger.warning("Supabase credentials not set. Logging will be disabled.")
+    supabase_client = None
+    logger.info("Supabase features are disabled (VT_SUPABASE_ENABLE=0)")
 
 
 def upsert_user_profile_from_oauth(
@@ -23,15 +31,30 @@ def upsert_user_profile_from_oauth(
 ) -> Optional[Dict[str, str]]:
     """
     Upsert user profile in Supabase from OAuth data. Returns stored user row or None.
+    Handles missing email or provider_user_id gracefully for providers like GitHub.
     """
-    if not supabase_client:
+    if not VT_SUPABASE_ENABLE or not supabase_client:
         logger.error("Supabase client not available for OAuth callback")
         return None
 
     email = raw_user_data.get("email")
     name = raw_user_data.get("name") or raw_user_data.get("given_name", "")
-    avatar_url = raw_user_data.get("picture")
-    provider_user_id = raw_user_data.get("sub") or raw_user_data.get("id")
+    avatar_url = raw_user_data.get("picture") or raw_user_data.get("avatar_url")
+    provider_user_id = (
+        raw_user_data.get("sub")
+        or raw_user_data.get("id")
+        or raw_user_data.get("node_id")
+    )
+
+    # Fallback: For GitHub, try to extract email from 'emails' if not present
+    if not email and "emails" in raw_user_data:
+        emails = raw_user_data["emails"]
+        if isinstance(emails, list):
+            primary_email = next((e["email"] for e in emails if e.get("primary")), None)
+            if primary_email:
+                email = primary_email
+            elif emails:
+                email = emails[0].get("email")
 
     if not email or not provider_user_id:
         logger.error("Missing required OAuth data: email or provider_user_id missing")
@@ -86,7 +109,8 @@ def upsert_user_profile_from_oauth(
 
 def fetch_user_profile_from_supabase(user_id: str) -> dict:
     """Fetch user profile from Supabase database by user_id."""
-    if not supabase_client:
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase is disabled or not initialized. Returning empty profile.")
         return {}
     try:
         response = (
@@ -175,12 +199,12 @@ def log_request_to_supabase(
     completion_response: Optional[Any] = None,
 ) -> None:
     """Log a request to the Supabase request_logs table, only if status is 'success'."""
-    if status != "success":
-        logger.info("Skipping Supabase log: status is not 'success' (%s)", status)
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase logging is disabled. Skipping log.")
         return
 
-    if not supabase_client:
-        logger.warning("Supabase client not initialized. Skipping log.")
+    if status != "success":
+        logger.info("Skipping Supabase log: status is not 'success' (%s)", status)
         return
 
     try:
@@ -376,27 +400,30 @@ def failure_callback_supabase(
 
 def setup_litellm_callbacks():
     """Setup LiteLLM callbacks for Supabase logging."""
-    if SUPABASE_URL and SUPABASE_KEY:
-        # Use our custom callback functions instead of LiteLLM's built-in ones
-        # This avoids the credential issues with LiteLLM's Supabase integration
-        litellm.success_callback = [success_callback_supabase]
-        litellm.failure_callback = [failure_callback_supabase]
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase features are disabled (VT_SUPABASE_ENABLE=0)")
+        return
+    logger.info(
+        "Setting up LiteLLM callbacks (Supabase: %s, URL: %s)",
+        "✓" if SUPABASE_URL else "✗",
+        SUPABASE_URL or "N/A",
+    )
+    # Use our custom callback functions instead of LiteLLM's built-in ones
+    # This avoids the credential issues with LiteLLM's Supabase integration
+    litellm.success_callback = [success_callback_supabase]
+    litellm.failure_callback = [failure_callback_supabase]
 
-        # Debug: Check what callbacks are actually set
-        logger.info("LiteLLM callbacks configured:")
-        logger.info("  [v] Success callbacks: %s", litellm.success_callback)
-        logger.info("  [v] Failure callbacks: %s", litellm.failure_callback)
-        logger.info("  Supabase URL: %s", SUPABASE_URL[:50] + "...")
-    else:
-        logger.warning(
-            "Cannot setup LiteLLM callbacks: Missing SUPABASE_URL (%s) or SUPABASE_KEY (%s)",
-            "✓" if SUPABASE_URL else "✗",
-        )
+    # Debug: Check what callbacks are actually set
+    logger.info("LiteLLM callbacks configured:")
+    logger.info("  [v] Success callbacks: %s", litellm.success_callback)
+    logger.info("  [v] Failure callbacks: %s", litellm.failure_callback)
+    logger.info("  Supabase URL: %s", SUPABASE_URL[:50] + "...")
 
 
 def get_user_analytics(user_id: str) -> Optional[Dict[str, Any]]:
     """Get comprehensive analytics for a user."""
-    if not supabase_client:
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase is disabled or not initialized. Returning None.")
         return None
 
     try:
@@ -417,7 +444,8 @@ def get_user_request_history(
     user_id: str, limit: int = 50, offset: int = 0
 ) -> List[Dict[str, Any]]:
     """Get user's request history."""
-    if not supabase_client:
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase is disabled or not initialized. Returning empty list.")
         return []
 
     try:
@@ -436,7 +464,8 @@ def get_user_request_history(
 
 def get_user_token_breakdown(user_id: str) -> List[Dict[str, Any]]:
     """Get user's token usage breakdown by model and provider."""
-    if not supabase_client:
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase is disabled or not initialized. Returning empty list.")
         return []
     try:
         result = supabase_client.rpc(
@@ -453,7 +482,8 @@ def get_user_token_breakdown(user_id: str) -> List[Dict[str, Any]]:
 
 def get_user_monthly_usage(user_id: str) -> List[Dict[str, Any]]:
     """Get user's monthly usage data from the simplified view."""
-    if not supabase_client:
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase is disabled or not initialized. Returning empty list.")
         return []
     try:
         result = (
@@ -473,7 +503,8 @@ def get_user_monthly_usage(user_id: str) -> List[Dict[str, Any]]:
 
 def get_recent_user_activity(limit: int = 20) -> List[Dict[str, Any]]:
     """Get recent activity across all users."""
-    if not supabase_client:
+    if not VT_SUPABASE_ENABLE or not supabase_client:
+        logger.info("Supabase is disabled or not initialized. Returning empty list.")
         return []
     try:
         result = (

@@ -8,10 +8,11 @@ from typing import Any, Dict, List, Union
 
 import chainlit as cl
 from chainlit.input_widget import Select, Slider, Switch, TextInput
-from utils import constants as const
-from utils import llm_providers_config as conf
 
+from vtai.utils import constants as const
+from vtai.utils import llm_providers_config as conf
 from vtai.utils.api_keys import encrypt_api_key
+from vtai.utils.config import VT_AUTH_ENABLE, VT_SUPABASE_ENABLE, logger
 
 # NOTE: For public/shared deployments, do NOT put your own API keys in .env.
 # Use Chainlit's user_env config to prompt each user for their own API keys (BYOK).
@@ -32,6 +33,19 @@ async def build_settings() -> Dict[str, Any]:
             Dict[str, Any]: The configured user settings as a dictionary
     """
     settings_widgets = _create_settings_widgets()
+
+    # Feature-gate BYOK fields: only show if not using Supabase/Auth
+    if not VT_AUTH_ENABLE and not VT_SUPABASE_ENABLE:
+        # Add BYOK fields for user API keys (for local/dev use)
+        settings_widgets.append(
+            TextInput(
+                label="OpenAI API Key (BYOK)",
+                id="openai_api_key",
+                password=True,
+                placeholder="Paste your OpenAI API key here (never sent to server)",
+            )
+        )
+        # Add more BYOK fields for other providers as needed
 
     settings = await cl.ChatSettings(settings_widgets).send()
     return settings
