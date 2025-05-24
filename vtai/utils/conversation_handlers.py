@@ -32,6 +32,8 @@ from vtai.utils.url_extractor import extract_url
 from vtai.utils.user_session_helper import (
     get_setting,
     get_user_session_id,
+    get_user_id,
+    get_user_email,
     update_message_history_from_assistant,
     update_message_history_from_user,
 )
@@ -97,7 +99,21 @@ async def use_chat_completion_api(
         timeout: Timeout in seconds for the operation
     """
     logger.info("Using Chat Completions API for model: %s", model)
-    user_id = get_user_session_id()
+    
+    # Get both session ID and authenticated user ID
+    session_id = get_user_session_id()
+    auth_user_id = get_user_id()
+    user_email = get_user_email()
+    
+    # Use authenticated user ID if available, otherwise fall back to session ID
+    user_for_litellm = auth_user_id if auth_user_id else session_id
+    
+    logger.info("User context: session=%s, auth_user=%s, email=%s, using=%s", 
+               session_id[:8] + "..." if session_id else None,
+               auth_user_id, 
+               user_email,
+               user_for_litellm[:8] + "..." if user_for_litellm else None)
+    
     start_time = time.time()
     
     # LiteLLM callbacks should already be set up in config.py
@@ -105,7 +121,7 @@ async def use_chat_completion_api(
     try:
         stream = await asyncio.wait_for(
             litellm.acompletion(
-                user=user_id,
+                user=user_for_litellm,
                 model=model,
                 messages=messages,
                 stream=True,
@@ -145,11 +161,11 @@ async def use_chat_completion_api(
             model=model,
             messages=messages,
             response={"content": response_content},
-            end_user=user_id,
+            end_user=user_for_litellm,
             status="success",
             response_time=time.time() - start_time,
             total_cost=cost_estimate,
-            user_profile_id=user_id,
+            user_profile_id=auth_user_id if auth_user_id else None,  # Use authenticated user ID for profile linking
             tokens_used=total_tokens,
             provider=provider
         )
@@ -161,11 +177,11 @@ async def use_chat_completion_api(
             model=model,
             messages=messages,
             response=None,
-            end_user=user_id,
+            end_user=user_for_litellm,
             status="failure",
             error={"error": str(e)},
             response_time=time.time() - start_time,
-            user_profile_id=user_id,
+            user_profile_id=auth_user_id if auth_user_id else None,
             provider=provider
         )
         # Reraise for upstream error handling

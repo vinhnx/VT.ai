@@ -86,6 +86,9 @@ def log_request_to_supabase(
         logger.error("Error logging to Supabase: %s: %s", type(e).__name__, str(e))
 
 
+# Token usage is now handled automatically by database triggers
+# Monthly usage is calculated on-demand via the monthly_token_usage view
+# This function is no longer needed but kept for backward compatibility
 def update_user_token_usage(
     user_profile_id: str, 
     tokens_used: int, 
@@ -93,59 +96,14 @@ def update_user_token_usage(
     model: str, 
     provider: str
 ) -> None:
-    """Update user's token usage tracking."""
-    if not supabase_client:
-        return
-        
-    try:
-        # Update user_profiles tokens_used counter
-        current_result = supabase_client.table("user_profiles").select("tokens_used").eq("user_id", user_profile_id).execute()
-        current_tokens = current_result.data[0]["tokens_used"] if current_result.data else 0
-        new_total = current_tokens + tokens_used
-        
-        supabase_client.table("user_profiles").update({"tokens_used": new_total}).eq("user_id", user_profile_id).execute()
-        
-        # Update monthly usage tracking
-        now = datetime.now()
-        period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        
-        # Try to get existing monthly record
-        monthly_result = supabase_client.table("tokens_usage").select("*").eq("user_profile_id", user_profile_id).eq("period_type", "monthly").eq("period_start", period_start.isoformat()).execute()
-        
-        if monthly_result.data:
-            # Update existing record
-            existing = monthly_result.data[0]
-            new_tokens = existing["total_tokens"] + tokens_used
-            new_cost = existing["total_cost"] + cost
-            
-            # Update breakdowns
-            model_breakdown = existing.get("model_breakdown", {})
-            model_breakdown[model] = model_breakdown.get(model, 0) + tokens_used
-            
-            provider_breakdown = existing.get("provider_breakdown", {})
-            provider_breakdown[provider] = provider_breakdown.get(provider, 0) + tokens_used
-            
-            supabase_client.table("tokens_usage").update({
-                "total_tokens": new_tokens,
-                "total_cost": new_cost,
-                "model_breakdown": model_breakdown,
-                "provider_breakdown": provider_breakdown,
-                "updated_at": now.isoformat()
-            }).eq("id", existing["id"]).execute()
-        else:
-            # Create new monthly record
-            supabase_client.table("tokens_usage").insert({
-                "user_profile_id": user_profile_id,
-                "total_tokens": tokens_used,
-                "total_cost": cost,
-                "period_start": period_start.isoformat(),
-                "period_type": "monthly",
-                "model_breakdown": {model: tokens_used},
-                "provider_breakdown": {provider: tokens_used}
-            }).execute()
-            
-    except Exception as e:
-        logger.error("Error updating token usage: %s: %s", type(e).__name__, str(e))
+    """
+    Update user's token usage tracking.
+    
+    Note: This is now handled automatically by database triggers.
+    The user_profiles.tokens_used field is updated automatically when
+    request_logs entries are inserted with a valid user_profile_id.
+    """
+    logger.debug("Token usage update handled automatically by database trigger for user %s", user_profile_id)
 
 
 # LiteLLM callback functions
@@ -171,10 +129,17 @@ def success_callback_supabase(
         tokens_used = usage.total_tokens if usage else 0
         
         # Get cost information
-        cost = litellm.completion_cost(completion_response, model)
+        try:
+            cost = litellm.completion_cost(completion_response, model)
+        except Exception:
+            cost = None
         
         # Extract provider from model
         provider = model.split("/")[0] if "/" in model else "openai"
+        
+        # Log debug info
+        logger.info("✅ SUCCESS CALLBACK TRIGGERED: user=%s, model=%s, tokens=%s, call_id=%s", 
+                   user, model, tokens_used, litellm_call_id)
         
         log_request_to_supabase(
             model=model,
@@ -185,7 +150,7 @@ def success_callback_supabase(
             response_time=response_time,
             total_cost=cost,
             litellm_call_id=litellm_call_id,
-            user_profile_id=user,
+            user_profile_id=user if user else None,  # Use the session ID as user_profile_id
             tokens_used=tokens_used,
             provider=provider
         )
@@ -216,7 +181,7 @@ def failure_callback_supabase(
         
         # Log the error details
         error_details = {"error": str(completion_response)} if completion_response else {}
-        logger.info("Logging failure callback for user: %s, model: %s, error: %s", 
+        logger.info("❌ FAILURE CALLBACK TRIGGERED: user=%s, model=%s, error=%s", 
                    user, model, str(completion_response)[:100])
         
         log_request_to_supabase(
@@ -244,7 +209,82 @@ def setup_litellm_callbacks():
         litellm.success_callback = [success_callback_supabase]
         litellm.failure_callback = [failure_callback_supabase]
         
-        logger.info("LiteLLM custom Supabase callbacks configured successfully with URL: %s", SUPABASE_URL[:50] + "...")
+        # Debug: Check what callbacks are actually set
+        logger.info("LiteLLM callbacks configured:")
+        logger.info("  Success callbacks: %s", litellm.success_callback)
+        logger.info("  Failure callbacks: %s", litellm.failure_callback)
+        logger.info("  Supabase URL: %s", SUPABASE_URL[:50] + "...")
     else:
         logger.warning("Cannot setup LiteLLM callbacks: Missing SUPABASE_URL (%s) or SUPABASE_KEY (%s)", 
                       "✓" if SUPABASE_URL else "✗", "✓" if SUPABASE_KEY else "✗")
+
+
+def get_user_analytics(user_id: str) -> Optional[Dict[str, Any]]:
+    """Get comprehensive analytics for a user."""
+    if not supabase_client:
+        return None
+        
+    try:
+        result = supabase_client.table("user_request_analytics").select("*").eq("user_id", user_id).execute()
+        return result.data[0] if result.data else None
+    except Exception as e:
+        logger.error("Error getting user analytics: %s: %s", type(e).__name__, str(e))
+        return None
+
+
+def get_user_request_history(user_id: str, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+    """Get user's request history."""
+    if not supabase_client:
+        return []
+        
+    try:
+        result = supabase_client.rpc("get_user_request_history", {
+            "p_user_id": user_id,
+            "p_limit": limit,
+            "p_offset": offset
+        }).execute()
+        return result.data or []
+    except Exception as e:
+        logger.error("Error getting user request history: %s: %s", type(e).__name__, str(e))
+        return []
+
+
+def get_user_token_breakdown(user_id: str) -> List[Dict[str, Any]]:
+    """Get user's token usage breakdown by model and provider."""
+    if not supabase_client:
+        return []
+        
+    try:
+        result = supabase_client.rpc("get_user_token_breakdown", {
+            "p_user_id": user_id
+        }).execute()
+        return result.data or []
+    except Exception as e:
+        logger.error("Error getting user token breakdown: %s: %s", type(e).__name__, str(e))
+        return []
+
+
+def get_user_monthly_usage(user_id: str) -> List[Dict[str, Any]]:
+    """Get user's monthly usage data from the simplified view."""
+    if not supabase_client:
+        return []
+        
+    try:
+        result = supabase_client.table("monthly_token_usage").select("*").eq("user_profile_id", user_id).execute()
+        return result.data or []
+    except Exception as e:
+        logger.error("Error getting user monthly usage: %s: %s", type(e).__name__, str(e))
+        return []
+
+
+def get_recent_user_activity(limit: int = 20) -> List[Dict[str, Any]]:
+    """Get recent activity across all users."""
+    if not supabase_client:
+        return []
+        
+    try:
+        result = supabase_client.table("user_recent_activity").select("*").limit(limit).execute()
+        return result.data or []
+    except Exception as e:
+        logger.error("Error getting recent user activity: %s: %s", type(e).__name__, str(e))
+        return []
