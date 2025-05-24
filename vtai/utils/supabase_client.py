@@ -88,11 +88,17 @@ def log_request_to_supabase(
     completion_tokens: Optional[int] = None,
     prompt_cost_per_token: Optional[float] = None,
     completion_cost_per_token: Optional[float] = None,
+    completion_response: Optional[Any] = None,
 ) -> None:
-    """Log a request to the Supabase request_logs table."""
+    """Log a request to the Supabase request_logs table, only if status is 'success'."""
+    if status != "success":
+        logger.info("Skipping Supabase log: status is not 'success' (%s)", status)
+        return
+
     if not supabase_client:
         logger.warning("Supabase client not initialized. Skipping log.")
         return
+
     try:
         if user_profile_id:
             try:
@@ -180,12 +186,6 @@ def success_callback_supabase(
 ) -> None:
     """Success callback for LiteLLM to log successful requests with detailed cost breakdown."""
     try:
-        # Only log if HTTP status is 200 (success)
-        status_code = getattr(completion_response, "status_code", 200)
-        if status_code != 200:
-            logger.info("Skipping Supabase log: non-200 status (%s)", status_code)
-            return
-
         model = kwargs.get("model", "")
         messages = kwargs.get("messages", [])
         user = kwargs.get("user", "")
@@ -278,6 +278,7 @@ def success_callback_supabase(
             prompt_cost_per_token=prompt_cost_per_token,
             completion_cost_per_token=completion_cost_per_token,
             additional_details=cost_breakdown,
+            completion_response=completion_response,
         )
 
     # ruff: noqa: E722 - bare except required for external API/DB robustness
@@ -291,46 +292,19 @@ def failure_callback_supabase(
     start_time: datetime,
     end_time: datetime,
 ) -> None:
-    """Failure callback for LiteLLM to log failed requests."""
+    """Failure callback for LiteLLM. Do not log failed requests to Supabase."""
     try:
-        # Extract relevant information
+        # Only log error locally, do not send to Supabase
         model = kwargs.get("model", "")
-        messages = kwargs.get("messages", [])
         user = kwargs.get("user", "")
-        litellm_call_id = kwargs.get("litellm_call_id")
-
-        # Calculate response time
-        response_time = (
-            (end_time - start_time).total_seconds() if start_time and end_time else 0
-        )
-
-        # Extract provider from model
-        provider = model.split("/")[0] if "/" in model else "openai"
-
-        # Log the error details
-        error_details = (
-            {"error": str(completion_response)} if completion_response else {}
-        )
         logger.info(
             "❌ FAILURE CALLBACK TRIGGERED: user=%s, model=%s, error=%s",
             user,
             model,
             str(completion_response)[:100],
         )
-
-        log_request_to_supabase(
-            model=model,
-            messages=messages,
-            response={},
-            end_user=user,
-            status="error",
-            error=error_details,
-            response_time=response_time,
-            litellm_call_id=litellm_call_id,
-            user_profile_id=user if user else None,
-            provider=provider,
-        )
-
+        # Ensure no call to log_request_to_supabase here
+        return
     # ruff: noqa: E722 - bare except required for external API/DB robustness
     except Exception as e:
         logger.error("Error in failure callback: %s: %s", type(e).__name__, str(e))
@@ -346,14 +320,13 @@ def setup_litellm_callbacks():
 
         # Debug: Check what callbacks are actually set
         logger.info("LiteLLM callbacks configured:")
-        logger.info("  Success callbacks: %s", litellm.success_callback)
-        logger.info("  Failure callbacks: %s", litellm.failure_callback)
+        logger.info("  [v] Success callbacks: %s", litellm.success_callback)
+        logger.info("  [v] Failure callbacks: %s", litellm.failure_callback)
         logger.info("  Supabase URL: %s", SUPABASE_URL[:50] + "...")
     else:
         logger.warning(
             "Cannot setup LiteLLM callbacks: Missing SUPABASE_URL (%s) or SUPABASE_KEY (%s)",
             "✓" if SUPABASE_URL else "✗",
-            "✓" if SUPABASE_KEY else "✗",
         )
 
 
@@ -401,7 +374,6 @@ def get_user_token_breakdown(user_id: str) -> List[Dict[str, Any]]:
     """Get user's token usage breakdown by model and provider."""
     if not supabase_client:
         return []
-
     try:
         result = supabase_client.rpc(
             "get_user_token_breakdown", {"p_user_id": user_id}
@@ -419,7 +391,6 @@ def get_user_monthly_usage(user_id: str) -> List[Dict[str, Any]]:
     """Get user's monthly usage data from the simplified view."""
     if not supabase_client:
         return []
-
     try:
         result = (
             supabase_client.table("monthly_token_usage")
@@ -440,7 +411,6 @@ def get_recent_user_activity(limit: int = 20) -> List[Dict[str, Any]]:
     """Get recent activity across all users."""
     if not supabase_client:
         return []
-
     try:
         result = (
             supabase_client.table("user_recent_activity")
