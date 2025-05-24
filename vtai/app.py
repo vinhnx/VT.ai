@@ -25,7 +25,6 @@ from vtai.utils import llm_providers_config as conf
 from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
 from vtai.utils.conversation_handlers import set_litellm_api_keys_from_settings
 from vtai.utils.settings_builder import build_settings
-from vtai.utils.supabase_client import UserProfileService
 from vtai.utils.user_session_helper import get_setting, get_user_profile
 
 # Register cleanup function to ensure resources are properly released
@@ -205,7 +204,7 @@ async def chainlit_chat_start():
 
         # Send welcome message with user information
         welcome_msg = f"""
-Hi **{user_name}**, welcome to VT.ai! You can type `view profile` at any time to view your user profile. Feel free to ask me anything.
+Hi **{user_name}**, welcome to VT.ai! You can type `my profile` at any time to view your user profile. Feel free to ask me anything.
 """
         await cl.Message(content=welcome_msg).send()
     else:
@@ -249,11 +248,20 @@ async def on_message(message: cl.Message) -> None:
     load_deferred_imports()
 
     content = message.content.strip()
-    # Accept both text and command triggers for profile/usage
-    if content == "view profile" or (
-        hasattr(message, "command") and message.command == "view_profile"
-    ):
-        UserProfileService.show_user_profile_action()
+
+    # Accept both text and command triggers for profile/usage, exclude from chat safe_execution
+    if content == "my profile":
+        user_id = cl.user_session.get("user_id")
+        profile = get_user_profile() or {}
+        if not profile and user_id:
+            profile = cl.run_sync(fetch_user_profile_from_supabase(user_id))
+        if not profile:
+            await cl.Message(content="No user profile found.").send()
+        else:
+            await cl.Message(
+                content="Your profile:",
+                elements=[cl.CustomElement(name="UserProfile", props=profile)],
+            ).send()
         return
 
     async with safe_execution(

@@ -33,17 +33,7 @@ async def build_settings() -> Dict[str, Any]:
     """
     settings_widgets = _create_settings_widgets()
 
-    # Add a profile action to the settings panel using Chainlit's supported UI action mechanism
-    profile_action = cl.Action(
-        id="show_profile_action",
-        name="show_profile_action",
-        label="Show Profile",
-        description="Show your user profile information.",
-        icon="user",
-        payload={},
-    )
-
-    settings = await cl.ChatSettings(settings_widgets, actions=[profile_action]).send()
+    settings = await cl.ChatSettings(settings_widgets).send()
     return settings
 
 
@@ -67,6 +57,14 @@ def _create_settings_widgets() -> List[Union[Select, Slider, Switch, TextInput]]
         return ""
 
     widgets = [
+        Select(
+            id="show_profile_select",
+            label="My Profile",
+            description="Select to view your user profile.",
+            values=["No", "Yes"],
+            initial_value="No",
+            on_change="show_user_profile_select",
+        ),
         # Add security notice to the description of the first widget (Chat Model)
         Select(
             id=conf.SETTINGS_CHAT_MODEL,
@@ -336,17 +334,5 @@ def _create_settings_widgets() -> List[Union[Select, Slider, Switch, TextInput]]
             initial_value=const.DEFAULT_WEB_SEARCH_MODEL,
         ),
     ]
-
-    # Add a visible Select widget to trigger profile view as a workaround
-    widgets.append(
-        Select(
-            id="show_profile_select",
-            label="Show Profile",
-            description="Select to view your user profile.",
-            values=["No", "Yes"],
-            initial_value="No",
-            on_change="show_user_profile_select",
-        )
-    )
 
     return widgets
