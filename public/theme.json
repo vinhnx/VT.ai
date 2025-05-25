@@ -1,10 +1,10 @@
 {
     "custom_fonts": [
-        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+        "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
     ],
     "variables": {
         "light": {
-            "--font-sans": "'Inter', sans-serif",
+            "--font-sans": "'Open Sans', sans-serif",
             "--font-mono": "source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace",
             "--background": "0 0% 100%",
             "--foreground": "0 0% 14.5%",
@@ -36,7 +36,7 @@
             "--sidebar-ring": "0 0% 70.8%"
         },
         "dark": {
-            "--font-sans": "'Inter', sans-serif",
+            "--font-sans": "'Open Sans', sans-serif",
             "--font-mono": "source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace",
             "--background": "0 0% 14.5%",
             "--foreground": "0 0% 98.5%",
