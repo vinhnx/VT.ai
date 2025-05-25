@@ -79,23 +79,6 @@ API keys are securely stored in `~/.config/vtai/.env` for future use.
 
 ## Usage Guide
 
-### Programmatic Usage
-
-```python
-from vtai.app import run_app
-
-# Basic usage with default settings
-run_app()
-
-# Advanced configuration
-run_app(
-    models=["gpt-4o", "claude-3-5-sonnet"],
-    enable_web_search=True,
-    enable_voice=True,
-    enable_thinking=True
-)
-```
-
 ### Interface Usage
 
 The application provides a clean, intuitive interface with the following capabilities:
@@ -175,6 +158,8 @@ cd VT.ai
 uv venv
 source .venv/bin/activate  # Linux/Mac
 uv pip install -e ".[dev]"
+
+chainlit run vtai/app
 
 # Run tests
 pytest
