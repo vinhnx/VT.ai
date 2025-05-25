@@ -69,6 +69,10 @@ nav:
     - Router: api/router.md
     - Utils: api/utils.md
     - Assistants: api/assistants.md
+  - Production Guide:
+    - LiteLLM + Supabase Integration: litellm-supabase-logging.md
+    - Production Ready Summary: production-ready-summary.md
+    - User Request Analytics: user-request-analytics.md
 
 plugins:
   - search

@@ -1,8 +1,8 @@
 # VT.ai
 
-> VT.ai is a minimal multimodal AI chat application with dynamic routing capabilities that supports multiple AI providers including OpenAI, Anthropic Claude, Google Gemini, and local models via Ollama.
+> VT.ai is a minimal multimodal AI chat application with dynamic routing capabilities that supports multiple AI providers including OpenAI, Anthropic Claude, Google Gemini, DeepSeek R1, and local models via Ollama.
 
-VT.ai is a Python-based AI chat application featuring semantic-based routing, multimodal capabilities (text, image, audio), vision analysis, and dynamic response generation. The app supports multiple AI providers and offers a user-friendly interface for interacting with various AI models.
+VT.ai is a Python-based AI chat application featuring semantic-based routing, multimodal capabilities (text, image, audio), vision analysis, web search with intelligent summarization, and dynamic response generation. The app supports multiple AI providers and offers a user-friendly interface for interacting with various AI models.
 
 ## Documentation
 
@@ -41,8 +41,9 @@ summary: Documentation for VT.ai, a minimal multimodal AI chat application with 
 description:
   This is the official documentation for VT.ai, a Python-based AI chat application
   that supports multiple AI providers including OpenAI, Anthropic Claude, Google Gemini,
-  and local models via Ollama. The app features semantic-based routing, multimodal
-  capabilities (text, image, audio), vision analysis, and dynamic response generation.
+  DeepSeek R1, and local models via Ollama. The app features semantic-based routing,
+  multimodal capabilities (text, image, audio), vision analysis, web search with
+  intelligent summarization, and dynamic response generation.
 
 audience: Users and developers interested in using or extending VT.ai
 
@@ -57,11 +58,14 @@ documentation:
 key-concepts:
   - Multimodal AI: VT.ai supports text, image, and audio inputs and outputs
   - Semantic Routing: Smart system that directs queries to specialized handlers
-  - Multi-Provider Integration: Supports OpenAI, Anthropic, Google, and more
+  - Multi-Provider Integration: Supports OpenAI, Anthropic, Google, DeepSeek R1, and more
   - Assistant Mode: Enhanced capabilities with code interpretation and file analysis
   - Thinking Mode: Access to step-by-step reasoning from models
   - Image Generation: Create images using DALL-E 3 and GPT-Image-1
   - Voice Interaction: Support for speech-to-text and text-to-speech
+  - Web Search: Real-time information retrieval with intelligent summarization
+  - Configurable Search Experience: Toggle between summarized and raw search results
+  - Search Summarization: Synthesis of information from multiple sources into coherent answers
 
 code-of-conduct:
   - Provide accurate information from the documentation
@@ -99,5 +103,6 @@ versions:
   - Check the GitHub repository for the most up-to-date information
 
 updates:
-  - This llms.txt was created on May 6, 2025
+  - This llms.txt was updated on May 25, 2025
+  - Recent additions include web search summarization and DeepSeek R1 model support
   - Updates to the documentation can be found in the GitHub repository

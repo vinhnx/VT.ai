@@ -37,9 +37,10 @@ VT.ai is a multimodal AI chat application designed to simplify interaction with 
 - **Semantic Routing System**: Vector-based classification automatically routes queries to appropriate models using FastEmbed embeddings, removing the need for manual model selection
 - **Multimodal Capabilities**: Comprehensive support for text, image, and audio inputs with advanced vision analysis
 - **Image Generation**: GPT-Image-1 integration with support for transparent backgrounds, multiple formats, and customizable quality parameters
-- **Web Search Integration**: Real-time information retrieval with source attribution via Tavily API
+- **Web Search Integration**: Real-time information retrieval with intelligent summarization that synthesizes information from multiple sources into coherent, readable answers via Tavily API
 - **Voice Processing**: Advanced speech-to-text and text-to-speech functionality with configurable voice options and silence detection
 - **Reasoning Visualization**: Step-by-step model reasoning visualization with the `<think>` tag for transparent AI decision processes
+- **Search Summarization**: Intelligent synthesis of information from multiple sources into coherent, readable answers
 
 ## Installation & Setup
 
@@ -123,8 +124,9 @@ The application provides a clean, intuitive interface with the following capabil
 1. **Dynamic Conversations**: The semantic router automatically selects the most appropriate model for each query
 2. **Image Generation**: Create images using prompts like "generate an image of..." or "draw a..."
 3. **Visual Analysis**: Upload or provide URLs to analyze visual content
-4. **Reasoning Visualization**: Add `<think>` to prompts to observe step-by-step reasoning
-5. **Voice Interaction**: Use the microphone feature for speech input and text-to-speech output
+4. **Web Search**: Ask questions requiring current information and get intelligent summaries from multiple sources
+5. **Reasoning Visualization**: Add `<think>` to prompts to observe step-by-step reasoning
+6. **Voice Interaction**: Use the microphone feature for speech input and text-to-speech output
 
 Detailed usage instructions are available in the [Getting Started Guide](https://vinhnx.github.io/VT.ai/user/getting-started/).
 
@@ -149,8 +151,8 @@ The [implementation documentation](https://vinhnx.github.io/VT.ai/user/getting-s
 
 | Category       | Models                                                |
 |----------------|----------------------------------------------------- |
-| **Chat**       | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5  |
-| **Vision**     | GPT-4o, Gemini 1.5 Pro/Flash, Claude 3, Llama3.2 Vision    |
+| **Chat**       | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5, DeepSeek R1  |
+| **Vision**     | GPT-4o, Gemini 1.5 Pro/Flash, Claude 3.5, Llama3.2 Vision    |
 | **Image Gen**  | GPT-Image-1 with custom parameters                   |
 | **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                     |
 | **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B via Ollama) |
