@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="./public/screenshot.jpg" alt="VT.ai screenshot">
-  <p align="center">Minimal Multimodal AI Chat App with Dynamic Routing</p>
+  <p align="center">Multimodal AI Chat App with Dynamic Routing</p>
 </p>
 
 <p align="center">
