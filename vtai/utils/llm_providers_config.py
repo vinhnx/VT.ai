@@ -88,7 +88,7 @@ SETTINGS_REASONING_EFFORT: str = "settings_reasoning_effort"
 # Core Model Defaults
 DEFAULT_TEMPERATURE: float = 0.8
 DEFAULT_TOP_P: float = 1.0
-DEFAULT_MODEL: str = "gemini/gemini-2.0-flash"
+DEFAULT_MODEL: str = "openrouter/google/gemini-2.0-flash-exp:free"
 
 # Vision Model Defaults
 DEFAULT_VISION_MODEL: str = "gemini/gemini-2.0-flash"
@@ -214,6 +214,7 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "DeepSeek Coder": "deepseek/deepseek-coder",
     # OpenRouter models
     "OpenRouter - Qwen: Qwen3 0.6B (free)": "openrouter/qwen/qwen3-0.6b-04-28:free",
+    "OpenRouter - Google: Gemini 2.0 Flash Experimental (free)": "openrouter/google/gemini-2.0-flash-exp:free",
     "OpenRouter - DeepSeek R1 (free)": "openrouter/deepseek/deepseek-r1:free",
     "OpenRouter - DeepSeek R1": "openrouter/deepseek/deepseek-r1",
     "OpenRouter - DeepSeek V3 0324 (free)": "openrouter/deepseek/deepseek-chat-v3-0324:free",
