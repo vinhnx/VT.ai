@@ -59,7 +59,6 @@ nav:
   - Developer Guide:
     - Architecture: developer/architecture.md
     - Extending VT.ai: developer/extending.md
-    - Model Context Protocol: developer/mcp.md
     - Semantic Routing: developer/routing.md
     - Models Integration: developer/models.md
     - Assistant Tools: developer/tools.md
