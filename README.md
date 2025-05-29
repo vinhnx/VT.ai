@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="./public/screenshot.jpg" alt="VT.ai screenshot">
-  <p align="center">Minimal Multimodal AI Chat App with Dynamic Routing</p>
+  <p align="center">Multimodal AI Chat App with Dynamic Routing</p>
 </p>
 
 <p align="center">
@@ -78,23 +78,6 @@ export GEMINI_API_KEY='your-key-here'  # For Gemini models
 API keys are securely stored in `~/.config/vtai/.env` for future use.
 
 ## Usage Guide
-
-### Programmatic Usage
-
-```python
-from vtai.app import run_app
-
-# Basic usage with default settings
-run_app()
-
-# Advanced configuration
-run_app(
-    models=["gpt-4o", "claude-3-5-sonnet"],
-    enable_web_search=True,
-    enable_voice=True,
-    enable_thinking=True
-)
-```
 
 ### Interface Usage
 
@@ -175,6 +158,8 @@ cd VT.ai
 uv venv
 source .venv/bin/activate  # Linux/Mac
 uv pip install -e ".[dev]"
+
+chainlit run vtai/app
 
 # Run tests
 pytest
