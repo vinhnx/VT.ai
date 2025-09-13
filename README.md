@@ -16,10 +16,11 @@
   <a href="https://codespaces.new/vinhnx/VT.ai"><img alt="Open in GitHub Codespaces" src="https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github"/></a>
   <a href="https://vinhnx.github.io/VT.ai"><img alt="Documentation" src="https://img.shields.io/badge/Documentation-526CFE?logo=materialformkdocs&logoColor=fff"></a>
   <a href="https://github.com/vinhnx/VT.ai/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="https://deepwiki.com/vinhnx/VT.ai"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 <p align="center">
-   <a href="#"><img alt="Google Gemini" src="https://img.shields.io/badge/Google%20Gemini-886FBF?logo=googlegemini&logoColor=fff"></a>
+  <a href="#"><img alt="Google Gemini" src="https://img.shields.io/badge/Google%20Gemini-886FBF?logo=googlegemini&logoColor=fff"></a>
   <a href="#"><img alt="Claude" src="https://img.shields.io/badge/Claude-D97757?logo=claude&logoColor=fff"></a>
   <a href="#"><img alt="ChatGPT" src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white"></a>
   <a href="#"><img alt="Deepseek" src="https://custom-icon-badges.demolab.com/badge/Deepseek-4D6BFF?logo=deepseek&logoColor=fff"></a>
