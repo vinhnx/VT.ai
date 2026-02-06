@@ -20,12 +20,12 @@ import chainlit as cl
 import dotenv
 
 # Import only essential modules for startup
-from utils import constants as const
-from utils import llm_providers_config as conf
-from utils.config import cleanup, initialize_app, load_model_prices, logger
-from utils.error_handlers import handle_exception
-from utils.settings_builder import build_settings
-from utils.user_session_helper import get_setting
+from .utils import constants as const
+from .utils import llm_providers_config as conf
+from .utils.config import cleanup, initialize_app, load_model_prices, logger
+from .utils.error_handlers import handle_exception
+from .utils.settings_builder import build_settings
+from .utils.user_session_helper import get_setting
 
 # Register cleanup function to ensure resources are properly released
 atexit.register(cleanup)
@@ -70,19 +70,19 @@ def load_deferred_imports():
     import subprocess
 
     import numpy as np
-    from utils.conversation_handlers import (
+    from .utils.conversation_handlers import (
         config_chat_session,
         handle_conversation,
         handle_files_attachment,
         handle_reasoning_conversation,
         handle_thinking_conversation,
     )
-    from utils.dict_to_object import DictToObject
-    from utils.file_handlers import process_files
-    from utils.llm_profile_builder import build_llm_profile
-    from utils.media_processors import handle_tts_response
-    from utils.safe_execution import safe_execution
-    from utils.starter_prompts import (
+    from .utils.dict_to_object import DictToObject
+    from .utils.file_handlers import process_files
+    from .utils.llm_profile_builder import build_llm_profile
+    from .utils.media_processors import handle_tts_response
+    from .utils.safe_execution import safe_execution
+    from .utils.starter_prompts import (
         get_command_route,
         get_command_template,
         set_commands,
@@ -232,3 +232,87 @@ async def on_message(message: cl.Message) -> None:
                 await handle_reasoning_conversation(message, messages, route_layer)
             else:
                 await handle_conversation(message, messages, route_layer)
+
+
+# Only run initialization if not being imported just for the main function
+if __name__ == "__main__":
+    # App initialization code goes here when running as script
+    # Import only essential modules for startup
+    from vtai.utils import constants as const
+    from vtai.utils import llm_providers_config as conf
+    from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
+    from vtai.utils.error_handlers import handle_exception
+    from vtai.utils.settings_builder import build_settings
+    from vtai.utils.user_session_helper import get_setting
+
+    # Register cleanup function to ensure resources are properly released
+    atexit.register(cleanup)
+
+    # Flag to track if we're in fast mode
+    fast_mode = os.environ.get("VT_FAST_START") == "1"
+    if fast_mode:
+        logger.info("Starting in fast mode - optimizing startup time")
+        start_time = time.time()
+
+    # Initialize the application with improved client configuration
+    route_layer, _, openai_client, async_openai_client = initialize_app()
+
+    if fast_mode:
+        logger.info(
+            f"App initialization completed in {time.time() - start_time:.2f} seconds"
+        )
+
+    # Support for deferred model prices loading
+    _model_prices_loaded = False
+    _imports_loaded = False
+
+
+def main():
+    """
+    Main entry point for the VT.ai application.
+    
+    This function serves as the command-line interface for the application.
+    """
+    import os
+    import sys
+    
+    # Check if user wants help or version info without running the full app
+    if len(sys.argv) > 1 and sys.argv[1] in ['-h', '--help', '--version']:
+        # Just import and run chainlit's help/version without initializing our app
+        try:
+            import chainlit.cli
+            # Temporarily adjust sys.argv to run chainlit help
+            original_argv = sys.argv[:]
+            sys.argv = ["chainlit"] + sys.argv[1:]
+            chainlit.cli.cli()
+            return
+        except ImportError:
+            print("Error: chainlit is not installed or not available.")
+            print("Please install the package with: pip install vtai")
+            sys.exit(1)
+    
+    # Set environment variable to indicate we're running in CLI mode
+    os.environ.setdefault("CHAINLIT_RUN_WITHOUT_WATCH", "1")
+    
+    try:
+        import chainlit.cli
+        
+        # Save original argv to restore later if needed
+        original_argv = sys.argv[:]
+        
+        # Set up arguments to run the app with chainlit
+        sys.argv = ["chainlit", "run", __file__, "--headless"]  # Add headless to prevent opening browser during test
+        
+        # Run the chainlit application
+        chainlit.cli.cli()
+    except ImportError:
+        print("Error: chainlit is not installed or not available.")
+        print("Please install the package with: pip install vtai")
+        sys.exit(1)
+    finally:
+        # Restore original argv
+        sys.argv = original_argv
+
+
+if __name__ == "__main__":
+    main()

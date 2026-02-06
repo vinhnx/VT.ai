@@ -10,9 +10,9 @@ from typing import Any, Dict, Optional
 import chainlit as cl
 from openai.types.beta.threads import ImageFileContentBlock, Message, TextContentBlock
 from openai.types.beta.threads.runs import RunStep
-from utils import constants as const
-from utils.config import logger
-from utils.user_session_helper import get_setting
+from . import constants as const
+from .config import logger
+from .user_session_helper import get_setting
 
 
 # Action callback for changing the model

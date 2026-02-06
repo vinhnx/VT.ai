@@ -13,7 +13,7 @@ import chainlit as cl
 import requests
 from openai import AsyncOpenAI
 from PIL import Image
-from utils.config import allowed_mime, logger
+from .config import allowed_mime, logger
 
 
 async def check_files(files: List) -> Tuple[bool, Optional[str]]:

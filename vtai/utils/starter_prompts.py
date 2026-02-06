@@ -11,8 +11,8 @@ from random import choice, shuffle
 from typing import Dict, List, Optional, Union
 
 import chainlit as cl
-from router.constants import SemanticRouterType
-from router.trainer import create_routes
+from ..router.constants import SemanticRouterType
+from ..router.trainer import create_routes
 
 # Comprehensive set of hardcoded starter prompts covering various use cases
 STARTER_PROMPTS = [

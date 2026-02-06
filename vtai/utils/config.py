@@ -25,8 +25,8 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 
 # Update imports to use vtai namespace
-from router.constants import RouteLayer
-from utils import constants as const
+from ..router.constants import RouteLayer
+from . import constants as const
 
 # Configure logging - set level based on environment
 log_level = os.environ.get("VT_LOG_LEVEL", "INFO").upper()

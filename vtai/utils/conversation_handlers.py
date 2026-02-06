@@ -15,17 +15,17 @@ import chainlit as cl
 import litellm
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI
-from utils import llm_providers_config as conf
-from utils.config import logger
-from utils.error_handlers import handle_exception, safe_execution
-from utils.media_processors import (
+from . import llm_providers_config as conf
+from .config import logger
+from .error_handlers import handle_exception, safe_execution
+from .media_processors import (
     handle_audio_transcribe,
     handle_audio_understanding,
     handle_trigger_async_image_gen,
     handle_vision,
 )
-from utils.url_extractor import extract_url
-from utils.user_session_helper import (
+from .url_extractor import extract_url
+from .user_session_helper import (
     get_setting,
     get_user_session_id,
     update_message_history_from_assistant,

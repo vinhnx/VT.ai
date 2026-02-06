@@ -9,8 +9,8 @@ import contextlib
 from typing import Any, Callable, Optional
 
 import chainlit as cl
-from utils.config import logger
-from utils.error_handlers import handle_exception
+from .config import logger
+from .error_handlers import handle_exception
 
 
 @contextlib.asynccontextmanager

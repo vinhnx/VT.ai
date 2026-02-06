@@ -148,23 +148,197 @@ Contributions to VT.ai are welcome. The project accepts various types of contrib
 - **Documentation**: Enhance documentation or add examples
 - **Feedback**: Share user experiences to help improve the project
 
-Development setup:
+### Development Setup
+
+Follow these steps to set up a local development environment:
+
+#### Prerequisites
+- Python 3.11 or higher
+- [uv](https://docs.astral.sh/uv/) package manager (recommended) or pip
+- Git
+
+#### Step-by-step Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/vinhnx/VT.ai.git
+   cd VT.ai
+   ```
+
+2. **Set up Python virtual environment**
+   ```bash
+   # Using uv (recommended)
+   uv venv
+   
+   # Or using standard Python venv
+   python -m venv .venv
+   ```
+
+3. **Activate the virtual environment**
+   ```bash
+   # On macOS/Linux
+   source .venv/bin/activate
+   
+   # On Windows
+   .venv\Scripts\activate
+   ```
+
+4. **Install development dependencies**
+   ```bash
+   # Install the package in editable mode with development dependencies
+   uv pip install -e ".[dev]"
+   
+   # Or if using pip
+   pip install -e ".[dev]"
+   ```
+
+5. **Set up environment variables**
+   Copy the `.env.example` file to create your own `.env` file:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Then edit `.env` to add your API keys:
+   ```bash
+   # Edit the .env file with your preferred editor
+   nano .env
+   # or
+   code .env  # if using VS Code
+   ```
+
+6. **Run the application in development mode**
+   ```bash
+   # Using chainlit (recommended for development)
+   chainlit run vtai/app
+
+   # The application will be available at http://localhost:8000
+   ```
+
+7. **Run tests to verify your setup**
+   ```bash
+   # Run all tests
+   pytest
+
+   # Run tests with coverage
+   pytest --cov=vtai
+
+   # Run specific test categories
+   pytest tests/unit/
+   pytest tests/integration/
+   ```
+
+#### All-in-One Development Run
+
+For convenience, you can use the `run_app.py` script which provides an all-in-one solution for running the application:
 
 ```bash
-# Clone the repository
+# Direct Python execution (will initialize but not start server)
+python run_app.py
+
+# With chainlit for full interactive development
+chainlit run run_app.py -w
+
+# Or simply use the main app module
+chainlit run vtai/app
+```
+
+The `run_app.py` script serves as a wrapper that:
+- Sets up the proper Python path
+- Initializes the application with all necessary components
+- Provides a single entry point for development
+- Handles environment setup automatically
+
+#### Alternative Development Setup (using pip)
+If you prefer to use pip instead of uv:
+
+```bash
+# Clone and navigate to the project
 git clone https://github.com/vinhnx/VT.ai.git
 cd VT.ai
 
-# Set up development environment
-uv venv
-source .venv/bin/activate  # Linux/Mac
-uv pip install -e ".[dev]"
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On macOS/Linux
+# .venv\Scripts\activate  # On Windows
 
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run the application
 chainlit run vtai/app
-
-# Run tests
-pytest
 ```
+
+#### Development Commands
+
+Common commands you'll use during development:
+
+- `chainlit run vtai/app` - Run the development server
+- `pytest` - Run all tests
+- `pytest -x` - Run tests and stop on first failure
+- `pytest --cov=vtai` - Run tests with coverage report
+- `ruff check .` - Check code for linting issues
+- `ruff format .` - Format code according to project standards
+- `uv pip install -e ".[dev]"` - Reinstall after dependency changes
+
+#### Troubleshooting Common Issues
+
+**Issue: ModuleNotFoundError when running the application**
+- Solution: Make sure you've activated your virtual environment and installed the package in editable mode:
+  ```bash
+  source .venv/bin/activate
+  pip install -e .
+  ```
+
+**Issue: Permission denied when creating virtual environment**
+- Solution: Make sure you have write permissions in the project directory:
+  ```bash
+  chmod 755 .
+  uv venv
+  ```
+
+**Issue: Chainlit not found**
+- Solution: Install chainlit separately or make sure you've installed all dependencies:
+  ```bash
+  pip install chainlit
+  # or
+  pip install -e ".[dev]"
+  ```
+
+**Issue: API keys not being recognized**
+- Solution: Verify your `.env` file is in the correct location and contains properly formatted keys:
+  ```bash
+  # Check if .env file exists in project root
+  ls -la .env
+  
+  # Verify content format
+  cat .env
+  # Should contain: OPENAI_API_KEY=your_actual_key_here
+  ```
+
+**Issue: Application fails to start with port binding errors**
+- Solution: Check if another process is using the default port:
+  ```bash
+  # Find processes using port 8000
+  lsof -ti:8000
+  # Kill the process if needed
+  kill $(lsof -ti:8000)
+  ```
+
+**Issue: Slow startup times**
+- Solution: You can enable fast startup mode by setting an environment variable:
+  ```bash
+  export VT_FAST_START=1
+  chainlit run vtai/app
+  ```
+
+**Issue: Dependency conflicts**
+- Solution: Create a fresh virtual environment and reinstall dependencies:
+  ```bash
+  rm -rf .venv
+  python -m venv .venv
+  source .venv/bin/activate
+  pip install -e ".[dev]"
+  ```
 
 ## Testing and Quality
 
