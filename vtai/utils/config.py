@@ -512,7 +512,6 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
         logger.info("Created minimal route layer for fast startup")
     else:
         # Normal initialization with encoder
-        from semantic_router import Route
 
         routes = load_routes(encoder=encoder, use_cache=True)
 

@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.beta import Assistant
+
 from ..utils import constants
 
 # Assistant (beta)

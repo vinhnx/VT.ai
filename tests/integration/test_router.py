@@ -36,4 +36,4 @@ def test_router_initialization():
         assert hasattr(route, "name")
         assert isinstance(route.name, str)
     except Exception as e:
-        pytest.fail(f"Router initialization failed with exception: {e}")        pytest.fail(f"Router initialization failed with exception: {e}")
+        pytest.fail(f"Router initialization failed with exception: {e}")

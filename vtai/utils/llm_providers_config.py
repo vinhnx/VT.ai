@@ -5,19 +5,10 @@ This module defines configuration constants and settings for various LLM provide
 models, and feature-specific settings used throughout the VT.ai application.
 """
 
-import json
-import os
-import random
-from datetime import datetime
-from pathlib import Path
-from random import choice, shuffle
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-import chainlit as cl
-from litellm import completion
 from pydantic import BaseModel
 
-from ..router.trainer import create_routes
 from .chat_profile import AppChatProfileType
 from .starter_prompts import get_shuffled_starters
 

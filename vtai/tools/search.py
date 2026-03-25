@@ -4,7 +4,7 @@ Web search tools using liteLLM and Tavily for VT.ai
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from litellm import completion
 from pydantic import BaseModel, Field

@@ -13,7 +13,7 @@ import audioop
 import io
 import os
 import wave
-from typing import Any, BinaryIO, Dict, List, Optional
+from typing import BinaryIO
 
 import chainlit as cl
 import numpy as np

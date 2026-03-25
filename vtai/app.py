@@ -4,26 +4,17 @@ VT - Main application entry point.
 A multimodal AI chat application with dynamic conversation routing.
 """
 
-import argparse
-import asyncio
 import atexit
-import json
 import os
-import shutil
 import sys
 import time
-from contextlib import asynccontextmanager
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 import chainlit as cl
-import dotenv
 
 # Import only essential modules for startup
 from .utils import constants as const
 from .utils import llm_providers_config as conf
 from .utils.config import cleanup, initialize_app, load_model_prices, logger
-from .utils.error_handlers import handle_exception
 from .utils.settings_builder import build_settings
 from .utils.user_session_helper import get_setting
 
@@ -61,8 +52,19 @@ def load_deferred_imports():
 
     # pylint: disable=global-statement
     global numpy, audioop, subprocess, build_llm_profile
-    global process_files, handle_tts_response, safe_execution, get_command_route, get_command_template
-    global set_commands, handle_conversation, handle_files_attachment, handle_thinking_conversation, handle_reasoning_conversation, DictToObject
+    global \
+        process_files, \
+        handle_tts_response, \
+        safe_execution, \
+        get_command_route, \
+        get_command_template
+    global \
+        set_commands, \
+        handle_conversation, \
+        handle_files_attachment, \
+        handle_thinking_conversation, \
+        handle_reasoning_conversation, \
+        DictToObject
     global config_chat_session
 
     # Import modules that are not needed during initial startup
@@ -70,6 +72,7 @@ def load_deferred_imports():
     import subprocess
 
     import numpy as np
+
     from .utils.conversation_handlers import (
         config_chat_session,
         handle_conversation,
@@ -241,7 +244,6 @@ if __name__ == "__main__":
     from vtai.utils import constants as const
     from vtai.utils import llm_providers_config as conf
     from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
-    from vtai.utils.error_handlers import handle_exception
     from vtai.utils.settings_builder import build_settings
     from vtai.utils.user_session_helper import get_setting
 
@@ -270,17 +272,17 @@ if __name__ == "__main__":
 def main():
     """
     Main entry point for the VT.ai application.
-    
+
     This function serves as the command-line interface for the application.
     """
     import os
-    import sys
-    
+
     # Check if user wants help or version info without running the full app
-    if len(sys.argv) > 1 and sys.argv[1] in ['-h', '--help', '--version']:
+    if len(sys.argv) > 1 and sys.argv[1] in ["-h", "--help", "--version"]:
         # Just import and run chainlit's help/version without initializing our app
         try:
             import chainlit.cli
+
             # Temporarily adjust sys.argv to run chainlit help
             original_argv = sys.argv[:]
             sys.argv = ["chainlit"] + sys.argv[1:]
@@ -290,19 +292,24 @@ def main():
             print("Error: chainlit is not installed or not available.")
             print("Please install the package with: pip install vtai")
             sys.exit(1)
-    
+
     # Set environment variable to indicate we're running in CLI mode
     os.environ.setdefault("CHAINLIT_RUN_WITHOUT_WATCH", "1")
-    
+
     try:
         import chainlit.cli
-        
+
         # Save original argv to restore later if needed
         original_argv = sys.argv[:]
-        
+
         # Set up arguments to run the app with chainlit
-        sys.argv = ["chainlit", "run", __file__, "--headless"]  # Add headless to prevent opening browser during test
-        
+        sys.argv = [
+            "chainlit",
+            "run",
+            __file__,
+            "--headless",
+        ]  # Add headless to prevent opening browser during test
+
         # Run the chainlit application
         chainlit.cli.cli()
     except ImportError:

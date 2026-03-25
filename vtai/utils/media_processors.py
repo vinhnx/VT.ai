@@ -5,7 +5,6 @@ Handles image, audio, and text-to-speech processing.
 """
 
 import asyncio
-import audioop
 import base64
 import io
 import os
@@ -14,7 +13,7 @@ import time
 import wave
 from io import BytesIO
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, List, Optional, Tuple
+from typing import BinaryIO, Dict, Optional, Tuple
 
 import chainlit as cl
 import litellm
@@ -249,7 +248,7 @@ async def handle_audio_transcribe(
         return ""
 
 
-async def handle_audio_understanding(path: str, prompt: str = None) -> None:
+async def handle_audio_understanding(path: str, prompt: Optional[str] = None) -> None:
     """
     Analyzes and understands audio content using the best available AI model.
     Goes beyond simple transcription to provide detailed analysis of the audio content.
@@ -884,7 +883,7 @@ async def handle_trigger_async_image_gen(query: str) -> None:
     # Create a step to show progress instead of a message
     step = cl.Step(
         name="Image Generation",
-        type="generation",
+        type="run",
         show_input=False,
     )
 
@@ -906,7 +905,7 @@ async def handle_trigger_async_image_gen(query: str) -> None:
             get_setting(conf.SETTINGS_IMAGE_GEN_OUTPUT_FORMAT)
             or conf.DEFAULT_IMAGE_GEN_OUTPUT_FORMAT
         )
-        moderation = (
+        (
             get_setting(conf.SETTINGS_IMAGE_GEN_MODERATION)
             or conf.DEFAULT_IMAGE_GEN_MODERATION
         )
@@ -936,7 +935,7 @@ async def handle_trigger_async_image_gen(query: str) -> None:
             await step.update()
 
             # Generate image
-            logger.info(f"Generating image with OpenAI client using GPT-Image-1")
+            logger.info("Generating image with OpenAI client using GPT-Image-1")
             image_response = openai_client.images.generate(**generation_params)
 
             # Extract the generated image data

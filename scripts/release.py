@@ -143,7 +143,6 @@ def main():
     if not non_interactive and not args.skip_tag:
         create_tag = input(f"Create git tag '{tag_name}'? (y/n): ").lower() == "y"
 
-    tag_created = False
     if create_tag:
         if tag_exists(tag_name):
             print(f"⚠️  Tag '{tag_name}' already exists, skipping tag creation")
@@ -153,7 +152,6 @@ def main():
                 f"Creating git tag {tag_name}",
             )
             print(f"✅ Git tag '{tag_name}' created successfully")
-            tag_created = True
 
     # 3. Build distribution packages
     run_command(

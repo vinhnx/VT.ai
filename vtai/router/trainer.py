@@ -208,7 +208,7 @@ def main() -> None:
         if args.verbose:
             print(f"Created layer with {len(routes)} routes:")
             for i, route in enumerate(routes):
-                print(f"  {i+1}. '{route.name}' - {len(route.utterances)} utterances")
+                print(f"  {i + 1}. '{route.name}' - {len(route.utterances)} utterances")
             # Fixed: Access the model name from the variable instead of the attribute
             print(f"Encoder: {model_name}")
 

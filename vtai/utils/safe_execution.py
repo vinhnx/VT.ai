@@ -6,9 +6,10 @@ Provides standardized error handling and context management.
 
 import asyncio
 import contextlib
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import chainlit as cl
+
 from .config import logger
 from .error_handlers import handle_exception
 

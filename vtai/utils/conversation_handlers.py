@@ -9,15 +9,20 @@ import json
 import os
 import pathlib
 import time
+from io import BytesIO
 from typing import Any, Dict, List
 
 import chainlit as cl
 import litellm
 from litellm.utils import trim_messages
 from openai import AsyncOpenAI
+
+from vtai.router.constants import SemanticRouterType
+from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
+
 from . import llm_providers_config as conf
 from .config import logger
-from .error_handlers import handle_exception, safe_execution
+from .error_handlers import safe_execution
 from .media_processors import (
     handle_audio_transcribe,
     handle_audio_understanding,
@@ -31,9 +36,6 @@ from .user_session_helper import (
     update_message_history_from_assistant,
     update_message_history_from_user,
 )
-
-from vtai.router.constants import SemanticRouterType
-from vtai.tools.search import WebSearchOptions, WebSearchParameters, WebSearchTool
 
 
 def create_message_actions(content: str, model: str) -> List[cl.Action]:
@@ -307,8 +309,8 @@ async def handle_files_attachment(
                     await handle_audio_understanding(path, prompt)
                 else:
                     # For simple transcription or if no specific prompt, use the existing transcription
-                    f = pathlib.Path(path)
-                    await handle_audio_transcribe(path, f, async_openai_client)
+                    with open(path, "rb") as audio_file_io:
+                        await handle_audio_transcribe(path, BytesIO(audio_file_io.read()), async_openai_client)
 
                     # If transcription completed but user might want more analysis, suggest it
                     if not prompt:
@@ -597,7 +599,6 @@ async def handle_reasoning_conversation(
     # Create empty objects that will be initialized in the context
     thinking_step = None
     final_answer = None
-    thinking_completed = False
 
     async with safe_execution(
         operation_name=f"reasoning conversation with model {model}"

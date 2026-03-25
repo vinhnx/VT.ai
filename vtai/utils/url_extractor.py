@@ -1,8 +1,9 @@
 import logging
 import re
-from typing import List, Optional
+from typing import List
 
 logger = logging.getLogger("vt.ai.url_extractor")
+
 
 def extract_url(text: str) -> List[str]:
     """
@@ -33,7 +34,7 @@ def extract_url(text: str) -> List[str]:
         urls = re.findall(url_pattern, text)
 
         # Remove any trailing punctuation that might have been included
-        cleaned_urls = [url.rstrip('.,;:!?') for url in urls]
+        cleaned_urls = [url.rstrip(".,;:!?") for url in urls]
 
         return cleaned_urls
     except Exception as e:

@@ -2,17 +2,10 @@
 API compatibility utilities for handling different LLM provider APIs.
 """
 
-import asyncio
-import functools
-import inspect
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import litellm
-from litellm.exceptions import (
-    AuthenticationError,
-    BadRequestError,
-    ServiceUnavailableError,
-)
+
 from .config import logger
 
 

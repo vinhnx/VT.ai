@@ -8,9 +8,10 @@ starter prompts and commands as alternative approaches.
 
 import random
 from random import choice, shuffle
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import chainlit as cl
+
 from ..router.constants import SemanticRouterType
 from ..router.trainer import create_routes
 
@@ -395,7 +396,7 @@ def build_commands_from_routes(max_count: int = 5) -> List[Dict]:
             List[Dict]: List of command dictionaries
     """
     # Get all routes from the router
-    routes = create_routes()
+    create_routes()
 
     # Create mapping for route commands
     route_commands = {

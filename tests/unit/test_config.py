@@ -82,4 +82,4 @@ def test_initialize_app(mock_route_layer, mock_route, mock_encoder, mock_open,
     assert len(result) == 4  # route_layer, assistant_id, openai_client, async_openai_client
 
     # Verify API keys were loaded
-    mock_load_keys.assert_called_once()    mock_load_keys.assert_called_once()
+    mock_load_keys.assert_called_once()

@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 import chainlit as cl
 from openai.types.beta.threads import ImageFileContentBlock, Message, TextContentBlock
 from openai.types.beta.threads.runs import RunStep
+
 from . import constants as const
 from .config import logger
 from .user_session_helper import get_setting

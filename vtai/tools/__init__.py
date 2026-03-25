@@ -2,7 +2,7 @@
 Tools for VT.ai
 """
 
-from .search import WebSearchTool, WebSearchParameters, WebSearchOptions
+from .search import WebSearchOptions, WebSearchParameters, WebSearchTool
 
 __all__ = [
     "WebSearchTool",

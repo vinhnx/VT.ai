@@ -6,10 +6,11 @@ Provides standardized error handling and user feedback for various exception typ
 
 import asyncio
 import contextlib
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import chainlit as cl
 from litellm.exceptions import BadRequestError, RateLimitError, ServiceUnavailableError
+
 from .config import logger
 
 

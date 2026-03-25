@@ -3,7 +3,7 @@ Unit tests for VT.ai conversation handlers.
 """
 
 from contextlib import contextmanager
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from utils.conversation_handlers import handle_conversation
@@ -153,9 +153,9 @@ async def test_handle_web_search_with_summarization(
         for call in mock_message_instance.stream_token.call_args_list
         if "Here's a summary" in call[0][0]
     ]
-    assert (
-        len(prefix_call_args) > 0
-    ), "Did not find the summarization prefix in the response"
+    assert len(prefix_call_args) > 0, (
+        "Did not find the summarization prefix in the response"
+    )
 
 
 @pytest.mark.asyncio
@@ -246,6 +246,6 @@ async def test_handle_web_search_without_summarization(
         for call in mock_message_instance.stream_token.call_args_list
         if "Here's what I found" in call[0][0]
     ]
-    assert (
-        len(prefix_call_args) > 0
-    ), "Did not find the raw results prefix in the response"
+    assert len(prefix_call_args) > 0, (
+        "Did not find the raw results prefix in the response"
+    )

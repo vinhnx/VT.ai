@@ -4,12 +4,12 @@ Creates and manages assistants for VT.ai.
 This module provides functions to create, update, and manage OpenAI Assistants.
 """
 
-import os
-from typing import List, Optional
+from typing import Any, List, Optional, cast
 
 from assistants.tools import ASSISTANT_TOOLS
 from openai import AsyncOpenAI
 from openai.types.beta import Assistant
+
 from ..utils import constants as const
 
 
@@ -41,7 +41,7 @@ async def create_assistant(
     assistant = await client.beta.assistants.create(
         name=name,
         instructions=instructions,
-        tools=tools,
+        tools=cast(Any, tools),
         model=model,
     )
 

@@ -81,18 +81,18 @@ async def test_handle_vision(mock_supports_vision, mock_acompletion, mock_cl_mes
                 "vtai.utils.user_session_helper.get_setting",
                 return_value="gpt-4-vision",
             ):
-                with patch("vtai.utils.media_processors.cl.Image") as mock_cl_image:
-                    with patch("vtai.utils.media_processors.cl.Text") as mock_cl_text:
+                with patch("vtai.utils.media_processors.cl.Image"):
+                    with patch("vtai.utils.media_processors.cl.Text"):
                         with patch(
                             "vtai.utils.media_processors.update_message_history_from_assistant"
-                        ) as mock_update_history:
+                        ):
                             with patch(
                                 "vtai.utils.media_processors.asyncio.wait_for",
                                 side_effect=lambda coro, timeout: coro,
                             ):
                                 with patch(
                                     "vtai.utils.media_processors.get_user_session_id"
-                                ) as mock_get_user_id:
+                                ):
                                     # Call the function
                                     await handle_vision(
                                         temp_filename, "Describe this image", True
@@ -139,15 +139,15 @@ async def test_handle_trigger_async_image_gen(mock_aimage_generation, mock_cl_me
 
             with patch(
                 "vtai.utils.media_processors.get_user_session_id"
-            ) as mock_get_user_id:
-                with patch("vtai.utils.media_processors.cl.Image") as mock_cl_image:
-                    with patch("vtai.utils.media_processors.cl.Text") as mock_cl_text:
+            ):
+                with patch("vtai.utils.media_processors.cl.Image"):
+                    with patch("vtai.utils.media_processors.cl.Text"):
                         with patch(
                             "vtai.utils.media_processors.cl.Action"
-                        ) as mock_cl_action:
+                        ):
                             with patch(
                                 "vtai.utils.media_processors.update_message_history_from_assistant"
-                            ) as mock_update_history:
+                            ):
                                 with patch(
                                     "vtai.utils.media_processors.asyncio.wait_for",
                                     side_effect=lambda coro, timeout: coro,

@@ -4,11 +4,8 @@ Chainlit-compatible wrapper script for VT.ai application.
 This script properly exposes the VT.ai callbacks to Chainlit.
 """
 
-import sys
 import os
-import asyncio
-import logging
-from typing import Dict, Any
+import sys
 
 # Add the project root to the Python path so imports work correctly
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -19,11 +16,8 @@ if project_root not in sys.path:
 os.chdir(project_root)
 
 # Import all the required callbacks from the main app
-from vtai.app import (
-    build_chat_profile,
-    start_chat,
-    on_message
-)
+from vtai.app import build_chat_profile, on_message, start_chat
+
 
 def main():
     """
@@ -31,25 +25,25 @@ def main():
     This function can be used to run the application programmatically.
     """
     print("Starting VT.ai application...")
-    
+
     # Initialize the application
     try:
         # Import chainlit here to avoid issues when running as standalone
         import chainlit as cl
-        
+
         # Expose the callbacks to Chainlit
-        globals()['build_chat_profile'] = build_chat_profile
-        globals()['start_chat'] = start_chat
-        globals()['on_message'] = on_message
-        
+        globals()["build_chat_profile"] = build_chat_profile
+        globals()["start_chat"] = start_chat
+        globals()["on_message"] = on_message
+
         print("VT.ai application initialized successfully!")
         print("Access the interface at: http://localhost:8000")
-        
+
         # If this script is run directly, start the Chainlit server
         if __name__ == "__main__":
             # This will be handled by the chainlit command
             pass
-            
+
     except ImportError as e:
         print(f"Error importing dependencies: {e}")
         print("Make sure you have installed the required dependencies:")
@@ -59,8 +53,9 @@ def main():
         print(f"Error initializing VT.ai application: {e}")
         sys.exit(1)
 
+
 # Expose the callbacks to Chainlit
-__all__ = ['build_chat_profile', 'start_chat', 'on_message']
+__all__ = ["build_chat_profile", "start_chat", "on_message"]
 
 # Call main if this script is run directly
 if __name__ == "__main__":

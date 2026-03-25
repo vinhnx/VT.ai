@@ -1,0 +1,8 @@
+# Ruff configuration
+[lint]
+select = ["E", "F", "B", "I"]
+ignore = ["E501"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
