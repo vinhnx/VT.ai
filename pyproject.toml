@@ -4,15 +4,15 @@ version = "0.7.4"
 description = " VT.ai - Minimal multimodal AI chat app with dynamic conversation routing "
 authors = [{ name = "Vinh Nguyen" }]
 dependencies = [
-    "chainlit==2.9.6",
-    "litellm==1.80.0",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
+    "chainlit==2.10.1",
+    "litellm==1.83.0",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
     "openai==1.109.1",
-    "pydantic==2.10.1",  # Specific version due to compatibility issues with chainlit
+    "pydantic==2.12.5",  # Specific version due to compatibility issues with chainlit
     "python-dotenv==1.2.2",
-    "semantic-router[fastembed]==0.0.72",
+    "semantic-router[fastembed]==0.1.12",
     "pillow==10.4.0",
     "google-generativeai==0.8.6",
-    "tavily-python==0.7.21",
+    "tavily-python==0.7.23",
     "httpx==0.28.1",
 ]
 readme = "README.md"
