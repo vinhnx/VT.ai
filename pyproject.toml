@@ -10,7 +10,7 @@ dependencies = [
     "pydantic==2.12.5",  # Specific version due to compatibility issues with chainlit
     "python-dotenv==1.2.2",
     "semantic-router[fastembed]==0.1.12",
-    "pillow==10.4.0",
+    "pillow==12.1.1",
     "google-generativeai==0.8.6",
     "tavily-python==0.7.23",
     "httpx==0.28.1",
