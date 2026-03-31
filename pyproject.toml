@@ -4,16 +4,16 @@ version = "0.7.4"
 description = " VT.ai - Minimal multimodal AI chat app with dynamic conversation routing "
 authors = [{ name = "Vinh Nguyen" }]
 dependencies = [
-    "chainlit>=2.0.0",
-    "litellm>=1.80.0,<1.82.7",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
-    "openai>=1.20.0",
+    "chainlit==2.9.6",
+    "litellm==1.80.0",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
+    "openai==1.109.1",
     "pydantic==2.10.1",  # Specific version due to compatibility issues with chainlit
-    "python-dotenv>=1.0.0",
-    "semantic-router[fastembed]>=0.0.54,<0.1.0",  # Constrained for openai compatibility
-    "pillow>=10.0.0",
-    "google-generativeai>=0.3.0",
-    "tavily-python>=0.5.4",
-    "httpx>=0.26.0",
+    "python-dotenv==1.2.2",
+    "semantic-router[fastembed]==0.0.72",
+    "pillow==10.4.0",
+    "google-generativeai==0.8.6",
+    "tavily-python==0.7.21",
+    "httpx==0.28.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.11"
@@ -46,20 +46,20 @@ packages = ["vtai"]
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.2",
-    "pytest-asyncio>=1.3.0",
-    "ruff>=0.11.4",
-    "twine>=6.2.0",
+    "pytest==9.0.2",
+    "pytest-asyncio==1.3.0",
+    "ruff==0.11.4",
+    "twine==6.2.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3.5",
-    "pytest-asyncio>=0.26.0",
-    "twine>=6.1.0",
-    "black>=23.7.0",
-    "isort>=5.12.0",
-    "flake8>=6.1.0",
+    "pytest==9.0.2",
+    "pytest-asyncio==1.3.0",
+    "twine==6.2.0",
+    "black==26.1.0",
+    "isort==7.0.0",
+    "flake8==7.3.0",
 ]
 
 docs = ["mkdocs-llmstxt>=0.2.0"]
