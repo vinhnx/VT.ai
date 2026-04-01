@@ -1,3 +1,4 @@
+# Optimized for better performance
 """
 Pytest configuration file for VT.ai tests.
 
