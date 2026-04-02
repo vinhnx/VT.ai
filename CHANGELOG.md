@@ -1,3 +1,21 @@
+## v0.7.5 (2026-04-02)
+
+### Security Fixes
+
+- **Dependency Security Updates**: Fixed 25 Dependabot alerts by updating vulnerable dependencies
+  - aiohttp 3.13.3 → 3.13.5 (fix 5 CVEs: HTTP header injection, response splitting, DoS)
+  - cryptography 46.0.4 → 46.0.6 (fix SECT curve subgroup validation bypass)
+  - mcp 1.12.4 → 1.26.0 (fix DNS rebinding protection)
+  - PyJWT 2.11.0 → 2.12.1 (fix critical header validation bypass)
+  - black 26.1.0 → 26.3.1 (fix path traversal in cache files)
+  - onnx 1.19.0 → 1.21.0 (fix TOCTOU arbitrary file read/write)
+  - pillow 10.4.0 → 12.2.0 (fix PSD out-of-bounds write)
+
+### Other Changes
+
+- Pin Python version to 3.11.x to resolve dependency conflicts
+- Add uv override-dependencies for transitive security fixes
+
 ## Upcoming (Next Release)
 
 ### Features
