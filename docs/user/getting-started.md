@@ -47,11 +47,13 @@ If you have [uv](https://github.com/astral-sh/uv) installed, you can try VT.ai w
 # Set your API key in the environment
 export OPENAI_API_KEY='sk-your-key-here'
 
-# Run VT.ai directly using uvx
-uvx vtai
+# Run VT.ai directly using uvx (requires Python 3.11)
+uvx --python 3.11 vtai
 ```
 
 This creates a temporary virtual environment just for this session. When you're done, nothing is left installed on your system.
+
+**Note:** VT.ai requires Python 3.11. If your system default is a different version, specify it explicitly with `--python 3.11`.
 
 ### Installation with uv
 

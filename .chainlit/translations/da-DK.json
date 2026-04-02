@@ -1,0 +1,259 @@
+{
+    "common": {
+        "actions": {
+            "cancel": "Annuller",
+            "confirm": "Bekr\u00e6ft",
+            "continue": "Forts\u00e6t",
+            "goBack": "G\u00e5 tilbage",
+            "reset": "Nulstil",
+            "submit": "Indsend"
+        },
+        "status": {
+            "loading": "Indl\u00e6ser...",
+            "error": {
+                "default": "Der opstod en fejl",
+                "serverConnection": "Kunne ikke n\u00e5 serveren"
+            }
+        }
+    },
+    "auth": {
+        "login": {
+            "title": "Log ind for at f\u00e5 adgang til appen",
+            "form": {
+                "email": {
+                    "label": "E-mailadresse",
+                    "required": "e-mail er et p\u00e5kr\u00e6vet felt",
+                    "placeholder": "me@example.com"
+                },
+                "password": {
+                    "label": "Adgangskode",
+                    "required": "adgangskode er et p\u00e5kr\u00e6vet felt"
+                },
+                "actions": {
+                    "signin": "Log ind"
+                },
+                "alternativeText": {
+                    "or": "ELLER"
+                }
+            },
+            "errors": {
+                "default": "Kunne ikke logge ind",
+                "signin": "Pr\u00f8v at logge ind med en anden konto",
+                "oauthSignin": "Pr\u00f8v at logge ind med en anden konto",
+                "redirectUriMismatch": "Omdirigerings-URI'en matcher ikke oauth-app konfigurationen",
+                "oauthCallback": "Pr\u00f8v at logge ind med en anden konto",
+                "oauthCreateAccount": "Pr\u00f8v at logge ind med en anden konto",
+                "emailCreateAccount": "Pr\u00f8v at logge ind med en anden konto",
+                "callback": "Pr\u00f8v at logge ind med en anden konto",
+                "oauthAccountNotLinked": "For at bekr\u00e6fte din identitet, log ind med samme konto, som du oprindeligt brugte",
+                "emailSignin": "E-mailen kunne ikke sendes",
+                "emailVerify": "Bekr\u00e6ft venligst din e-mail, en ny e-mail er blevet sendt",
+                "credentialsSignin": "Login mislykkedes. Kontroller at de angivne oplysninger er korrekte",
+                "sessionRequired": "Log venligst ind for at f\u00e5 adgang til denne side"
+            }
+        },
+        "provider": {
+            "continue": "Forts\u00e6t med {{provider}}"
+        }
+    },
+    "chat": {
+        "input": {
+            "placeholder": "Skriv din besked her...",
+            "actions": {
+                "send": "Send besked",
+                "stop": "Stop opgave",
+                "attachFiles": "Vedh\u00e6ft filer"
+            }
+        },
+        "favorites": {
+            "use": "Brug en favorit besked",
+            "headline": "Favorit beskeder",
+            "empty": {
+                "title": "Ingen gemte prompts endnu",
+                "description": "Start med at sende en prompt og markere den med en stjerne, eller v\u00e6lg en prompt fra tidligere samtaler"
+            }
+        },
+        "commands": {
+            "button": "V\u00e6rkt\u00f8jer",
+            "changeTool": "Skift v\u00e6rkt\u00f8j",
+            "availableTools": "Tilg\u00e6ngelige v\u00e6rkt\u00f8jer"
+        },
+        "speech": {
+            "start": "Start optagelse",
+            "stop": "Stop optagelse",
+            "connecting": "Forbinder"
+        },
+        "fileUpload": {
+            "dragDrop": "Tr\u00e6k og slip filer her",
+            "browse": "Gennemse filer",
+            "sizeLimit": "Gr\u00e6nse:",
+            "errors": {
+                "failed": "Upload mislykkedes",
+                "cancelled": "Annullerede upload af"
+            },
+            "actions": {
+                "cancelUpload": "Annullere upload",
+                "removeAttachment": "Fjern vedh\u00e6ftning"
+            }
+        },
+        "messages": {
+            "status": {
+                "using": "Bruger",
+                "used": "Brugte"
+            },
+            "actions": {
+                "copy": {
+                    "button": "Kopier til udklipsholder",
+                    "success": "Kopieret!"
+                }
+            },
+            "feedback": {
+                "positive": "Hj\u00e6lpsom",
+                "negative": "Ikke hj\u00e6lpsom",
+                "edit": "Rediger feedback",
+                "dialog": {
+                    "title": "Tilf\u00f8j en kommentar",
+                    "submit": "Indsend feedback",
+                    "yourFeedback": "Din feedback..."
+                },
+                "status": {
+                    "updating": "Opdaterer",
+                    "updated": "Feedback opdateret"
+                }
+            }
+        },
+        "history": {
+            "title": "Seneste input",
+            "empty": "S\u00e5 tomt...",
+            "show": "Vis historik"
+        },
+        "settings": {
+            "title": "Indstillingspanel",
+            "customize": "Tilpas dine chatindstillinger her"
+        },
+        "watermark": "Bygget med"
+    },
+    "threadHistory": {
+        "sidebar": {
+            "title": "Tidligere samtaler",
+            "filters": {
+                "search": "S\u00f8g",
+                "placeholder": "S\u00f8g i samtaler..."
+            },
+            "timeframes": {
+                "today": "I dag",
+                "yesterday": "I g\u00e5r",
+                "previous7days": "Seneste 7 dage",
+                "previous30days": "Seneste 30 dage"
+            },
+            "empty": "Ingen tr\u00e5de fundet",
+            "actions": {
+                "close": "Luk sidepanel",
+                "open": "\u00c5bn sidepanel"
+            }
+        },
+        "thread": {
+            "untitled": "Unavngivet samtale",
+            "menu": {
+                "rename": "Omd\u00f8b",
+                "share": "Del",
+                "delete": "Slet"
+            },
+            "actions": {
+                "share": {
+                    "title": "Del link til chat",
+                    "button": "Del",
+                    "status": {
+                        "copied": "Link kopieret",
+                        "created": "Delingslink oprettet!",
+                        "unshared": "Deling deaktiveret for denne tr\u00e5d"
+                    },
+                    "error": {
+                        "create": "Kunne ikke oprette delingslink",
+                        "unshare": "Kunne ikke fjerne deling af tr\u00e5d"
+                    }
+                },
+                "delete": {
+                    "title": "Bekr\u00e6ft sletning",
+                    "description": "Dette vil slette tr\u00e5den samt dens beskeder og elementer. Denne handling kan ikke fortrydes",
+                    "success": "Chat slettet",
+                    "inProgress": "Sletter chat"
+                },
+                "rename": {
+                    "title": "Omd\u00f8b tr\u00e5d",
+                    "description": "Indtast et nyt navn til denne tr\u00e5d",
+                    "form": {
+                        "name": {
+                            "label": "Navn",
+                            "placeholder": "Indtast nyt navn"
+                        }
+                    },
+                    "success": "Tr\u00e5d omd\u00f8bt!",
+                    "inProgress": "Omd\u00f8ber tr\u00e5d"
+                }
+            }
+        }
+    },
+    "navigation": {
+        "header": {
+            "chat": "Chat",
+            "readme": "\ud83d\udcd6",
+            "theme": {
+                "light": "Lyst tema",
+                "dark": "M\u00f8rkt tema",
+                "system": "F\u00f8lg system"
+            }
+        },
+        "newChat": {
+            "button": "Ny chat",
+            "dialog": {
+                "title": "Opret ny chat",
+                "description": "Dette vil rydde din nuv\u00e6rende chathistorik. Er du sikker p\u00e5, at du vil forts\u00e6tte?",
+                "tooltip": "Ny chat"
+            }
+        },
+        "user": {
+            "menu": {
+                "settings": "Indstillinger",
+                "settingsKey": "S",
+                "apiKeys": "API-n\u00f8gler",
+                "logout": "Log ud"
+            }
+        }
+    },
+    "apiKeys": {
+        "title": "P\u00e5kr\u00e6vede API-n\u00f8gler",
+        "description": "For at bruge denne app kr\u00e6ves f\u00f8lgende API-n\u00f8gler. N\u00f8glerne gemmes p\u00e5 din enheds lokale lager.",
+        "success": {
+            "saved": "Gemt succesfuldt"
+        }
+    },
+    "alerts": {
+        "info": "Info",
+        "note": "Bem\u00e6rk",
+        "tip": "Tip",
+        "important": "Vigtigt",
+        "warning": "Advarsel",
+        "caution": "Forsigtig",
+        "debug": "Fejlfinding",
+        "example": "Eksempel",
+        "success": "Succes",
+        "help": "Hj\u00e6lp",
+        "idea": "Id\u00e9",
+        "pending": "Afventer",
+        "security": "Sikkerhed",
+        "beta": "Beta",
+        "best-practice": "Bedste praksis"
+    },
+    "components": {
+        "MultiSelectInput": {
+            "placeholder": "V\u00e6lg..."
+        },
+        "DatePickerInput": {
+            "placeholder": {
+                "single": "V\u00e6lg en dato",
+                "range": "V\u00e6lg et datointerval"
+            }
+        }
+    }
+}

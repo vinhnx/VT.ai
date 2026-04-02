@@ -88,9 +88,9 @@ Multiple installation methods are available depending on requirements:
 # Standard PyPI installation
 uv pip install vtai
 
-# Zero-installation experience with uvx
+# Zero-installation experience with uvx (requires Python 3.11)
 export OPENAI_API_KEY='your-key-here'
-uvx vtai
+uvx --python 3.11 vtai
 
 # Development installation
 git clone https://github.com/vinhnx/VT.ai.git
@@ -99,6 +99,8 @@ uv venv
 source .venv/bin/activate  # Linux/Mac
 uv pip install -e ".[dev]"  # Install with development dependencies
 ```
+
+**Note:** VT.ai requires Python 3.11. If your system default is a different version, specify it explicitly with `--python 3.11`.
 
 ### API Key Configuration
 
