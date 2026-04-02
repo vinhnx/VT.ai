@@ -73,6 +73,43 @@ See the [full security advisory](https://github.com/vinhnx/VT.ai/releases/tag/v0
 
 ## Quick Start Guide
 
+### One-Click Installation (Recommended)
+
+For the easiest setup, use our automated installer script:
+
+**Linux/macOS:**
+```bash
+# Download and run the installer
+curl -fsSL https://raw.githubusercontent.com/vinhnx/VT.ai/main/scripts/install_and_run.sh | bash
+```
+
+Or clone and run locally:
+```bash
+git clone https://github.com/vinhnx/VT.ai.git
+cd VT.ai
+./scripts/install_and_run.sh
+```
+
+**Windows:**
+```powershell
+# Clone the repository
+git clone https://github.com/vinhnx/VT.ai.git
+cd VT.ai
+
+# Run the installer
+.\scripts\install_and_run.bat
+```
+
+The script will:
+- Check Python version (requires 3.11)
+- Install the `uv` package manager (if needed)
+- Create a virtual environment
+- Install VT.ai and all dependencies (including Chainlit)
+- Prompt for API keys
+- Launch VT.ai automatically
+
+---
+
 Follow these steps to get VT.ai up and running in under 5 minutes.
 
 ### Step 1: Check Python Version
@@ -200,6 +237,22 @@ vtai --api-key openai=sk-...
 ```
 
 ## Installation & Setup
+
+### Automated Installer (Easiest)
+
+Use our all-in-one installer script for a hands-off setup:
+
+```bash
+# Linux/macOS
+curl -fsSL https://raw.githubusercontent.com/vinhnx/VT.ai/main/scripts/install_and_run.sh | bash
+
+# Windows
+git clone https://github.com/vinhnx/VT.ai.git
+cd VT.ai
+.\scripts\install_and_run.bat
+```
+
+See the [Quick Start Guide](#quick-start-guide) for details.
 
 ### Advanced Installation Options
 
