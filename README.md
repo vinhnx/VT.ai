@@ -60,14 +60,14 @@ The application will open in your default browser at `http://localhost:8000`.
 # Start the application
 vtai
 
-# Configure API keys
-vtai --api-key openai=sk-...
+# Show version
+vtai --version
 
 # Show help
 vtai --help
 
-# Show version
-vtai --version
+# Configure API keys
+vtai --api-key openai=sk-...
 ```
 
 **Supported Providers:** `openai`, `anthropic`, `gemini`, `deepseek`, `ollama`
@@ -204,6 +204,12 @@ See [Security Information](docs/user/security.md) for complete details.
 # Basic usage
 vtai
 
+# Show version
+vtai --version
+
+# Show help
+vtai --help
+
 # Configure API keys
 vtai --api-key <provider>=<key>
 
@@ -211,12 +217,6 @@ vtai --api-key <provider>=<key>
 vtai --api-key openai=sk-...
 vtai --api-key anthropic=sk-ant-...
 vtai --api-key gemini=...
-
-# Show help
-vtai --help
-
-# Show version
-vtai --version
 ```
 
 **Environment Variables:**
@@ -291,6 +291,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 ---
 
 ## Recent Releases
+
+### v0.7.8 (April 2, 2026) - CLI Enhancement
+
+**New command-line interface with instant version and help flags.**
+
+- Added dedicated `vtai.cli` module for command-line interface
+- `--version` / `-v` flag shows version without loading the full app (instant response)
+- `--help` / `-h` flag displays usage information (instant response)
+- Improved CLI entry point separation for faster startup
+- Refactored `vtai.app` to extract `run_app()` function
+
+[View full release notes](https://github.com/vinhnx/VT.ai/releases/tag/v0.7.8)
 
 ### v0.7.5 (April 2, 2026) - Security Release
 
