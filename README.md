@@ -1,332 +1,67 @@
-<h1 align="center">VT</h1>
+# VT.ai
 
-<p align="center">
-  <img src="./public/screenshot.jpg" alt="VT.ai screenshot">
-  <p align="center">Multimodal AI Chat App with Dynamic Routing</p>
-</p>
+VT.ai is an open-source multimodal AI chat application with dynamic conversation routing. Supports multiple LLM providers with semantic-based routing and comprehensive multimodal capabilities.
 
-<p align="center">
-<a href="https://github.com/sponsors/vinhnx"><img alt="Github Sponsors" src="https://img.shields.io/badge/GitHub%20Sponsors-30363D?&logo=GitHub-Sponsors&logoColor=EA4AAA"></a>
-</p>
+## Installation
 
-<p align="center">
-  <a href="https://pypi.org/project/vtai/"><img alt="PyPI" src="https://img.shields.io/pypi/v/vtai?logo=pypi&logoColor=fff"></a>
-  <a href="https://pypi.org/project/vtai/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/vtai?logo=python&logoColor=white"></a>
-  <a href="https://huggingface.co/vinhnx90"><img alt="Hugging Face" src="https://img.shields.io/badge/Hugging%20Face-FFD21E?logo=huggingface&logoColor=000"></a>
-  <a href="https://codespaces.new/vinhnx/VT.ai"><img alt="Open in GitHub Codespaces" src="https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github"/></a>
-  <a href="https://vinhnx.github.io/VT.ai"><img alt="Documentation" src="https://img.shields.io/badge/Documentation-526CFE?logo=materialformkdocs&logoColor=fff"></a>
-  <a href="https://github.com/vinhnx/VT.ai/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
-  <a href="https://deepwiki.com/vinhnx/VT.ai"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
-</p>
+**Native Installer (Recommended)**
+- Automatic Python 3.11 setup
+- Installs `uv` package manager (faster than pip)
+- Creates isolated virtual environment
+- Installs all dependencies including Chainlit
+- Interactive API key configuration
+- Auto-launches VT.ai after installation
 
-<p align="center">
-  <a href="#"><img alt="Google Gemini" src="https://img.shields.io/badge/Google%20Gemini-886FBF?logo=googlegemini&logoColor=fff"></a>
-  <a href="#"><img alt="Claude" src="https://img.shields.io/badge/Claude-D97757?logo=claude&logoColor=fff"></a>
-  <a href="#"><img alt="ChatGPT" src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white"></a>
-  <a href="#"><img alt="Deepseek" src="https://custom-icon-badges.demolab.com/badge/Deepseek-4D6BFF?logo=deepseek&logoColor=fff"></a>
-</p>
-
-> **Latest Release (v0.7.5)**: Security update addressing 25 vulnerabilities. All users should upgrade immediately. See [Release Notes](https://github.com/vinhnx/VT.ai/releases/tag/v0.7.5) for details.
-
-## VT.ai
-
-VT.ai is a multimodal AI chat application designed to simplify interaction with different AI models through a unified interface. It employs vector-based semantic routing to direct queries to the most suitable model, eliminating the need to switch between multiple applications and interfaces.
-
-**[Documentation](https://vinhnx.github.io/VT.ai/)**
-
-## Security Notice
-
-**Version 0.7.5** (Latest) - Released April 2, 2026
-
-This release addresses **25 security vulnerabilities** in dependencies. All users should upgrade immediately.
-
-### Fixed Vulnerabilities
-
-| Package | Severity | Issue | Fixed Version |
-|---------|----------|-------|---------------|
-| aiohttp | High | 5 CVEs: HTTP header injection, response splitting, DoS | 3.13.5 |
-| cryptography | High | SECT curve subgroup validation bypass | 46.0.6 |
-| mcp | High | DNS rebinding protection | 1.26.0 |
-| PyJWT | High | Critical header validation bypass | 2.12.1 |
-| black | High | Path traversal in cache files | 26.3.1 |
-| onnx | High | TOCTOU arbitrary file read/write | 1.21.0 |
-| pillow | High | PSD out-of-bounds write | 12.2.0 |
-
-**Upgrade now:**
+**Linux & macOS:**
 ```bash
-pip install --upgrade vtai
-```
-
-See the [full security advisory](https://github.com/vinhnx/VT.ai/releases/tag/v0.7.5) for details.
-
----
-
-## Key Features
-
-- **Multi-Provider Integration**: Unified access to models from OpenAI (o1/o3/4o), Anthropic (Claude), Google (Gemini), DeepSeek, Llama, Cohere, and local models via Ollama
-- **Semantic Routing System**: Vector-based classification automatically routes queries to appropriate models using FastEmbed embeddings, removing the need for manual model selection
-- **Multimodal Capabilities**: Comprehensive support for text, image, and audio inputs with advanced vision analysis
-- **Image Generation**: GPT-Image-1 integration with support for transparent backgrounds, multiple formats, and customizable quality parameters
-- **Web Search Integration**: Real-time information retrieval with source attribution via Tavily API
-- **Voice Processing**: Advanced speech-to-text and text-to-speech functionality with configurable voice options and silence detection
-- **Reasoning Visualization**: Step-by-step model reasoning visualization with the `<think>` tag for transparent AI decision processes
-
-## Quick Start Guide
-
-### One-Click Installation (Recommended)
-
-For the easiest setup, use our automated installer script:
-
-**Linux/macOS:**
-```bash
-# Download and run the installer
 curl -fsSL https://raw.githubusercontent.com/vinhnx/VT.ai/main/scripts/install_and_run.sh | bash
+# Or skip API key configuration
+curl -fsSL https://raw.githubusercontent.com/vinhnx/VT.ai/main/scripts/install_and_run.sh | bash -s -- --no-api-config
 ```
 
-Or clone and run locally:
-```bash
-git clone https://github.com/vinhnx/VT.ai.git
-cd VT.ai
-./scripts/install_and_run.sh
-```
-
-**Windows:**
+**Windows (PowerShell):**
 ```powershell
-# Clone the repository
 git clone https://github.com/vinhnx/VT.ai.git
 cd VT.ai
-
-# Run the installer
 .\scripts\install_and_run.bat
 ```
 
-**Installer Features:**
-- ✅ Automatic Python 3.11 version check
-- ✅ Installs `uv` package manager (faster than pip)
-- ✅ Creates isolated virtual environment
-- ✅ Installs VT.ai with all dependencies (Chainlit, etc.)
-- ✅ Interactive API key configuration
-- ✅ Auto-launches VT.ai after installation
-- ✅ Colored output and progress indicators
-- ✅ Error handling with helpful messages
-
-**Installer Options:**
+**Alternative Installation Methods:**
 ```bash
-# Linux/macOS options
-./scripts/install_and_run.sh --no-run          # Install but don't run
-./scripts/install_and_run.sh --no-api-config   # Skip API key prompts
-./scripts/install_and_run.sh --help            # Show all options
+# PyPI (standard installation)
+pip install vtai
+
+# With uv (faster)
+uv pip install vtai
+
+# Try without installing
+uvx --python 3.11 vtai
 ```
+
+**See [Installation Guide](docs/user/getting-started.md) and [Security Notice](docs/user/security.md) for more options and troubleshooting.**
 
 ---
 
-Follow these steps to get VT.ai up and running in under 5 minutes.
-
-### Step 1: Check Python Version
-
-VT.ai requires Python 3.11. Check your version:
+## Usage
 
 ```bash
-python --version  # Should show Python 3.11.x
-```
+# Set your API key
+export OPENAI_API_KEY="sk-..."
 
-If you don't have Python 3.11, install it from [python.org](https://www.python.org/downloads/) or use a version manager like `pyenv`.
-
-### Step 2: Install VT.ai
-
-Choose one of the following installation methods:
-
-**Option A: Using pip (Recommended)**
-```bash
-pip install vtai
-```
-
-**Option B: Using uv (Faster)**
-```bash
-pip install uv  # If you don't have uv
-uv pip install vtai
-```
-
-**Option C: Try without installing**
-```bash
-uvx --python 3.11 vtai
-```
-
-### Step 3: Configure API Keys
-
-Set up your API keys using one of these methods:
-
-**Method A: Environment Variables (Recommended for testing)**
-```bash
-export OPENAI_API_KEY='sk-your-key-here'
-export ANTHROPIC_API_KEY='sk-ant-your-key-here'  # Optional: for Claude
-export GEMINI_API_KEY='your-key-here'  # Optional: for Gemini
-```
-
-**Method B: Command-Line Configuration**
-```bash
-vtai --api-key openai=sk-your-key-here
-```
-
-**Method C: Interactive Setup**
-The application will prompt you for API keys on first run if not configured.
-
-### Step 4: Run VT.ai
-
-Start the application:
-
-```bash
+# Launch VT.ai
 vtai
 ```
 
-The application will:
-1. Start a local web server
-2. Automatically open your default browser
-3. Display the chat interface at `http://localhost:8000`
+The application will open in your default browser at `http://localhost:8000`.
 
-### Step 5: Start Chatting
-
-Once the interface opens:
-
-1. **Select a conversation mode** from the available profiles
-2. **Type your message** in the chat input
-3. **Try different capabilities**:
-   - Ask questions: "What is quantum computing?"
-   - Generate images: "Draw a sunset over mountains"
-   - Analyze images: Upload an image and ask questions about it
-   - Use reasoning: Add `<think>` to see step-by-step thinking
-
-### Example Session
-
-```bash
-# 1. Set your API key
-export OPENAI_API_KEY='sk-...'
-
-# 2. Start VT.ai
-vtai
-
-# 3. Browser opens to http://localhost:8000
-
-# 4. Try these prompts:
-# - "Explain photosynthesis in simple terms"
-# - "Generate an image of a futuristic city"
-# - "What's the weather like today?" (if web search enabled)
-```
-
-### Troubleshooting
-
-**Issue: Command not found**
-```bash
-# Ensure the package is installed
-pip show vtai
-
-# If using a virtual environment, make sure it's activated
-source .venv/bin/activate  # Linux/Mac
-```
-
-**Issue: Port already in use**
-```bash
-# Find and kill the process using port 8000
-lsof -ti:8000 | xargs kill -9  # Linux/Mac
-```
-
-**Issue: Python version error**
-```bash
-# Use Python 3.11 explicitly
-python3.11 -m pip install vtai
-python3.11 -m vtai
-```
-
-**Issue: API key not recognized**
-```bash
-# Verify the environment variable is set
-echo $OPENAI_API_KEY  # Should show your key (not empty)
-
-# Or configure via command line
-vtai --api-key openai=sk-...
-```
-
-## Installation & Setup
-
-### Automated Installer (Easiest)
-
-Use our all-in-one installer script for a hands-off setup:
-
-```bash
-# Linux/macOS
-curl -fsSL https://raw.githubusercontent.com/vinhnx/VT.ai/main/scripts/install_and_run.sh | bash
-
-# Windows
-git clone https://github.com/vinhnx/VT.ai.git
-cd VT.ai
-.\scripts\install_and_run.bat
-```
-
-See the [Quick Start Guide](#quick-start-guide) for details.
-
-### Advanced Installation Options
-
-For most users, the Quick Start Guide above is sufficient. Use these options for specific needs:
-
-**Production Installation**
-```bash
-# Install with all dependencies
-uv pip install vtai
-
-# Verify installation
-vtai --version
-```
-
-**Development Installation**
-```bash
-# Clone the repository
-git clone https://github.com/vinhnx/VT.ai.git
-cd VT.ai
-
-# Create virtual environment
-uv venv
-source .venv/bin/activate  # Linux/Mac
-.venv\Scripts\activate     # Windows
-
-# Install with development dependencies
-uv pip install -e ".[dev]"
-```
-
-**Try Before Installing**
-```bash
-# Run temporarily with uvx (requires Python 3.11)
-export OPENAI_API_KEY='your-key-here'
-uvx --python 3.11 vtai
-```
-
-### API Key Management
-
-**Persistent Configuration**
-
-API keys are securely stored in `~/.config/vtai/.env` for future sessions.
-
-```bash
-# Configure once, use forever
-vtai --api-key openai=sk-...
-vtai --api-key anthropic=sk-ant-...
-```
-
-**Session-Only Configuration**
-
-```bash
-export OPENAI_API_KEY='sk-...'
-export ANTHROPIC_API_KEY='sk-ant-...'
-vtai
-```
-
-## Command-Line Reference
+### Command-Line Usage
 
 ```bash
 # Start the application
 vtai
 
 # Configure API keys
-vtai --api-key <provider>=<key>
+vtai --api-key openai=sk-...
 
 # Show help
 vtai --help
@@ -337,88 +72,180 @@ vtai --version
 
 **Supported Providers:** `openai`, `anthropic`, `gemini`, `deepseek`, `ollama`
 
-## Usage Guide
+### Capabilities
 
-### Using the Chat Interface
+#### Multimodal Support
+VT.ai provides comprehensive multimodal capabilities:
+- **Text Chat**: Natural conversations with multiple AI models
+- **Image Generation**: Create images with DALL-E 3 and GPT-Image-1
+- **Visual Analysis**: Upload and analyze images with vision models
+- **Voice Interaction**: Speech-to-text and text-to-speech with configurable voices
+- **Web Search**: Real-time information retrieval with Tavily API
+- **Reasoning Visualization**: Step-by-step thinking with `<think>` tag
 
-The web interface provides a clean, intuitive chat experience:
+#### Semantic Routing
+VT.ai uses vector-based semantic routing to automatically direct queries to the most appropriate model:
+- **Fast Classification**: Uses FastEmbed embeddings for instant routing decisions
+- **No Manual Selection**: Automatic model selection based on query intent
+- **Optimized Performance**: Reduces latency by avoiding unnecessary LLM calls
+- **Custom Routes**: Extensible routing system for specialized use cases
 
-**1. Start a Conversation**
-- Select a conversation profile from the dropdown
-- Type your message in the input box
-- Press Enter or click Send
+For more information about capabilities, see [Usage Guide](docs/user/getting-started.md#usage-guide).
 
-**2. Try Different Capabilities**
+---
 
-| Capability | Example Prompts |
-|------------|----------------|
-| **General Chat** | "Explain quantum computing simply" |
-| **Image Generation** | "Generate an image of a sunset over mountains" |
-| **Visual Analysis** | Upload an image, then ask "What's in this photo?" |
-| **Reasoning** | "<think> Solve this step by step: If x+5=10, what is x?" |
-| **Web Search** | "What are the latest AI developments?" |
+### Supported Providers
 
-**3. Use Voice Features**
-- Click the microphone icon for speech-to-text
-- Enable text-to-speech in settings for audio responses
+VT.ai works with OpenAI, Anthropic, Google Gemini, DeepSeek, Cohere, Ollama (local), and more. Set the corresponding environment variable for your provider:
 
-### Advanced Usage
+```bash
+export OPENAI_API_KEY="sk-..."        # OpenAI (GPT-o1, GPT-o3, GPT-4o)
+export ANTHROPIC_API_KEY="sk-ant-..." # Anthropic (Claude 3.5/3.7)
+export GEMINI_API_KEY="..."           # Google (Gemini 2.0/2.5)
+export DEEPSEEK_API_KEY="..."         # DeepSeek models
+```
 
-**Multi-Model Conversations**
+See [Provider Configuration](docs/user/getting-started.md#api-key-configuration) for complete setup instructions.
 
-VT.ai automatically routes queries to the best model:
-- Complex reasoning → GPT-o1/o3
-- Creative tasks → Claude
-- Fast responses → GPT-4o mini
-- Local processing → Ollama models
+---
 
-**Image Analysis Workflow**
-1. Click the attachment icon
-2. Select or drag an image
-3. Ask questions: "What objects are visible?" or "Read the text in this image"
+### Configuration
 
-**Image Generation Workflow**
-1. Use prompts starting with:
-   - "Generate an image of..."
-   - "Draw a..."
-   - "Create an illustration of..."
-2. Specify style: "...in watercolor style"
-3. Specify format: "...with transparent background"
+VT.ai supports flexible configuration options:
 
-Detailed usage instructions are available in the [Getting Started Guide](https://vinhnx.github.io/VT.ai/user/getting-started/).
+**API Key Management:**
+- **Environment Variables**: Session-only configuration
+- **Command-Line**: `vtai --api-key provider=key`
+- **Persistent Storage**: Securely stored in `~/.config/vtai/.env`
 
-## Documentation
+**Model Selection:**
+- Automatic routing based on query semantics
+- Manual override via conversation profiles
+- Custom model aliases in configuration
 
-The documentation is organized into sections designed for different user needs:
+For full configuration options, see [Configuration Guide](docs/user/getting-started.md#configuration).
 
-- **[User Guide](https://vinhnx.github.io/VT.ai/user/getting-started/)**: Installation, configuration, and feature documentation
-- **[Developer Guide](https://vinhnx.github.io/VT.ai/developer/architecture/)**: Architecture details, extension points, and implementation information
-- **[API Reference](https://vinhnx.github.io/VT.ai/api/)**: Comprehensive API documentation for programmatic usage
+---
 
-## Implementation Options
+### Key Features
 
-VT.ai offers two distinct implementations:
+- **Multi-Provider Integration**: Unified access to models from OpenAI, Anthropic, Google, DeepSeek, and local models via Ollama
+- **Semantic Routing System**: Vector-based classification using FastEmbed embeddings for automatic model selection
+- **Multimodal Capabilities**: Text, image, and audio inputs with advanced vision analysis
+- **Image Generation**: GPT-Image-1 integration with transparent backgrounds, multiple formats, and quality parameters
+- **Web Search Integration**: Real-time information retrieval with source attribution via Tavily API
+- **Voice Processing**: Advanced speech-to-text and text-to-speech with configurable voice options
+- **Reasoning Visualization**: Step-by-step model reasoning with `<think>` tag for transparent decision processes
+- **Security First**: All dependencies regularly updated with automated vulnerability scanning
 
-- **Python Implementation**: Full-featured reference implementation with complete support for all capabilities
-- **Rust Implementation**: High-performance alternative with optimized memory usage and native compiled speed
+---
 
-The [implementation documentation](https://vinhnx.github.io/VT.ai/user/getting-started/#implementation-options) provides a detailed comparison of both options.
+### Security & Safety
+
+VT.ai implements a **security-first approach** to protect users and their data:
+
+**Dependency Security:**
+- **Automated Scanning**: Dependabot integration for vulnerability detection
+- **Regular Updates**: All dependencies kept at latest secure versions
+- **Override Dependencies**: Force secure versions for transitive dependencies
+- **Version Pinning**: Critical dependencies pinned to known-safe versions
+
+**Data Protection:**
+- **Local Storage**: API keys stored locally in `~/.config/vtai/.env`
+- **No Data Collection**: No telemetry or data collection by default
+- **Secure Defaults**: Conservative security settings out of the box
+- **Workspace Isolation**: All operations confined to workspace boundaries
+
+**Latest Security Release (v0.7.5):**
+- Fixed 25 vulnerabilities in dependencies
+- Updated aiohttp, cryptography, mcp, PyJWT, black, onnx, and pillow
+- Added uv override-dependencies for transitive security fixes
+
+See [Security Information](docs/user/security.md) for complete details.
+
+---
+
+## Docs & Examples
+
+- [**Getting Started**](docs/user/getting-started.md)
+  - [Installation Guide](docs/user/getting-started.md#installation)
+  - [Quick Start](docs/user/getting-started.md#quick-start)
+  - [Configuration](docs/user/getting-started.md#configuration)
+- [**Security Information**](docs/user/security.md)
+  - [Latest Security Release](docs/user/security.md#latest-security-release-v075)
+  - [Vulnerability Details](docs/user/security.md#vulnerabilities-fixed)
+  - [Upgrade Instructions](docs/user/security.md#how-to-upgrade)
+- [**Usage Guide**](docs/user/getting-started.md#usage-guide)
+  - [Chat Interface](docs/user/getting-started.md#using-the-chat-interface)
+  - [Image Generation](docs/user/getting-started.md#image-generation-workflow)
+  - [Visual Analysis](docs/user/getting-started.md#image-analysis-workflow)
+  - [Voice Features](docs/user/getting-started.md#voice-features)
+- [**Provider Guides**](docs/user/getting-started.md#api-key-configuration)
+  - [OpenAI Setup](docs/user/getting-started.md#api-key-configuration)
+  - [Anthropic Setup](docs/user/getting-started.md#api-key-configuration)
+  - [Google Gemini Setup](docs/user/getting-started.md#api-key-configuration)
+- [**Developer Guide**](docs/developer/architecture.md)
+  - [Architecture Overview](docs/developer/architecture.md)
+  - [Semantic Routing](docs/developer/architecture.md#routing-layer)
+  - [Extension Points](docs/developer/architecture.md#extension-points)
+- [**API Reference**](docs/api/index.md)
+  - [Module Documentation](docs/api/index.md)
+  - [Conversation Handlers](docs/api/conversation_handlers.md)
+  - [Router Components](docs/api/router.md)
+- [**Troubleshooting**](README.md#troubleshooting)
+  - [Common Issues](README.md#troubleshooting)
+  - [FAQ](docs/FAQ.md)
+
+---
+
+## Command-Line Reference
+
+```bash
+# Basic usage
+vtai
+
+# Configure API keys
+vtai --api-key <provider>=<key>
+
+# Supported providers
+vtai --api-key openai=sk-...
+vtai --api-key anthropic=sk-ant-...
+vtai --api-key gemini=...
+
+# Show help
+vtai --help
+
+# Show version
+vtai --version
+```
+
+**Environment Variables:**
+```bash
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GEMINI_API_KEY="..."
+vtai
+```
+
+---
 
 ## Supported Models
 
 | Category       | Models                                                |
-|----------------|----------------------------------------------------- |
-| **Chat**       | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5  |
-| **Vision**     | GPT-4o, Gemini 1.5 Pro/Flash, Claude 3, Llama3.2 Vision    |
+|----------------|------------------------------------------------------ |
+| **Chat**       | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5 |
+| **Vision**     | GPT-4o, Gemini 1.5 Pro/Flash, Claude 3, Llama3.2 Vision |
 | **Image Gen**  | GPT-Image-1 with custom parameters                   |
 | **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                     |
 | **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B via Ollama) |
 
-The [Models Documentation](https://vinhnx.github.io/VT.ai/user/models/) provides detailed information about model-specific capabilities and configuration options.
+See [Models Documentation](docs/user/models.md) for detailed model capabilities and configuration.
+
+---
 
 ## Technical Architecture
 
-VT.ai leverages several open-source projects to deliver its functionality:
+VT.ai leverages several open-source projects:
 
 - **[Chainlit](https://chainlit.io)**: Modern chat interface framework
 - **[LiteLLM](https://docs.litellm.ai)**: Unified model abstraction layer
@@ -426,230 +253,42 @@ VT.ai leverages several open-source projects to deliver its functionality:
 - **[FastEmbed](https://github.com/qdrant/fastembed)**: Efficient embedding generation
 - **[Tavily](https://tavily.com)**: Web search capabilities
 
-The application architecture follows a clean, modular design:
-
+**Architecture Components:**
 - **Entry Point**: `vtai/app.py` - Main application logic
 - **Routing Layer**: `vtai/router/` - Semantic classification system
-- **Assistants**: `vtai/assistants/` - Specialized handlers for different query types
-- **Tools**: `vtai/tools/` - Web search, file operations, and other integrations
+- **Assistants**: `vtai/assistants/` - Specialized handlers
+- **Tools**: `vtai/tools/` - Web search, file operations, integrations
 
-## Contributing
+See [Architecture Documentation](docs/developer/architecture.md) for details.
 
-Contributions to VT.ai are welcome. The project accepts various types of contributions:
+---
 
-- **Bug Reports**: Submit detailed GitHub issues for any bugs encountered
-- **Feature Requests**: Propose new functionality through GitHub issues
-- **Pull Requests**: Submit code improvements and bug fixes
-- **Documentation**: Enhance documentation or add examples
-- **Feedback**: Share user experiences to help improve the project
+### Contributing
 
-### Development Setup
+I warmly welcome contributions of all kinds! Whether you're looking to fix bugs, add new features, improve documentation, or enhance the user experience, your help is greatly appreciated.
 
-Follow these steps to set up a local development environment:
+**How To Contribute:**
+- Report issues you're experiencing
+- Suggest new features or improvements
+- Help answer questions in the issue tracker
+- Improve documentation or add examples
 
-#### Prerequisites
-- Python 3.11 or higher
-- [uv](https://docs.astral.sh/uv/) package manager (recommended) or pip
-- Git
+**If you're not sure where to start:**
+- Check out the [issues page](https://github.com/vinhnx/VT.ai/issues)
+- Look for [good first issue](https://github.com/vinhnx/VT.ai/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) labeled items
+- Feel free to browse all open issues and pick one that resonates with you!
 
-#### Step-by-step Setup
+**Steps to get started:**
+1. Fork the repository by clicking the Fork button in the top-right corner
+2. Clone your forked repository to your local machine
+3. Create a new branch for your changes
+4. Start contributing!
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/vinhnx/VT.ai.git
-   cd VT.ai
-   ```
+When reporting an issue, please include enough details for others to reproduce the problem effectively.
 
-2. **Set up Python virtual environment**
-   ```bash
-   # Using uv (recommended)
-   uv venv
-   
-   # Or using standard Python venv
-   python -m venv .venv
-   ```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-3. **Activate the virtual environment**
-   ```bash
-   # On macOS/Linux
-   source .venv/bin/activate
-   
-   # On Windows
-   .venv\Scripts\activate
-   ```
-
-4. **Install development dependencies**
-   ```bash
-   # Install the package in editable mode with development dependencies
-   uv pip install -e ".[dev]"
-   
-   # Or if using pip
-   pip install -e ".[dev]"
-   ```
-
-5. **Set up environment variables**
-   Copy the `.env.example` file to create your own `.env` file:
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Then edit `.env` to add your API keys:
-   ```bash
-   # Edit the .env file with your preferred editor
-   nano .env
-   # or
-   code .env  # if using VS Code
-   ```
-
-6. **Run the application in development mode**
-   ```bash
-   # Using chainlit (recommended for development)
-   chainlit run vtai/app
-
-   # The application will be available at http://localhost:8000
-   ```
-
-7. **Run tests to verify your setup**
-   ```bash
-   # Run all tests
-   pytest
-
-   # Run tests with coverage
-   pytest --cov=vtai
-
-   # Run specific test categories
-   pytest tests/unit/
-   pytest tests/integration/
-   ```
-
-#### All-in-One Development Run
-
-For convenience, you can use the `run_app.py` script which provides an all-in-one solution for running the application:
-
-```bash
-# Direct Python execution (will initialize but not start server)
-python run_app.py
-
-# With chainlit for full interactive development
-chainlit run run_app.py -w
-
-# Or simply use the main app module
-chainlit run vtai/app
-```
-
-The `run_app.py` script serves as a wrapper that:
-- Sets up the proper Python path
-- Initializes the application with all necessary components
-- Provides a single entry point for development
-- Handles environment setup automatically
-
-#### Alternative Development Setup (using pip)
-If you prefer to use pip instead of uv:
-
-```bash
-# Clone and navigate to the project
-git clone https://github.com/vinhnx/VT.ai.git
-cd VT.ai
-
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On macOS/Linux
-# .venv\Scripts\activate  # On Windows
-
-# Install in development mode
-pip install -e ".[dev]"
-
-# Run the application
-chainlit run vtai/app
-```
-
-#### Development Commands
-
-Common commands you'll use during development:
-
-- `chainlit run vtai/app` - Run the development server
-- `pytest` - Run all tests
-- `pytest -x` - Run tests and stop on first failure
-- `pytest --cov=vtai` - Run tests with coverage report
-- `ruff check .` - Check code for linting issues
-- `ruff format .` - Format code according to project standards
-- `uv pip install -e ".[dev]"` - Reinstall after dependency changes
-
-#### Troubleshooting Common Issues
-
-**Issue: ModuleNotFoundError when running the application**
-- Solution: Make sure you've activated your virtual environment and installed the package in editable mode:
-  ```bash
-  source .venv/bin/activate
-  pip install -e .
-  ```
-
-**Issue: Permission denied when creating virtual environment**
-- Solution: Make sure you have write permissions in the project directory:
-  ```bash
-  chmod 755 .
-  uv venv
-  ```
-
-**Issue: Chainlit not found**
-- Solution: Install chainlit separately or make sure you've installed all dependencies:
-  ```bash
-  pip install chainlit
-  # or
-  pip install -e ".[dev]"
-  ```
-
-**Issue: API keys not being recognized**
-- Solution: Verify your `.env` file is in the correct location and contains properly formatted keys:
-  ```bash
-  # Check if .env file exists in project root
-  ls -la .env
-  
-  # Verify content format
-  cat .env
-  # Should contain: OPENAI_API_KEY=your_actual_key_here
-  ```
-
-**Issue: Application fails to start with port binding errors**
-- Solution: Check if another process is using the default port:
-  ```bash
-  # Find processes using port 8000
-  lsof -ti:8000
-  # Kill the process if needed
-  kill $(lsof -ti:8000)
-  ```
-
-**Issue: Slow startup times**
-- Solution: You can enable fast startup mode by setting an environment variable:
-  ```bash
-  export VT_FAST_START=1
-  chainlit run vtai/app
-  ```
-
-**Issue: Dependency conflicts**
-- Solution: Create a fresh virtual environment and reinstall dependencies:
-  ```bash
-  rm -rf .venv
-  python -m venv .venv
-  source .venv/bin/activate
-  pip install -e ".[dev]"
-  ```
-
-## Testing and Quality
-
-Quality is maintained through comprehensive testing:
-
-```bash
-# Run the test suite
-pytest
-
-# Run with coverage reporting
-pytest --cov=vtai
-
-# Run specific test categories
-pytest tests/unit/
-pytest tests/integration/
-```
+---
 
 ## Recent Releases
 
@@ -671,6 +310,14 @@ pytest tests/integration/
 
 [View all releases](https://github.com/vinhnx/VT.ai/releases)
 
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=vinhnx/VT.ai&type=timeline&legend=top-left)](https://www.star-history.com/#vinhnx/VT.ai&type=timeline)
+
+---
+
 ## License
 
-VT.ai is available under the MIT License - See [LICENSE](LICENSE) for details.
+VT.ai is available under the [MIT License](LICENSE).
