@@ -524,8 +524,10 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
         routes = load_routes(encoder=encoder, use_cache=True)
 
         # Create SemanticRouter with the routes
-        route_layer = SemanticRouter(routes=routes, encoder=encoder)
-        logger.info(f"Initialized route layer with {len(routes)} routes")
+        # Note: semantic_router 0.1.x requires explicit index initialization
+        # The index will be built on first use automatically
+        route_layer = SemanticRouter(routes=routes, encoder=encoder, init_async_index=True)
+        logger.info(f"Initialized route layer with {len(routes)} routes (async index enabled)")
 
     # Initialize OpenAI clients
     openai_client, async_openai_client = create_openai_clients()
