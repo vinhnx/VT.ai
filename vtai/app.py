@@ -13,12 +13,16 @@ import time
 # This is needed when running via chainlit which loads the file directly
 _script_dir = os.path.dirname(os.path.abspath(__file__))
 _parent_dir = os.path.dirname(_script_dir)
-if _parent_dir not in sys.path:
-    sys.path.insert(0, _parent_dir)
+
+# Add parent directory to sys.path if not already present
+# Use normalized path to handle spaces and special characters correctly
+_parent_dir_normalized = os.path.normpath(_parent_dir)
+if _parent_dir_normalized not in [os.path.normpath(p) for p in sys.path]:
+    sys.path.insert(0, _parent_dir_normalized)
 
 # Also set PYTHONPATH to ensure subprocesses and chainlit can find the package
 if 'PYTHONPATH' not in os.environ:
-    os.environ['PYTHONPATH'] = _parent_dir
+    os.environ['PYTHONPATH'] = _parent_dir_normalized
 
 import chainlit as cl
 
