@@ -4,7 +4,12 @@ Constants for the semantic router component.
 
 from typing import List
 
-from semantic_router import RouteLayer as SRRouteLayer
+# semantic_router 0.1.x uses SemanticRouter instead of RouteLayer
+try:
+    from semantic_router import RouteLayer as SRRouteLayer
+except ImportError:
+    # Fallback for semantic_router >= 0.1.0
+    from semantic_router import SemanticRouter as SRRouteLayer
 
 # Export RouteLayer directly to fix import issues
 RouteLayer = SRRouteLayer

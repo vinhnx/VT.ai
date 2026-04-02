@@ -28,6 +28,14 @@ from openai import AsyncOpenAI, OpenAI
 from ..router.constants import RouteLayer
 from . import constants as const
 
+# Import SemanticRouter for semantic_router 0.1.x compatibility
+try:
+    from semantic_router import RouteLayer as SRBase
+except ImportError:
+    from semantic_router import SemanticRouter as SRBase
+
+SemanticRouter = SRBase
+
 # Configure logging - set level based on environment
 log_level = os.environ.get("VT_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -504,19 +512,19 @@ def initialize_app() -> Tuple[RouteLayer, None, OpenAI, AsyncOpenAI]:
 
     # Load semantic router layer
     if fast_start and not encoder:
-        # Create a minimal RouteLayer with empty routes in fast mode
+        # Create a minimal SemanticRouter with empty routes in fast mode
         # The real initialization will happen on first use
-        from semantic_router import RouteLayer as EmptyRouteLayer
+        from semantic_router import SemanticRouter as EmptySemanticRouter
 
-        route_layer = EmptyRouteLayer(routes=[])
+        route_layer = EmptySemanticRouter(routes=[])
         logger.info("Created minimal route layer for fast startup")
     else:
         # Normal initialization with encoder
 
         routes = load_routes(encoder=encoder, use_cache=True)
 
-        # Create RouteLayer with the routes
-        route_layer = RouteLayer(routes=routes, encoder=encoder)
+        # Create SemanticRouter with the routes
+        route_layer = SemanticRouter(routes=routes, encoder=encoder)
         logger.info(f"Initialized route layer with {len(routes)} routes")
 
     # Initialize OpenAI clients

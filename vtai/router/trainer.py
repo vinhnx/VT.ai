@@ -7,9 +7,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import dotenv
-from semantic_router import Route
+from semantic_router import Route, SemanticRouter
 from semantic_router.encoders import FastEmbedEncoder
-from semantic_router.layer import RouteLayer
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 
@@ -257,7 +256,7 @@ def train_router(
     model_name: str = "BAAI/bge-small-en-v1.5",
     output_path: str = "./vtai/router/layers.json",
     verbose: bool = False
-) -> RouteLayer:
+) -> SemanticRouter:
     """
     Train the semantic router with given routes.
 
@@ -268,7 +267,7 @@ def train_router(
         verbose: Enable verbose output
 
     Returns:
-        Trained RouteLayer object
+        Trained SemanticRouter object
     """
     start_time = time.time()
 
@@ -281,7 +280,7 @@ def train_router(
         for i, route in enumerate(routes):
             print(f"  {i + 1}. '{route.name}' - {len(route.utterances)} utterances")
 
-    layer = RouteLayer(encoder=encoder, routes=routes)
+    layer = SemanticRouter(encoder=encoder, routes=routes)
 
     # Save the trained layer
     layer.to_json(output_path)
