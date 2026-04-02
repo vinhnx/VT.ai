@@ -26,11 +26,40 @@
   <a href="#"><img alt="Deepseek" src="https://custom-icon-badges.demolab.com/badge/Deepseek-4D6BFF?logo=deepseek&logoColor=fff"></a>
 </p>
 
+> 📢 **Latest Release (v0.7.5)**: Security update addressing 25 vulnerabilities. All users should upgrade immediately. See [Release Notes](https://github.com/vinhnx/VT.ai/releases/tag/v0.7.5) for details.
+
 ## VT.ai
 
 VT.ai is a multimodal AI chat application designed to simplify interaction with different AI models through a unified interface. It employs vector-based semantic routing to direct queries to the most suitable model, eliminating the need to switch between multiple applications and interfaces.
 
 **[Documentation](https://vinhnx.github.io/VT.ai/)**
+
+## 🔒 Security Notice
+
+**Version 0.7.5** (Latest) - Released April 2, 2026
+
+This release addresses **25 security vulnerabilities** in dependencies. All users should upgrade immediately.
+
+### Fixed Vulnerabilities
+
+| Package | Severity | Issue | Fixed Version |
+|---------|----------|-------|---------------|
+| aiohttp | 🔴 High | 5 CVEs: HTTP header injection, response splitting, DoS | 3.13.5 |
+| cryptography | 🔴 High | SECT curve subgroup validation bypass | 46.0.6 |
+| mcp | 🔴 High | DNS rebinding protection | 1.26.0 |
+| PyJWT | 🔴 High | Critical header validation bypass | 2.12.1 |
+| black | 🔴 High | Path traversal in cache files | 26.3.1 |
+| onnx | 🔴 High | TOCTOU arbitrary file read/write | 1.21.0 |
+| pillow | 🔴 High | PSD out-of-bounds write | 12.2.0 |
+
+**Upgrade now:**
+```bash
+pip install --upgrade vtai
+```
+
+See the [full security advisory](https://github.com/vinhnx/VT.ai/releases/tag/v0.7.5) for details.
+
+---
 
 ## Key Features
 
@@ -43,6 +72,15 @@ VT.ai is a multimodal AI chat application designed to simplify interaction with 
 - **Reasoning Visualization**: Step-by-step model reasoning visualization with the `<think>` tag for transparent AI decision processes
 
 ## Installation & Setup
+
+### ⚡ Quick Upgrade (Recommended)
+
+```bash
+# Upgrade to latest secure version
+pip install --upgrade vtai
+```
+
+### Multiple Installation Methods
 
 Multiple installation methods are available depending on requirements:
 
@@ -355,6 +393,26 @@ pytest --cov=vtai
 pytest tests/unit/
 pytest tests/integration/
 ```
+
+## 📦 Recent Releases
+
+### v0.7.5 (April 2, 2026) - Security Release
+
+**Critical security update** addressing 25 vulnerabilities in dependencies.
+
+- Fixed high-severity CVEs in aiohttp, cryptography, mcp, PyJWT, black, onnx, and pillow
+- Added uv override-dependencies for transitive security fixes
+- Pinned Python version to 3.11.x for stable dependency resolution
+
+[View full release notes →](https://github.com/vinhnx/VT.ai/releases/tag/v0.7.5)
+
+### v0.7.4
+
+- Optimized URL extraction and async file handling
+- Enhanced router training capabilities
+- Improved LLM provider configuration
+
+[View all releases →](https://github.com/vinhnx/VT.ai/releases)
 
 ## License
 

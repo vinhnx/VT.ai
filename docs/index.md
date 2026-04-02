@@ -2,6 +2,8 @@
 
 Welcome to the VT.ai documentation. VT.ai is a minimal multimodal AI chat application with dynamic routing capabilities.
 
+> 📢 **Latest Release (v0.7.5)**: Critical security update addressing 25 vulnerabilities. [Upgrade now](user/getting-started.md#quick-upgrade) or view the [release notes](https://github.com/vinhnx/VT.ai/releases/tag/v0.7.5).
+
 ## About VT.ai
 
 VT.ai is a sophisticated multimodal AI chat application that integrates multiple AI providers (OpenAI, Anthropic, Google, etc.) with smart semantic routing to direct queries to the most appropriate handlers. It supports text, image, and audio inputs, includes vision analysis for images, and features advanced image generation capabilities with DALL-E 3 and GPT-Image-1.
