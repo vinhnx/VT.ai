@@ -71,69 +71,199 @@ See the [full security advisory](https://github.com/vinhnx/VT.ai/releases/tag/v0
 - **Voice Processing**: Advanced speech-to-text and text-to-speech functionality with configurable voice options and silence detection
 - **Reasoning Visualization**: Step-by-step model reasoning visualization with the `<think>` tag for transparent AI decision processes
 
-## Installation & Setup
+## Quick Start Guide
 
-### Quick Install and Run
+Follow these steps to get VT.ai up and running in under 5 minutes.
+
+### Step 1: Check Python Version
+
+VT.ai requires Python 3.11. Check your version:
 
 ```bash
-# Install from PyPI
+python --version  # Should show Python 3.11.x
+```
+
+If you don't have Python 3.11, install it from [python.org](https://www.python.org/downloads/) or use a version manager like `pyenv`.
+
+### Step 2: Install VT.ai
+
+Choose one of the following installation methods:
+
+**Option A: Using pip (Recommended)**
+```bash
 pip install vtai
+```
 
-# Set your API key
+**Option B: Using uv (Faster)**
+```bash
+pip install uv  # If you don't have uv
+uv pip install vtai
+```
+
+**Option C: Try without installing**
+```bash
+uvx --python 3.11 vtai
+```
+
+### Step 3: Configure API Keys
+
+Set up your API keys using one of these methods:
+
+**Method A: Environment Variables (Recommended for testing)**
+```bash
 export OPENAI_API_KEY='sk-your-key-here'
+export ANTHROPIC_API_KEY='sk-ant-your-key-here'  # Optional: for Claude
+export GEMINI_API_KEY='your-key-here'  # Optional: for Gemini
+```
 
-# Run as a command-line application
+**Method B: Command-Line Configuration**
+```bash
+vtai --api-key openai=sk-your-key-here
+```
+
+**Method C: Interactive Setup**
+The application will prompt you for API keys on first run if not configured.
+
+### Step 4: Run VT.ai
+
+Start the application:
+
+```bash
 vtai
 ```
 
-### Multiple Installation Methods
+The application will:
+1. Start a local web server
+2. Automatically open your default browser
+3. Display the chat interface at `http://localhost:8000`
 
-Multiple installation methods are available depending on requirements:
+### Step 5: Start Chatting
+
+Once the interface opens:
+
+1. **Select a conversation mode** from the available profiles
+2. **Type your message** in the chat input
+3. **Try different capabilities**:
+   - Ask questions: "What is quantum computing?"
+   - Generate images: "Draw a sunset over mountains"
+   - Analyze images: Upload an image and ask questions about it
+   - Use reasoning: Add `<think>` to see step-by-step thinking
+
+### Example Session
 
 ```bash
-# Standard PyPI installation
+# 1. Set your API key
+export OPENAI_API_KEY='sk-...'
+
+# 2. Start VT.ai
+vtai
+
+# 3. Browser opens to http://localhost:8000
+
+# 4. Try these prompts:
+# - "Explain photosynthesis in simple terms"
+# - "Generate an image of a futuristic city"
+# - "What's the weather like today?" (if web search enabled)
+```
+
+### Troubleshooting
+
+**Issue: Command not found**
+```bash
+# Ensure the package is installed
+pip show vtai
+
+# If using a virtual environment, make sure it's activated
+source .venv/bin/activate  # Linux/Mac
+```
+
+**Issue: Port already in use**
+```bash
+# Find and kill the process using port 8000
+lsof -ti:8000 | xargs kill -9  # Linux/Mac
+```
+
+**Issue: Python version error**
+```bash
+# Use Python 3.11 explicitly
+python3.11 -m pip install vtai
+python3.11 -m vtai
+```
+
+**Issue: API key not recognized**
+```bash
+# Verify the environment variable is set
+echo $OPENAI_API_KEY  # Should show your key (not empty)
+
+# Or configure via command line
+vtai --api-key openai=sk-...
+```
+
+## Installation & Setup
+
+### Advanced Installation Options
+
+For most users, the Quick Start Guide above is sufficient. Use these options for specific needs:
+
+**Production Installation**
+```bash
+# Install with all dependencies
 uv pip install vtai
 
-# Zero-installation experience with uvx (requires Python 3.11)
-export OPENAI_API_KEY='your-key-here'
-uvx --python 3.11 vtai
+# Verify installation
+vtai --version
+```
 
-# Development installation
+**Development Installation**
+```bash
+# Clone the repository
 git clone https://github.com/vinhnx/VT.ai.git
 cd VT.ai
+
+# Create virtual environment
 uv venv
 source .venv/bin/activate  # Linux/Mac
-uv pip install -e ".[dev]"  # Install with development dependencies
+.venv\Scripts\activate     # Windows
+
+# Install with development dependencies
+uv pip install -e ".[dev]"
 ```
 
-**Note:** VT.ai requires Python 3.11. If your system default is a different version, specify it explicitly with `--python 3.11`.
-
-### API Key Configuration
-
-Configure API keys to enable specific model capabilities:
-
+**Try Before Installing**
 ```bash
-# Command-line configuration
-vtai --api-key openai=sk-your-key-here
-
-# Environment variable configuration
-export OPENAI_API_KEY='sk-your-key-here'  # For OpenAI models
-export ANTHROPIC_API_KEY='sk-ant-your-key-here'  # For Claude models
-export GEMINI_API_KEY='your-key-here'  # For Gemini models
+# Run temporarily with uvx (requires Python 3.11)
+export OPENAI_API_KEY='your-key-here'
+uvx --python 3.11 vtai
 ```
 
-API keys are securely stored in `~/.config/vtai/.env` for future use.
+### API Key Management
 
-## Command-Line Usage
+**Persistent Configuration**
 
-After installation, VT.ai can be run as a command-line executable:
+API keys are securely stored in `~/.config/vtai/.env` for future sessions.
 
 ```bash
-# Basic usage (opens web interface)
+# Configure once, use forever
+vtai --api-key openai=sk-...
+vtai --api-key anthropic=sk-ant-...
+```
+
+**Session-Only Configuration**
+
+```bash
+export OPENAI_API_KEY='sk-...'
+export ANTHROPIC_API_KEY='sk-ant-...'
+vtai
+```
+
+## Command-Line Reference
+
+```bash
+# Start the application
 vtai
 
 # Configure API keys
-vtai --api-key openai=sk-your-key-here
+vtai --api-key <provider>=<key>
 
 # Show help
 vtai --help
@@ -142,19 +272,55 @@ vtai --help
 vtai --version
 ```
 
-The application will start a web server and open your default browser to the chat interface (typically at `http://localhost:8000`).
+**Supported Providers:** `openai`, `anthropic`, `gemini`, `deepseek`, `ollama`
 
 ## Usage Guide
 
-### Interface Usage
+### Using the Chat Interface
 
-The application provides a clean, intuitive interface with the following capabilities:
+The web interface provides a clean, intuitive chat experience:
 
-1. **Dynamic Conversations**: The semantic router automatically selects the most appropriate model for each query
-2. **Image Generation**: Create images using prompts like "generate an image of..." or "draw a..."
-3. **Visual Analysis**: Upload or provide URLs to analyze visual content
-4. **Reasoning Visualization**: Add `<think>` to prompts to observe step-by-step reasoning
-5. **Voice Interaction**: Use the microphone feature for speech input and text-to-speech output
+**1. Start a Conversation**
+- Select a conversation profile from the dropdown
+- Type your message in the input box
+- Press Enter or click Send
+
+**2. Try Different Capabilities**
+
+| Capability | Example Prompts |
+|------------|----------------|
+| **General Chat** | "Explain quantum computing simply" |
+| **Image Generation** | "Generate an image of a sunset over mountains" |
+| **Visual Analysis** | Upload an image, then ask "What's in this photo?" |
+| **Reasoning** | "<think> Solve this step by step: If x+5=10, what is x?" |
+| **Web Search** | "What are the latest AI developments?" |
+
+**3. Use Voice Features**
+- Click the microphone icon for speech-to-text
+- Enable text-to-speech in settings for audio responses
+
+### Advanced Usage
+
+**Multi-Model Conversations**
+
+VT.ai automatically routes queries to the best model:
+- Complex reasoning → GPT-o1/o3
+- Creative tasks → Claude
+- Fast responses → GPT-4o mini
+- Local processing → Ollama models
+
+**Image Analysis Workflow**
+1. Click the attachment icon
+2. Select or drag an image
+3. Ask questions: "What objects are visible?" or "Read the text in this image"
+
+**Image Generation Workflow**
+1. Use prompts starting with:
+   - "Generate an image of..."
+   - "Draw a..."
+   - "Create an illustration of..."
+2. Specify style: "...in watercolor style"
+3. Specify format: "...with transparent background"
 
 Detailed usage instructions are available in the [Getting Started Guide](https://vinhnx.github.io/VT.ai/user/getting-started/).
 
