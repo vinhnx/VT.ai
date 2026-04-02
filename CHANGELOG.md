@@ -1,3 +1,18 @@
+## v0.7.7 (2026-04-02)
+
+### Bug Fixes
+
+- **Path Handling**: Fixed ModuleNotFoundError when project path contains spaces
+  - Use `os.path.normpath()` to properly handle paths with spaces and special characters
+  - Fix import failures in directories like "VT.ai" or "My Projects"
+  - Normalize path comparison when checking sys.path entries
+
+### Technical Details
+
+- Chainlit loads app.py as a file, not as a module
+- Paths with spaces caused `sys.path.insert()` to fail
+- Solution: Normalize paths using `os.path.normpath()` before adding to sys.path
+
 ## v0.7.6 (2026-04-02)
 
 ### Bug Fixes
