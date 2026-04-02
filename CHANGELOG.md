@@ -1,3 +1,30 @@
+## v0.7.6 (2026-04-02)
+
+### Bug Fixes
+
+- **semantic_router Compatibility**: Fixed breaking API changes in semantic_router 0.1.x
+  - Updated `RouteLayer` to `SemanticRouter` throughout codebase
+  - Added backward compatibility for semantic_router 0.0.x and 0.1.x
+  - Fixed imports in `trainer.py`, `config.py`, and `constants.py`
+
+- **Chainlit Import Issues**: Resolved module import failures when running via chainlit
+  - Changed relative imports to absolute imports in `app.py`
+  - Added `sys.path` manipulation for proper package discovery
+  - Set `PYTHONPATH` environment variable for subprocess compatibility
+  - Fixed "No module named 'vtai/app'" error
+
+### Improvements
+
+- **Global Installation**: Now works with `uv tool install` for system-wide usage
+- **No Virtual Environment Required**: Can run `vtai` command from any directory
+- **Better Error Messages**: Improved import error handling and fallbacks
+
+### Technical Details
+
+- semantic_router 0.1.12 uses `SemanticRouter` class (`RouteLayer` was removed)
+- Chainlit loads app.py as a file, not as a module, breaking relative imports
+- Solution: Use absolute imports and add parent directory to sys.path
+
 ## v0.7.5 (2026-04-02)
 
 ### Security Fixes
