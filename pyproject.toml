@@ -35,7 +35,7 @@ classifiers = [
 "Bug Tracker" = "https://github.com/vinhnx/VT.ai/issues"
 
 [project.scripts]
-vtai = "vtai.app:main"
+vtai = "vtai.cli:main"
 
 [build-system]
 requires = ["hatchling"]

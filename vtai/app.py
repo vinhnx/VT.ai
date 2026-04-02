@@ -286,29 +286,13 @@ if __name__ == "__main__":
     _imports_loaded = False
 
 
-def main():
+def run_app():
     """
-    Main entry point for the VT.ai application.
-
-    This function serves as the command-line interface for the application.
+    Run the VT.ai application with Chainlit.
+    
+    This function starts the Chainlit server and runs the application.
     """
     import os
-
-    # Check if user wants help or version info without running the full app
-    if len(sys.argv) > 1 and sys.argv[1] in ["-h", "--help", "--version"]:
-        # Just import and run chainlit's help/version without initializing our app
-        try:
-            import chainlit.cli
-
-            # Temporarily adjust sys.argv to run chainlit help
-            original_argv = sys.argv[:]
-            sys.argv = ["chainlit"] + sys.argv[1:]
-            chainlit.cli.cli()
-            return
-        except ImportError:
-            print("Error: chainlit is not installed or not available.")
-            print("Please install the package with: pip install vtai")
-            sys.exit(1)
 
     # Set environment variable to indicate we're running in CLI mode
     os.environ.setdefault("CHAINLIT_RUN_WITHOUT_WATCH", "1")
@@ -336,6 +320,15 @@ def main():
     finally:
         # Restore original argv
         sys.argv = original_argv
+
+
+def main():
+    """
+    Main entry point for the VT.ai application.
+
+    This function serves as the command-line interface for the application.
+    """
+    run_app()
 
 
 if __name__ == "__main__":

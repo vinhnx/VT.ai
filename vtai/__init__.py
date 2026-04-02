@@ -6,5 +6,7 @@ try:
     from importlib.metadata import version
 
     __version__ = version("vtai")
-except:
-    __version__ = "0.1.0"
+except Exception:
+    __version__ = "0.7.7"
+
+__all__ = ["__version__"]
