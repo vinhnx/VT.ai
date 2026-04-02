@@ -1,4 +1,10 @@
 import argparse
+import json
+import os
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
 import dotenv
 from semantic_router import Route
@@ -176,6 +182,134 @@ def create_routes() -> list[Route]:
     return routes
 
 
+def load_routes_from_file(file_path: str) -> List[Route]:
+    """
+    Load additional routes from a JSON file.
+
+    Args:
+        file_path: Path to the JSON file containing route definitions
+
+    Returns:
+        List of Route objects
+    """
+    routes = []
+    try:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+
+        for route_data in data.get('routes', []):
+            route = Route(
+                name=route_data['name'],
+                utterances=route_data.get('utterances', [])
+            )
+            routes.append(route)
+
+        print(f"Loaded {len(routes)} routes from {file_path}")
+    except FileNotFoundError:
+        print(f"Route file not found: {file_path}")
+    except json.JSONDecodeError as e:
+        print(f"Invalid JSON in route file: {e}")
+    except Exception as e:
+        print(f"Error loading routes: {e}")
+
+    return routes
+
+
+def analyze_route_coverage(routes: List[Route]) -> Dict:
+    """
+    Analyze the coverage and balance of routes.
+
+    Args:
+        routes: List of routes to analyze
+
+    Returns:
+        Dictionary with analysis results
+    """
+    analysis = {
+        "total_routes": len(routes),
+        "total_utterances": sum(len(r.utterances) for r in routes),
+        "avg_utterances_per_route": 0,
+        "min_utterances": 0,
+        "max_utterances": 0,
+        "route_details": []
+    }
+
+    if not routes:
+        return analysis
+
+    utterance_counts = [len(r.utterances) for r in routes]
+    analysis["avg_utterances_per_route"] = sum(utterance_counts) / len(utterance_counts)
+    analysis["min_utterances"] = min(utterance_counts)
+    analysis["max_utterances"] = max(utterance_counts)
+
+    for route in routes:
+        analysis["route_details"].append({
+            "name": route.name,
+            "utterance_count": len(route.utterances),
+            "avg_word_count": sum(len(u.split()) for u in route.utterances) / len(route.utterances) if route.utterances else 0
+        })
+
+    return analysis
+
+
+def train_router(
+    routes: List[Route],
+    model_name: str = "BAAI/bge-small-en-v1.5",
+    output_path: str = "./vtai/router/layers.json",
+    verbose: bool = False
+) -> RouteLayer:
+    """
+    Train the semantic router with given routes.
+
+    Args:
+        routes: List of Route objects to train with
+        model_name: Name of the encoder model to use
+        output_path: Path to save the trained layer
+        verbose: Enable verbose output
+
+    Returns:
+        Trained RouteLayer object
+    """
+    start_time = time.time()
+
+    # Initialize FastEmbedEncoder explicitly without falling back to OpenAI
+    encoder = FastEmbedEncoder(model_name=model_name)
+
+    if verbose:
+        print(f"Training semantic router using FastEmbedEncoder: {model_name}")
+        print(f"Created layer with {len(routes)} routes:")
+        for i, route in enumerate(routes):
+            print(f"  {i + 1}. '{route.name}' - {len(route.utterances)} utterances")
+
+    layer = RouteLayer(encoder=encoder, routes=routes)
+
+    # Save the trained layer
+    layer.to_json(output_path)
+
+    elapsed = time.time() - start_time
+
+    if verbose:
+        print(f"Successfully saved semantic router layer to {output_path}")
+        print(f"Training completed in {elapsed:.2f} seconds")
+
+    return layer
+
+
+def get_model_options() -> List[str]:
+    """
+    Get available encoder model options.
+
+    Returns:
+        List of model names
+    """
+    return [
+        "BAAI/bge-small-en-v1.5",  # Fast, good quality
+        "BAAI/bge-base-en-v1.5",   # Better quality, slower
+        "BAAI/bge-large-en-v1.5",  # Best quality, slowest
+        "sentence-transformers/all-MiniLM-L6-v2",  # Alternative
+    ]
+
+
 def main() -> None:
     """
     Main function to train and save the semantic router.
@@ -193,29 +327,72 @@ def main() -> None:
         action="store_true",
         help="Enable verbose output during training",
     )
+    parser.add_argument(
+        "--model",
+        "-m",
+        type=str,
+        default="BAAI/bge-small-en-v1.5",
+        choices=get_model_options(),
+        help="Encoder model to use",
+    )
+    parser.add_argument(
+        "--analyze",
+        "-a",
+        action="store_true",
+        help="Analyze route coverage without training",
+    )
+    parser.add_argument(
+        "--add-routes",
+        type=str,
+        help="Path to JSON file with additional routes to add",
+    )
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Show statistics after training",
+    )
 
     args = parser.parse_args()
 
     try:
         routes = create_routes()
-        # Initialize FastEmbedEncoder explicitly without falling back to OpenAI
-        model_name = "BAAI/bge-small-en-v1.5"
-        encoder = FastEmbedEncoder(model_name=model_name)
 
-        print("Training semantic router using FastEmbedEncoder...")
-        layer = RouteLayer(encoder=encoder, routes=routes)
+        # Load additional routes if provided
+        if args.add_routes:
+            additional_routes = load_routes_from_file(args.add_routes)
+            routes.extend(additional_routes)
 
-        if args.verbose:
-            print(f"Created layer with {len(routes)} routes:")
-            for i, route in enumerate(routes):
-                print(f"  {i + 1}. '{route.name}' - {len(route.utterances)} utterances")
-            # Fixed: Access the model name from the variable instead of the attribute
-            print(f"Encoder: {model_name}")
+        # Analyze routes if requested
+        if args.analyze:
+            analysis = analyze_route_coverage(routes)
+            print("\n=== Route Coverage Analysis ===")
+            print(f"Total routes: {analysis['total_routes']}")
+            print(f"Total utterances: {analysis['total_utterances']}")
+            print(f"Average utterances per route: {analysis['avg_utterances_per_route']:.1f}")
+            print(f"Min utterances: {analysis['min_utterances']}")
+            print(f"Max utterances: {analysis['max_utterances']}")
+            print("\nPer-route details:")
+            for detail in analysis['route_details']:
+                print(f"  {detail['name']}: {detail['utterance_count']} utterances, "
+                      f"avg {detail['avg_word_count']:.1f} words")
+            return
 
-        # Save the trained layer
-        output_path = args.output
-        layer.to_json(output_path)
-        print(f"Successfully saved semantic router layer to {output_path}")
+        # Train the router
+        layer = train_router(
+            routes=routes,
+            model_name=args.model,
+            output_path=args.output,
+            verbose=args.verbose
+        )
+
+        # Show statistics if requested
+        if args.stats:
+            analysis = analyze_route_coverage(routes)
+            print("\n=== Training Statistics ===")
+            print(f"Model: {args.model}")
+            print(f"Total routes: {analysis['total_routes']}")
+            print(f"Total utterances: {analysis['total_utterances']}")
+            print(f"Output: {args.output}")
 
     except Exception as e:
         print(f"Error training semantic router: {str(e)}")
