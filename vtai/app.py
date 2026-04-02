@@ -88,19 +88,21 @@ def load_deferred_imports():
 
     import numpy as np
 
-    from .utils.conversation_handlers import (
+    # Use absolute imports instead of relative imports
+    # This is required because chainlit loads app.py as a file, not as a module
+    from vtai.utils.conversation_handlers import (
         config_chat_session,
         handle_conversation,
         handle_files_attachment,
         handle_reasoning_conversation,
         handle_thinking_conversation,
     )
-    from .utils.dict_to_object import DictToObject
-    from .utils.file_handlers import process_files
-    from .utils.llm_profile_builder import build_llm_profile
-    from .utils.media_processors import handle_tts_response
-    from .utils.safe_execution import safe_execution
-    from .utils.starter_prompts import (
+    from vtai.utils.dict_to_object import DictToObject
+    from vtai.utils.file_handlers import process_files
+    from vtai.utils.llm_profile_builder import build_llm_profile
+    from vtai.utils.media_processors import handle_tts_response
+    from vtai.utils.safe_execution import safe_execution
+    from vtai.utils.starter_prompts import (
         get_command_route,
         get_command_template,
         set_commands,
