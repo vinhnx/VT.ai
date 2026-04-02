@@ -73,11 +73,17 @@ See the [full security advisory](https://github.com/vinhnx/VT.ai/releases/tag/v0
 
 ## Installation & Setup
 
-### Quick Upgrade (Recommended)
+### Quick Install and Run
 
 ```bash
-# Upgrade to latest secure version
-pip install --upgrade vtai
+# Install from PyPI
+pip install vtai
+
+# Set your API key
+export OPENAI_API_KEY='sk-your-key-here'
+
+# Run as a command-line application
+vtai
 ```
 
 ### Multiple Installation Methods
@@ -117,6 +123,26 @@ export GEMINI_API_KEY='your-key-here'  # For Gemini models
 ```
 
 API keys are securely stored in `~/.config/vtai/.env` for future use.
+
+## Command-Line Usage
+
+After installation, VT.ai can be run as a command-line executable:
+
+```bash
+# Basic usage (opens web interface)
+vtai
+
+# Configure API keys
+vtai --api-key openai=sk-your-key-here
+
+# Show help
+vtai --help
+
+# Show version
+vtai --version
+```
+
+The application will start a web server and open your default browser to the chat interface (typically at `http://localhost:8000`).
 
 ## Usage Guide
 

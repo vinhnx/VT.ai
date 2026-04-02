@@ -37,6 +37,9 @@ uv pip install --upgrade vtai
 ```bash
 # Install VT.ai from PyPI (latest version)
 pip install vtai
+
+# After installation, run as a command
+vtai
 ```
 
 ### Quick Start with uvx (No Installation)
@@ -90,6 +93,39 @@ source .venv/bin/activate  # Linux/Mac
 # Install dependencies
 uv pip install -e .
 ```
+
+## Command-Line Usage
+
+After installation, VT.ai is available as a command-line executable:
+
+```bash
+# Start the application (opens web interface)
+vtai
+
+# Configure API keys from command line
+vtai --api-key openai=sk-your-key-here
+
+# Display help information
+vtai --help
+
+# Display version information
+vtai --version
+```
+
+The application starts a web server and automatically opens your default browser to the chat interface, typically available at `http://localhost:8000`.
+
+### Environment Variables
+
+You can also configure VT.ai using environment variables:
+
+```bash
+export OPENAI_API_KEY='sk-your-key-here'
+export ANTHROPIC_API_KEY='sk-ant-your-key-here'
+export GEMINI_API_KEY='your-key-here'
+vtai
+```
+
+API keys are securely stored in `~/.config/vtai/.env` for future sessions.
 
 ## Rust Implementation Setup
 
