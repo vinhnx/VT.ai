@@ -100,13 +100,23 @@ cd VT.ai
 .\scripts\install_and_run.bat
 ```
 
-The script will:
-- Check Python version (requires 3.11)
-- Install the `uv` package manager (if needed)
-- Create a virtual environment
-- Install VT.ai and all dependencies (including Chainlit)
-- Prompt for API keys
-- Launch VT.ai automatically
+**Installer Features:**
+- ✅ Automatic Python 3.11 version check
+- ✅ Installs `uv` package manager (faster than pip)
+- ✅ Creates isolated virtual environment
+- ✅ Installs VT.ai with all dependencies (Chainlit, etc.)
+- ✅ Interactive API key configuration
+- ✅ Auto-launches VT.ai after installation
+- ✅ Colored output and progress indicators
+- ✅ Error handling with helpful messages
+
+**Installer Options:**
+```bash
+# Linux/macOS options
+./scripts/install_and_run.sh --no-run          # Install but don't run
+./scripts/install_and_run.sh --no-api-config   # Skip API key prompts
+./scripts/install_and_run.sh --help            # Show all options
+```
 
 ---
 

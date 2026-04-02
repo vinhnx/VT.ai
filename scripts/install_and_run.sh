@@ -1,8 +1,9 @@
-#!/bin/bash
-# VT.ai All-in-One Installer and Runner
-# This script installs all dependencies and runs VT.ai in one command
+#!/usr/bin/env bash
+# VT.ai Native Installer
+# Installs VT.ai with all dependencies using uv
+# Supports: macOS, Linux, Windows (WSL/Git Bash)
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -11,252 +12,369 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Helper functions
-print_header() {
-    echo -e "${BLUE}========================================${NC}"
-    echo -e "${BLUE}$1${NC}"
-    echo -e "${BLUE}========================================${NC}"
+# Configuration
+REPO="vinhnx/VT.ai"
+PYTHON_VERSION="3.11"
+VENV_DIR=".venv"
+CONFIG_DIR="${HOME}/.config/vtai"
+ENV_FILE="${CONFIG_DIR}/.env"
+
+# Ensure we're in the project root or clone if needed
+if [ ! -f "pyproject.toml" ]; then
+    echo -e "${BLUE}INFO:${NC} VT.ai not found in current directory"
+    echo -e "${BLUE}INFO:${NC} Cloning repository..."
+    git clone "https://github.com/${REPO}.git" vtai-temp
+    cd vtai-temp
+    trap "cd .. && rm -rf vtai-temp" EXIT
+fi
+
+# Logging functions (all output to stderr)
+log_info() {
+    printf '%b\n' "${BLUE}INFO:${NC} $1" >&2
 }
 
-print_success() {
-    echo -e "${GREEN}✓ $1${NC}"
+log_success() {
+    printf '%b\n' "${GREEN}✓${NC} $1" >&2
 }
 
-print_warning() {
-    echo -e "${YELLOW}⚠ $1${NC}"
+log_error() {
+    printf '%b\n' "${RED}✗${NC} $1" >&2
 }
 
-print_error() {
-    echo -e "${RED}✗ $1${NC}"
+log_warning() {
+    printf '%b\n' "${YELLOW}⚠${NC} $1" >&2
+}
+
+# Check for required tools
+check_requirements() {
+    log_info "Checking requirements..."
+    
+    if ! command -v curl >/dev/null 2>&1; then
+        log_error "curl is required for installation"
+        exit 1
+    fi
+    
+    log_success "Requirements check passed"
 }
 
 # Check Python version
 check_python() {
-    print_header "Checking Python Version"
+    log_info "Checking Python version (requires ${PYTHON_VERSION})"
+    
+    local python_cmd=""
     
     if command -v python3.11 &> /dev/null; then
-        PYTHON_CMD="python3.11"
-        print_success "Found Python 3.11"
+        python_cmd="python3.11"
     elif command -v python3 &> /dev/null; then
-        PYTHON_VERSION=$(python3 --version 2>&1 | grep -oP '\d+\.\d+' | head -1)
-        if [[ "$PYTHON_VERSION" == "3.11"* ]]; then
-            PYTHON_CMD="python3"
-            print_success "Found Python 3.11"
-        else
-            print_warning "Found Python $PYTHON_VERSION (need 3.11)"
-            PYTHON_CMD="python3"
+        local version
+        version=$(python3 --version 2>&1 | grep -oP '\d+\.\d+' | head -1)
+        if [[ "$version" == "3.11"* ]]; then
+            python_cmd="python3"
         fi
-    else
-        print_error "Python 3.11 not found!"
-        echo "Please install Python 3.11 from https://www.python.org/downloads/"
+    fi
+    
+    if [ -z "$python_cmd" ]; then
+        log_error "Python ${PYTHON_VERSION} not found"
+        log_info "Please install Python ${PYTHON_VERSION} from https://www.python.org/downloads/"
         exit 1
     fi
     
-    echo "Using: $($PYTHON_CMD --version)"
+    log_success "Found Python $($python_cmd --version)"
+    echo "$python_cmd"
 }
 
-# Check if uv is installed, install if not
-check_uv() {
-    print_header "Checking uv Package Manager"
+# Install uv package manager
+install_uv() {
+    log_info "Checking uv package manager..."
     
     if command -v uv &> /dev/null; then
-        print_success "uv is already installed"
-        UV_CMD="uv"
-    else
-        print_warning "uv not found, installing..."
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        source $HOME/.local/bin/env 2>/dev/null || true
+        log_success "uv is already installed"
+        echo "uv"
+        return
+    fi
+    
+    log_warning "uv not found, installing..."
+    
+    if curl -LsSf https://astral.sh/uv/install.sh | sh &> /dev/null; then
+        # Try to source the environment
+        if [ -f "$HOME/.local/bin/env" ]; then
+            source "$HOME/.local/bin/env" 2>/dev/null || true
+        fi
         export PATH="$HOME/.local/bin:$PATH"
         
         if command -v uv &> /dev/null; then
-            print_success "uv installed successfully"
-            UV_CMD="uv"
-        else
-            print_warning "uv installation failed, falling back to pip"
-            UV_CMD="pip"
+            log_success "uv installed successfully"
+            echo "uv"
+            return
         fi
     fi
+    
+    log_warning "uv installation failed, falling back to pip"
+    echo "pip"
 }
 
 # Create virtual environment
 create_venv() {
-    print_header "Setting Up Virtual Environment"
+    local python_cmd="$1"
+    local uv_cmd="$2"
     
-    VENV_DIR=".venv"
+    log_info "Setting up virtual environment..."
     
     if [ -d "$VENV_DIR" ]; then
-        print_warning "Virtual environment already exists"
-        read -p "Do you want to recreate it? (y/n) " -n 1 -r
-        echo
+        log_warning "Virtual environment already exists"
+        read -p "Do you want to recreate it? (y/n) " -r
+        echo >&2
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             rm -rf "$VENV_DIR"
-            print_success "Removed old virtual environment"
+            log_success "Removed old virtual environment"
         else
-            print_success "Using existing virtual environment"
+            log_success "Using existing virtual environment"
         fi
     fi
     
     if [ ! -d "$VENV_DIR" ]; then
-        echo "Creating virtual environment..."
-        if [ "$UV_CMD" = "uv" ]; then
-            uv venv --python python3.11
+        log_info "Creating virtual environment with Python ${PYTHON_VERSION}..."
+        if [ "$uv_cmd" = "uv" ]; then
+            uv venv --python "python${PYTHON_VERSION}" &> /dev/null
         else
-            $PYTHON_CMD -m venv "$VENV_DIR"
+            "$python_cmd" -m venv "$VENV_DIR"
         fi
-        print_success "Virtual environment created"
+        log_success "Virtual environment created"
     fi
     
     # Activate virtual environment
     source "$VENV_DIR/bin/activate"
-    print_success "Virtual environment activated"
+    log_success "Virtual environment activated"
 }
 
 # Install dependencies
 install_dependencies() {
-    print_header "Installing Dependencies"
+    local uv_cmd="$1"
     
-    echo "Installing VT.ai and all dependencies (this may take a few minutes)..."
+    log_info "Installing VT.ai and all dependencies..."
+    log_info "This may take a few minutes depending on your connection"
     
-    if [ "$UV_CMD" = "uv" ]; then
-        uv pip install -e ".[dev]"
+    if [ "$uv_cmd" = "uv" ]; then
+        if uv pip install -e ".[dev]" &> /dev/null; then
+            log_success "All dependencies installed"
+        else
+            log_error "Failed to install dependencies"
+            exit 1
+        fi
     else
-        pip install -e ".[dev]"
+        if pip install -e ".[dev]" &> /dev/null; then
+            log_success "All dependencies installed"
+        else
+            log_error "Failed to install dependencies"
+            exit 1
+        fi
     fi
-    
-    print_success "All dependencies installed"
 }
 
 # Configure API keys
 configure_api_keys() {
-    print_header "Configuring API Keys"
-    
-    CONFIG_DIR="$HOME/.config/vtai"
-    ENV_FILE="$CONFIG_DIR/.env"
+    log_info "Configuring API keys..."
     
     # Create config directory
     mkdir -p "$CONFIG_DIR"
     
     # Check if API keys already exist
     if [ -f "$ENV_FILE" ]; then
-        print_warning "API configuration already exists at $ENV_FILE"
-        read -p "Do you want to update it? (y/n) " -n 1 -r
-        echo
+        log_warning "API configuration already exists at $ENV_FILE"
+        read -p "Do you want to update it? (y/n) " -r
+        echo >&2
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            print_success "Using existing configuration"
+            log_success "Using existing configuration"
             return
         fi
     fi
     
-    # Create or update .env file
-    echo "# VT.ai API Configuration" > "$ENV_FILE"
-    echo "# Created on $(date)" >> "$ENV_FILE"
-    echo "" >> "$ENV_FILE"
+    # Create new .env file
+    cat > "$ENV_FILE" << EOF
+# VT.ai API Configuration
+# Created on $(date)
+
+EOF
     
     # Prompt for API keys
-    echo "Enter your API keys (press Enter to skip):"
-    echo ""
+    echo >&2
+    log_info "Enter your API keys (press Enter to skip):"
+    echo >&2
     
     read -p "OpenAI API Key: " OPENAI_KEY
     if [ -n "$OPENAI_KEY" ]; then
         echo "OPENAI_API_KEY='$OPENAI_KEY'" >> "$ENV_FILE"
-        print_success "OpenAI API key saved"
+        log_success "OpenAI API key saved"
     fi
     
     read -p "Anthropic API Key: " ANTHROPIC_KEY
     if [ -n "$ANTHROPIC_KEY" ]; then
         echo "ANTHROPIC_API_KEY='$ANTHROPIC_KEY'" >> "$ENV_FILE"
-        print_success "Anthropic API key saved"
+        log_success "Anthropic API key saved"
     fi
     
     read -p "Google Gemini API Key: " GEMINI_KEY
     if [ -n "$GEMINI_KEY" ]; then
         echo "GEMINI_API_KEY='$GEMINI_KEY'" >> "$ENV_FILE"
-        print_success "Google Gemini API key saved"
+        log_success "Google Gemini API key saved"
     fi
     
     read -p "Tavily API Key (for web search): " TAVILY_KEY
     if [ -n "$TAVILY_KEY" ]; then
         echo "TAVILY_API_KEY='$TAVILY_KEY'" >> "$ENV_FILE"
-        print_success "Tavily API key saved"
+        log_success "Tavily API key saved"
     fi
     
-    echo ""
-    print_success "API keys saved to $ENV_FILE"
-    echo ""
-    echo "You can always update these later by editing: $ENV_FILE"
-    echo "Or set environment variables before running:"
-    echo "  export OPENAI_API_KEY='your-key'"
+    echo >&2
+    log_success "API keys saved to $ENV_FILE"
+    log_info "You can always update these later by editing: $ENV_FILE"
 }
 
 # Run VT.ai
 run_vtai() {
-    print_header "Starting VT.ai"
+    log_info "Starting VT.ai..."
     
-    echo ""
-    echo "Launching VT.ai..."
-    echo "The application will open in your default browser at: http://localhost:8000"
-    echo ""
-    echo "Press Ctrl+C to stop the application"
-    echo ""
+    echo >&2
+    log_info "Launching VT.ai..."
+    log_info "The application will open in your default browser at: http://localhost:8000"
+    echo >&2
+    log_info "Press Ctrl+C to stop the application"
+    echo >&2
     
     # Run chainlit
     chainlit run vtai/app -w
 }
 
-# Main installation function
+# Show usage
+show_usage() {
+    cat <<'USAGE'
+VT.ai Native Installer
+
+Usage: ./install_and_run.sh [options]
+
+Options:
+    --no-run          Install but don't run VT.ai
+    --no-api-config   Skip API key configuration
+    -h, --help        Show this help message
+
+Examples:
+    ./install_and_run.sh              # Full installation and run
+    ./install_and_run.sh --no-run     # Install only
+    ./install_and_run.sh --no-api-config  # Skip API prompts
+
+Environment variables:
+    OPENAI_API_KEY       Set OpenAI API key
+    ANTHROPIC_API_KEY    Set Anthropic API key
+    GEMINI_API_KEY       Set Google Gemini API key
+    TAVILY_API_KEY       Set Tavily API key
+
+USAGE
+}
+
+# Main installation flow
 main() {
-    print_header "VT.ai All-in-One Installer"
-    echo ""
-    echo "This script will:"
-    echo "  1. Check Python version (requires 3.11)"
-    echo "  2. Install uv package manager (if needed)"
-    echo "  3. Create a virtual environment"
-    echo "  4. Install VT.ai and all dependencies"
-    echo "  5. Configure API keys"
-    echo "  6. Run VT.ai"
-    echo ""
+    local run_after_install=1
+    local configure_api=1
     
-    read -p "Continue? (y/n) " -n 1 -r
-    echo
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --no-run)
+                run_after_install=0
+                shift
+                ;;
+            --no-api-config)
+                configure_api=0
+                shift
+                ;;
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
+    
+    echo >&2
+    log_info "VT.ai Native Installer"
+    echo >&2
+    log_info "This script will:"
+    log_info "  1. Check Python version (requires ${PYTHON_VERSION})"
+    log_info "  2. Install uv package manager (if needed)"
+    log_info "  3. Create a virtual environment"
+    log_info "  4. Install VT.ai and all dependencies"
+    if [ $configure_api -eq 1 ]; then
+        log_info "  5. Configure API keys"
+    fi
+    if [ $run_after_install -eq 1 ]; then
+        log_info "  $(($configure_api ? 6 : 5)). Run VT.ai"
+    fi
+    echo >&2
+    
+    read -p "Continue? (y/n) " -r
+    echo >&2
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Installation cancelled."
+        log_info "Installation cancelled."
         exit 0
     fi
     
-    echo ""
+    echo >&2
     
     # Run installation steps
-    check_python
-    echo ""
+    check_requirements
+    echo >&2
     
-    check_uv
-    echo ""
+    local python_cmd
+    python_cmd=$(check_python)
+    echo >&2
     
-    create_venv
-    echo ""
+    local uv_cmd
+    uv_cmd=$(install_uv)
+    echo >&2
     
-    install_dependencies
-    echo ""
+    create_venv "$python_cmd" "$uv_cmd"
+    echo >&2
     
-    configure_api_keys
-    echo ""
+    install_dependencies "$uv_cmd"
+    echo >&2
+    
+    if [ $configure_api -eq 1 ]; then
+        configure_api_keys
+        echo >&2
+    fi
     
     # Ask if user wants to run now
-    read -p "Do you want to run VT.ai now? (y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        run_vtai
+    if [ $run_after_install -eq 1 ]; then
+        read -p "Do you want to run VT.ai now? (y/n) " -r
+        echo >&2
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            run_vtai
+        else
+            echo >&2
+            log_success "Installation complete!"
+            echo >&2
+            log_info "To run VT.ai later:"
+            log_info "  1. Activate the virtual environment:"
+            log_info "     source ${VENV_DIR}/bin/activate"
+            log_info "  2. Run VT.ai:"
+            log_info "     chainlit run vtai/app"
+            echo >&2
+            log_info "Or simply run this script again to start VT.ai!"
+        fi
     else
-        echo ""
-        print_success "Installation complete!"
-        echo ""
-        echo "To run VT.ai later:"
-        echo "  1. Activate the virtual environment:"
-        echo "     source .venv/bin/activate"
-        echo "  2. Run VT.ai:"
-        echo "     chainlit run vtai/app"
-        echo ""
-        echo "Or simply run this script again to start VT.ai!"
+        echo >&2
+        log_success "Installation complete!"
+        echo >&2
+        log_info "To run VT.ai:"
+        log_info "  1. Activate the virtual environment:"
+        log_info "     source ${VENV_DIR}/bin/activate"
+        log_info "  2. Run VT.ai:"
+        log_info "     chainlit run vtai/app"
+        echo >&2
     fi
 }
 
