@@ -9,14 +9,25 @@ import os
 import sys
 import time
 
+# Ensure the parent directory is in sys.path for proper package imports
+# This is needed when running via chainlit which loads the file directly
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(_script_dir)
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
+
+# Also set PYTHONPATH to ensure subprocesses and chainlit can find the package
+if 'PYTHONPATH' not in os.environ:
+    os.environ['PYTHONPATH'] = _parent_dir
+
 import chainlit as cl
 
 # Import only essential modules for startup
-from .utils import constants as const
-from .utils import llm_providers_config as conf
-from .utils.config import cleanup, initialize_app, load_model_prices, logger
-from .utils.settings_builder import build_settings
-from .utils.user_session_helper import get_setting
+from vtai.utils import constants as const
+from vtai.utils import llm_providers_config as conf
+from vtai.utils.config import cleanup, initialize_app, load_model_prices, logger
+from vtai.utils.settings_builder import build_settings
+from vtai.utils.user_session_helper import get_setting
 
 # Register cleanup function to ensure resources are properly released
 atexit.register(cleanup)
