@@ -6,7 +6,7 @@ This page provides information about security vulnerabilities and updates in VT.
 
 **Release Date:** April 2, 2026
 
-**Severity:** 🔴 Critical
+**Severity:** Critical
 
 VT.ai v0.7.5 addresses **25 security vulnerabilities** in third-party dependencies. All users should upgrade immediately.
 

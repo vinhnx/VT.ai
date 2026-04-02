@@ -2,7 +2,7 @@
 
 This guide will help you get up and running with VT.ai quickly.
 
-> ⚠️ **Security Alert (v0.7.5)**: A critical security update has been released addressing 25 vulnerabilities. All users should upgrade immediately.
+> **Security Alert (v0.7.5)**: A critical security update has been released addressing 25 vulnerabilities. All users should upgrade immediately.
 >
 > ```bash
 > # Upgrade to the latest secure version
@@ -22,7 +22,7 @@ You can choose which implementation to use based on your needs. Both share simil
 
 VT.ai can be installed and run in multiple ways depending on your needs:
 
-### ⚡ Quick Upgrade (Recommended for Existing Users)
+### Quick Upgrade (Recommended for Existing Users)
 
 ```bash
 # Upgrade to latest secure version (v0.7.5)
