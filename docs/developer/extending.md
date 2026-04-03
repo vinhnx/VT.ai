@@ -260,7 +260,7 @@ The image generation process is handled in `vtai/utils/media_processors.py`. To 
    settings_components.append(
        cl.Select(
            id="my_custom_image_setting",
-           label="🖼️ My Custom Setting",
+           label="My Custom Setting",
            values=["option1", "option2", "option3"],
            initial_value="option1"
        )

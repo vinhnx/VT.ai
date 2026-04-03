@@ -176,14 +176,14 @@ While the Rust implementation aims for feature parity with the Python version, s
 
 | Feature                   | Status             | Notes                                   |
 |---------------------------|--------------------|-----------------------------------------|
-| Text chat                 | ✅ Full support   | Complete implementation                  |
-| Image analysis            | ✅ Full support   | Vision models fully supported            |
-| Image generation          | ✅ Full support   | All image generation options available   |
-| Voice interaction         | ⚠️ Partial support | Basic TTS, advanced features in progress |
-| Web search                | ✅ Full support   | Tavily integration complete              |
-| Thinking mode             | ✅ Full support   | Full reasoning capabilities              |
-| Assistant mode            | ⚠️ Partial support | Code interpreter in development          |
-| Dynamic routing           | ✅ Full support   | Efficient semantic routing               |
+| Text chat                 | Full support       | Complete implementation                  |
+| Image analysis            | Full support       | Vision models fully supported            |
+| Image generation          | Full support       | All image generation options available   |
+| Voice interaction         | Partial support    | Basic TTS, advanced features in progress |
+| Web search                | Full support       | Tavily integration complete              |
+| Thinking mode             | Full support       | Full reasoning capabilities              |
+| Assistant mode            | Partial support    | Code interpreter in development          |
+| Dynamic routing           | Full support       | Efficient semantic routing               |
 
 ## Extending the Rust Implementation
 
