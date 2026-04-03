@@ -4,7 +4,7 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import dotenv
 from semantic_router import Route, SemanticRouter
@@ -224,10 +224,10 @@ def analyze_route_coverage(routes: List[Route]) -> Dict:
     Returns:
         Dictionary with analysis results
     """
-    analysis = {
+    analysis: Dict[str, Any] = {
         "total_routes": len(routes),
         "total_utterances": sum(len(r.utterances) for r in routes),
-        "avg_utterances_per_route": 0,
+        "avg_utterances_per_route": 0.0,
         "min_utterances": 0,
         "max_utterances": 0,
         "route_details": []

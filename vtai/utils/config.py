@@ -25,14 +25,11 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
 
 # Update imports to use vtai namespace
-from ..router.constants import RouteLayer
-from . import constants as const
+from vtai.router.constants import RouteLayer
+from vtai.utils import constants as const
 
-# Import SemanticRouter for semantic_router 0.1.x compatibility
-try:
-    from semantic_router import RouteLayer as SRBase
-except ImportError:
-    from semantic_router import SemanticRouter as SRBase
+# Import SemanticRouter (RouteLayer was removed in newer versions)
+from semantic_router import SemanticRouter as SRBase
 
 SemanticRouter = SRBase
 
@@ -427,11 +424,10 @@ def load_routes(encoder=None, use_cache: bool = True) -> list:
                     route_name = route_data["name"]
                     route_utterances = route_data["utterances"]
 
-                    # Create Route object - passing the required utterances field and encoder
+                    # Create Route object - passing the required utterances field
                     route = Route(
                         name=route_name,
                         utterances=route_utterances,
-                        encoder=encoder,
                     )
                     routes.append(route)
 
@@ -471,11 +467,10 @@ def load_routes(encoder=None, use_cache: bool = True) -> list:
             route_name = route_data["name"]
             route_utterances = route_data["utterances"]
 
-            # Create Route object - passing the required utterances field and encoder
+            # Create Route object - passing the required utterances field
             route = Route(
                 name=route_name,
                 utterances=route_utterances,
-                encoder=encoder,
             )
             routes.append(route)
 

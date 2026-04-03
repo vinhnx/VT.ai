@@ -6,11 +6,11 @@ This module provides functions to create, update, and manage OpenAI Assistants.
 
 from typing import Any, List, Optional, cast
 
-from assistants.tools import ASSISTANT_TOOLS
 from openai import AsyncOpenAI
 from openai.types.beta import Assistant
 
-from ..utils import constants as const
+from vtai.assistants.tools import ASSISTANT_TOOLS
+from vtai.utils import constants as const
 
 
 async def create_assistant(
@@ -38,7 +38,7 @@ async def create_assistant(
         tools = ASSISTANT_TOOLS
 
     # Create assistant
-    assistant = await client.beta.assistants.create(
+    assistant = await client.beta.assistants.create(  # ty: ignore[deprecated]
         name=name,
         instructions=instructions,
         tools=cast(Any, tools),
@@ -73,7 +73,7 @@ async def get_or_create_assistant(
     # Try to retrieve existing assistant if ID is provided
     if assistant_id:
         try:
-            return await client.beta.assistants.retrieve(assistant_id)
+            return await client.beta.assistants.retrieve(assistant_id)  # ty: ignore[deprecated]
         except Exception as e:
             # If retrieval fails, log the error and proceed to create a new assistant
             print(

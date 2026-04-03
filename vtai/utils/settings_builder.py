@@ -4,10 +4,10 @@ Settings builder module for the VT.ai application.
 This module provides functions to build and configure user settings for the chat interface.
 """
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import chainlit as cl
-from chainlit.input_widget import Select, Slider, Switch
+from chainlit.input_widget import InputWidget, Select, Slider, Switch
 
 from vtai.utils import constants as const
 from vtai.utils import llm_providers_config as conf
@@ -28,12 +28,12 @@ async def build_settings() -> Dict[str, Any]:
     return settings
 
 
-def _create_settings_widgets() -> List[Union[Select, Slider, Switch]]:
+def _create_settings_widgets() -> List[InputWidget]:
     """
     Creates the list of settings widgets for the chat interface.
 
     Returns:
-            List[Union[Select, Slider, Switch]]: A list of input widgets for the settings panel
+            List[InputWidget]: A list of input widgets for the settings panel
     """
     return [
         # ===== CORE CONVERSATION SETTINGS =====

@@ -1,10 +1,11 @@
 import os
+from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.beta import Assistant
 
-from ..utils import constants
+from vtai.utils import constants
 
 # Assistant (beta)
 # ref: https://platform.openai.com/docs/assistants/tools/code-interpreter/how-it-works
@@ -44,14 +45,15 @@ class MinoAssistant:
     async def run_assistant(self) -> Assistant:
         tool = constants.ASSISTANT_TOOL_CODE_INTERPRETER
         assistant_name = NAME
+        tools_param: List[Dict[str, Any]] = [
+            {
+                "type": tool,
+            }
+        ]
         assistant = await self.__openai_client__.beta.assistants.create(
             name=assistant_name,
             instructions=INSTRUCTIONS,
-            tools=[
-                {
-                    "type": tool,
-                }
-            ],
+            tools=tools_param,  # ty: ignore[invalid-argument-type]
             model=MODEL,
         )
 

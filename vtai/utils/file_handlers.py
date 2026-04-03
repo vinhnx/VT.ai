@@ -80,7 +80,9 @@ async def process_files(files: List, async_client: AsyncOpenAI) -> List[str]:
 
     is_valid, error_message = await check_files(files)
     if not is_valid:
-        await cl.Message(content=error_message).send()
+        # error_message could be None, provide a default
+        message = error_message if error_message else "Invalid file(s) rejected."
+        await cl.Message(content=message).send()
         logger.warning(f"Invalid files rejected: {error_message}")
         return file_ids
 

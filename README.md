@@ -5,6 +5,7 @@ VT.ai is an open-source multimodal AI chat application with dynamic conversation
 ## Installation
 
 **Native Installer (Recommended)**
+
 - Automatic Python 3.11 setup
 - Installs `uv` package manager (faster than pip)
 - Creates isolated virtual environment
@@ -13,6 +14,7 @@ VT.ai is an open-source multimodal AI chat application with dynamic conversation
 - Auto-launches VT.ai after installation
 
 **Linux & macOS:**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/vinhnx/VT.ai/main/scripts/install_and_run.sh | bash
 # Or skip API key configuration
@@ -20,6 +22,7 @@ curl -fsSL https://raw.githubusercontent.com/vinhnx/VT.ai/main/scripts/install_a
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 git clone https://github.com/vinhnx/VT.ai.git
 cd VT.ai
@@ -27,6 +30,7 @@ cd VT.ai
 ```
 
 **Alternative Installation Methods:**
+
 ```bash
 # PyPI (standard installation)
 pip install vtai
@@ -75,7 +79,9 @@ vtai --api-key openai=sk-...
 ### Capabilities
 
 #### Multimodal Support
+
 VT.ai provides comprehensive multimodal capabilities:
+
 - **Text Chat**: Natural conversations with multiple AI models
 - **Image Generation**: Create images with DALL-E 3 and GPT-Image-1
 - **Visual Analysis**: Upload and analyze images with vision models
@@ -84,7 +90,9 @@ VT.ai provides comprehensive multimodal capabilities:
 - **Reasoning Visualization**: Step-by-step thinking with `<think>` tag
 
 #### Semantic Routing
+
 VT.ai uses vector-based semantic routing to automatically direct queries to the most appropriate model:
+
 - **Fast Classification**: Uses FastEmbed embeddings for instant routing decisions
 - **No Manual Selection**: Automatic model selection based on query intent
 - **Optimized Performance**: Reduces latency by avoiding unnecessary LLM calls
@@ -114,11 +122,13 @@ See [Provider Configuration](docs/user/getting-started.md#api-key-configuration)
 VT.ai supports flexible configuration options:
 
 **API Key Management:**
+
 - **Environment Variables**: Session-only configuration
 - **Command-Line**: `vtai --api-key provider=key`
 - **Persistent Storage**: Securely stored in `~/.config/vtai/.env`
 
 **Model Selection:**
+
 - Automatic routing based on query semantics
 - Manual override via conversation profiles
 - Custom model aliases in configuration
@@ -145,18 +155,21 @@ For full configuration options, see [Configuration Guide](docs/user/getting-star
 VT.ai implements a **security-first approach** to protect users and their data:
 
 **Dependency Security:**
+
 - **Automated Scanning**: Dependabot integration for vulnerability detection
 - **Regular Updates**: All dependencies kept at latest secure versions
 - **Override Dependencies**: Force secure versions for transitive dependencies
 - **Version Pinning**: Critical dependencies pinned to known-safe versions
 
 **Data Protection:**
+
 - **Local Storage**: API keys stored locally in `~/.config/vtai/.env`
 - **No Data Collection**: No telemetry or data collection by default
 - **Secure Defaults**: Conservative security settings out of the box
 - **Workspace Isolation**: All operations confined to workspace boundaries
 
 **Latest Security Release (v0.7.5):**
+
 - Fixed 25 vulnerabilities in dependencies
 - Updated aiohttp, cryptography, mcp, PyJWT, black, onnx, and pillow
 - Added uv override-dependencies for transitive security fixes
@@ -168,33 +181,33 @@ See [Security Information](docs/user/security.md) for complete details.
 ## Docs & Examples
 
 - [**Getting Started**](docs/user/getting-started.md)
-  - [Installation Guide](docs/user/getting-started.md#installation)
-  - [Quick Start](docs/user/getting-started.md#quick-start)
-  - [Configuration](docs/user/getting-started.md#configuration)
+    - [Installation Guide](docs/user/getting-started.md#installation)
+    - [Quick Start](docs/user/getting-started.md#quick-start)
+    - [Configuration](docs/user/getting-started.md#configuration)
 - [**Security Information**](docs/user/security.md)
-  - [Latest Security Release](docs/user/security.md#latest-security-release-v075)
-  - [Vulnerability Details](docs/user/security.md#vulnerabilities-fixed)
-  - [Upgrade Instructions](docs/user/security.md#how-to-upgrade)
+    - [Latest Security Release](docs/user/security.md#latest-security-release-v075)
+    - [Vulnerability Details](docs/user/security.md#vulnerabilities-fixed)
+    - [Upgrade Instructions](docs/user/security.md#how-to-upgrade)
 - [**Usage Guide**](docs/user/getting-started.md#usage-guide)
-  - [Chat Interface](docs/user/getting-started.md#using-the-chat-interface)
-  - [Image Generation](docs/user/getting-started.md#image-generation-workflow)
-  - [Visual Analysis](docs/user/getting-started.md#image-analysis-workflow)
-  - [Voice Features](docs/user/getting-started.md#voice-features)
+    - [Chat Interface](docs/user/getting-started.md#using-the-chat-interface)
+    - [Image Generation](docs/user/getting-started.md#image-generation-workflow)
+    - [Visual Analysis](docs/user/getting-started.md#image-analysis-workflow)
+    - [Voice Features](docs/user/getting-started.md#voice-features)
 - [**Provider Guides**](docs/user/getting-started.md#api-key-configuration)
-  - [OpenAI Setup](docs/user/getting-started.md#api-key-configuration)
-  - [Anthropic Setup](docs/user/getting-started.md#api-key-configuration)
-  - [Google Gemini Setup](docs/user/getting-started.md#api-key-configuration)
+    - [OpenAI Setup](docs/user/getting-started.md#api-key-configuration)
+    - [Anthropic Setup](docs/user/getting-started.md#api-key-configuration)
+    - [Google Gemini Setup](docs/user/getting-started.md#api-key-configuration)
 - [**Developer Guide**](docs/developer/architecture.md)
-  - [Architecture Overview](docs/developer/architecture.md)
-  - [Semantic Routing](docs/developer/architecture.md#routing-layer)
-  - [Extension Points](docs/developer/architecture.md#extension-points)
+    - [Architecture Overview](docs/developer/architecture.md)
+    - [Semantic Routing](docs/developer/architecture.md#routing-layer)
+    - [Extension Points](docs/developer/architecture.md#extension-points)
 - [**API Reference**](docs/api/index.md)
-  - [Module Documentation](docs/api/index.md)
-  - [Conversation Handlers](docs/api/conversation_handlers.md)
-  - [Router Components](docs/api/router.md)
+    - [Module Documentation](docs/api/index.md)
+    - [Conversation Handlers](docs/api/conversation_handlers.md)
+    - [Router Components](docs/api/router.md)
 - [**Troubleshooting**](README.md#troubleshooting)
-  - [Common Issues](README.md#troubleshooting)
-  - [FAQ](docs/FAQ.md)
+    - [Common Issues](README.md#troubleshooting)
+    - [FAQ](docs/FAQ.md)
 
 ---
 
@@ -220,6 +233,7 @@ vtai --api-key gemini=...
 ```
 
 **Environment Variables:**
+
 ```bash
 export OPENAI_API_KEY="sk-..."
 export ANTHROPIC_API_KEY="sk-ant-..."
@@ -231,13 +245,13 @@ vtai
 
 ## Supported Models
 
-| Category       | Models                                                |
-|----------------|------------------------------------------------------ |
-| **Chat**       | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5 |
-| **Vision**     | GPT-4o, Gemini 1.5 Pro/Flash, Claude 3, Llama3.2 Vision |
-| **Image Gen**  | GPT-Image-1 with custom parameters                   |
-| **TTS**        | GPT-4o mini TTS, TTS-1, TTS-1-HD                     |
-| **Local**      | Llama3, Mistral, DeepSeek R1 (1.5B to 70B via Ollama) |
+| Category      | Models                                                      |
+| ------------- | ----------------------------------------------------------- |
+| **Chat**      | GPT-o1, GPT-o3 Mini, GPT-4o, Claude 3.5/3.7, Gemini 2.0/2.5 |
+| **Vision**    | GPT-4o, Gemini 1.5 Pro/Flash, Claude 3, Llama3.2 Vision     |
+| **Image Gen** | GPT-Image-1 with custom parameters                          |
+| **TTS**       | GPT-4o mini TTS, TTS-1, TTS-1-HD                            |
+| **Local**     | Llama3, Mistral, DeepSeek R1 (1.5B to 70B via Ollama)       |
 
 See [Models Documentation](docs/user/models.md) for detailed model capabilities and configuration.
 
@@ -254,6 +268,7 @@ VT.ai leverages several open-source projects:
 - **[Tavily](https://tavily.com)**: Web search capabilities
 
 **Architecture Components:**
+
 - **Entry Point**: `vtai/app.py` - Main application logic
 - **Routing Layer**: `vtai/router/` - Semantic classification system
 - **Assistants**: `vtai/assistants/` - Specialized handlers
@@ -268,17 +283,20 @@ See [Architecture Documentation](docs/developer/architecture.md) for details.
 I warmly welcome contributions of all kinds! Whether you're looking to fix bugs, add new features, improve documentation, or enhance the user experience, your help is greatly appreciated.
 
 **How To Contribute:**
+
 - Report issues you're experiencing
 - Suggest new features or improvements
 - Help answer questions in the issue tracker
 - Improve documentation or add examples
 
 **If you're not sure where to start:**
+
 - Check out the [issues page](https://github.com/vinhnx/VT.ai/issues)
 - Look for [good first issue](https://github.com/vinhnx/VT.ai/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) labeled items
 - Feel free to browse all open issues and pick one that resonates with you!
 
 **Steps to get started:**
+
 1. Fork the repository by clicking the Fork button in the top-right corner
 2. Clone your forked repository to your local machine
 3. Create a new branch for your changes
@@ -287,6 +305,27 @@ I warmly welcome contributions of all kinds! Whether you're looking to fix bugs,
 When reporting an issue, please include enough details for others to reproduce the problem effectively.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+## Development
+
+### Type Checking
+
+This project uses [`ty`](https://github.com/astral-sh/ty) for static type checking. `ty` is a fast type checker developed by Astral (the creators of ruff and uv).
+
+```bash
+# Run type checking
+./scripts/type-check.sh
+
+# Or directly with uv
+uv run ty check vtai
+```
+
+**Why ty?**
+
+- Extremely fast type checking (10-100x faster than mypy)
+- Zero configuration needed
+- Works seamlessly with ruff for linting
+- Native uv integration
 
 ---
 

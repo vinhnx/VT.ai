@@ -13,7 +13,7 @@ import time
 import wave
 from io import BytesIO
 from pathlib import Path
-from typing import BinaryIO, Dict, Optional, Tuple
+from typing import Any, BinaryIO, Dict, Optional, Tuple
 
 import chainlit as cl
 import litellm
@@ -216,11 +216,20 @@ async def handle_audio_transcribe(
     model = conf.DEFAULT_WHISPER_MODEL
     try:
         # Add a timeout to the transcription request
+        # openai_client.audio.transcriptions.create() is sync, so we use asyncio.to_thread()
         transcription = await asyncio.wait_for(
-            openai_client.audio.transcriptions.create(model=model, file=audio_file),
+            asyncio.to_thread(
+                openai_client.audio.transcriptions.create,
+                model=model,
+                file=audio_file
+            ),
             timeout=30.0,  # 30 second timeout
         )
-        text = transcription.text
+        # Get text from transcription
+        if hasattr(transcription, 'text'):
+            text = str(transcription.text)
+        else:
+            text = str(transcription)
 
         await cl.Message(
             content="",
@@ -402,40 +411,14 @@ async def handle_audio_understanding(path: str, prompt: Optional[str] = None) ->
             audio_file_io = BytesIO(audio_file.read())
             audio_file_io.name = f"audio.{audio_format}"
 
-            # Perform transcription - ensure this is properly awaited
+            # Perform transcription - use sync API wrapped in to_thread
             try:
-                # Check if the method is already awaitable (newer OpenAI SDK)
-                if hasattr(openai_client.audio.transcriptions, "acreate"):
-                    # Use the explicit async method if available
-                    transcription_coroutine = (
-                        openai_client.audio.transcriptions.acreate(
-                            model="whisper-1",
-                            file=audio_file_io,
-                            response_format="text",
-                        )
-                    )
-                else:
-                    # For newer versions where create() itself returns a coroutine
-                    transcription_coroutine = openai_client.audio.transcriptions.create(
-                        model="whisper-1",
-                        file=audio_file_io,
-                        response_format="text",
-                    )
-
-                # Ensure the coroutine is awaitable before awaiting it
-                if asyncio.iscoroutine(transcription_coroutine) or hasattr(
-                    transcription_coroutine, "__await__"
-                ):
-                    transcription_result = await asyncio.wait_for(
-                        transcription_coroutine,
-                        timeout=60.0,
-                    )
-                else:
-                    # Handle non-coroutine case (synchronous result)
-                    logger.warning(
-                        "Transcription method returned non-awaitable, handling synchronously"
-                    )
-                    transcription_result = transcription_coroutine
+                # Use synchronous create() - it's faster and simpler
+                transcription_result = openai_client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file_io,
+                    response_format="text",
+                )
 
                 transcription = str(transcription_result)
                 logger.info(
@@ -493,51 +476,22 @@ async def handle_audio_understanding(path: str, prompt: Optional[str] = None) ->
         else:
             # Use OpenAI directly for OpenAI models
             try:
-                # Check if we should use acreate or create for async
-                if hasattr(openai_client.chat.completions, "acreate"):
-                    # Use explicit async method
-                    openai_completion_coroutine = openai_client.chat.completions.acreate(
-                        model=analysis_model,
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": "You are a helpful assistant that analyzes audio transcriptions.",
-                            },
-                            {"role": "user", "content": analysis_prompt},
-                        ],
-                        temperature=0.3,
-                    )
-                else:
-                    # Standard method
-                    openai_completion_coroutine = openai_client.chat.completions.create(
-                        model=analysis_model,
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": "You are a helpful assistant that analyzes audio transcriptions.",
-                            },
-                            {"role": "user", "content": analysis_prompt},
-                        ],
-                        temperature=0.3,
-                    )
-
-                # Ensure we have an awaitable before awaiting
-                if asyncio.iscoroutine(openai_completion_coroutine) or hasattr(
-                    openai_completion_coroutine, "__await__"
-                ):
-                    analysis_response = await asyncio.wait_for(
-                        openai_completion_coroutine,
-                        timeout=60.0,
-                    )
-                else:
-                    # Handle non-coroutine case
-                    logger.warning(
-                        "Analysis completion method returned non-awaitable, handling synchronously"
-                    )
-                    analysis_response = openai_completion_coroutine
+                # Use synchronous create() - simpler and works with OpenAI 2.x
+                analysis_response = openai_client.chat.completions.create(
+                    model=analysis_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a helpful assistant that analyzes audio transcriptions.",
+                        },
+                        {"role": "user", "content": analysis_prompt},
+                    ],
+                    temperature=0.3,
+                )
 
                 analysis = analysis_response.choices[0].message.content
-                logger.info(f"Analysis successful with {len(analysis)} characters")
+                if analysis:
+                    logger.info(f"Analysis successful with {len(analysis)} characters")
             except Exception as e:
                 logger.error(f"Error in analysis: {str(e)}")
                 analysis = f"[Analysis failed: {str(e)}]"
@@ -589,12 +543,12 @@ async def handle_audio_understanding(path: str, prompt: Optional[str] = None) ->
         await message.update()
 
 
-async def speech_to_text(audio_file: BinaryIO) -> str:
+async def speech_to_text(audio_file: tuple[str, bytes, str] | BinaryIO) -> str:
     """
     Transcribe speech to text using OpenAI's Whisper model.
 
     Args:
-        audio_file: Audio file to transcribe
+        audio_file: Audio file to transcribe (can be a tuple or BinaryIO)
 
     Returns:
         Transcribed text from the audio
@@ -936,7 +890,7 @@ async def handle_trigger_async_image_gen(query: str) -> None:
 
             # Generate image
             logger.info("Generating image with OpenAI client using GPT-Image-1")
-            image_response = openai_client.images.generate(**generation_params)
+            image_response = openai_client.images.generate(**generation_params)  # ty: ignore[no-matching-overload]
 
             # Extract the generated image data
             image_gen_data = image_response.data[0]

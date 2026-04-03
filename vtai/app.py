@@ -8,6 +8,7 @@ import atexit
 import os
 import sys
 import time
+from typing import Any
 
 # Ensure the parent directory is in sys.path for proper package imports
 # This is needed when running via chainlit which loads the file directly
@@ -54,6 +55,24 @@ if fast_mode:
 _model_prices_loaded = False
 _imports_loaded = False
 
+# Global variables for deferred imports (type annotated for ty)
+numpy: Any = None
+audioop: Any = None
+subprocess: Any = None
+build_llm_profile: Any = None
+process_files: Any = None
+handle_tts_response: Any = None
+safe_execution: Any = None
+get_command_route: Any = None
+get_command_template: Any = None
+set_commands: Any = None
+handle_conversation: Any = None
+handle_files_attachment: Any = None
+handle_thinking_conversation: Any = None
+handle_reasoning_conversation: Any = None
+DictToObject: Any = None
+config_chat_session: Any = None
+
 
 # Lazy import function to defer module importing
 def load_deferred_imports():
@@ -65,51 +84,55 @@ def load_deferred_imports():
 
     import_start = time.time()
 
-    # pylint: disable=global-statement
-    global numpy, audioop, subprocess, build_llm_profile
-    global \
-        process_files, \
-        handle_tts_response, \
-        safe_execution, \
-        get_command_route, \
-        get_command_template
-    global \
-        set_commands, \
-        handle_conversation, \
-        handle_files_attachment, \
-        handle_thinking_conversation, \
-        handle_reasoning_conversation, \
-        DictToObject
-    global config_chat_session
-
     # Import modules that are not needed during initial startup
-    import audioop
-    import subprocess
+    import audioop as _audioop
+    import subprocess as _subprocess
 
     import numpy as np
 
     # Use absolute imports instead of relative imports
     # This is required because chainlit loads app.py as a file, not as a module
     from vtai.utils.conversation_handlers import (
-        config_chat_session,
-        handle_conversation,
-        handle_files_attachment,
-        handle_reasoning_conversation,
-        handle_thinking_conversation,
+        config_chat_session as _config_chat_session,
+        handle_conversation as _handle_conversation,
+        handle_files_attachment as _handle_files_attachment,
+        handle_reasoning_conversation as _handle_reasoning_conversation,
+        handle_thinking_conversation as _handle_thinking_conversation,
     )
-    from vtai.utils.dict_to_object import DictToObject
-    from vtai.utils.file_handlers import process_files
-    from vtai.utils.llm_profile_builder import build_llm_profile
-    from vtai.utils.media_processors import handle_tts_response
-    from vtai.utils.safe_execution import safe_execution
+    from vtai.utils.dict_to_object import DictToObject as _DictToObject
+    from vtai.utils.file_handlers import process_files as _process_files
+    from vtai.utils.llm_profile_builder import build_llm_profile as _build_llm_profile
+    from vtai.utils.media_processors import handle_tts_response as _handle_tts_response
+    from vtai.utils.safe_execution import safe_execution as _safe_execution
     from vtai.utils.starter_prompts import (
-        get_command_route,
-        get_command_template,
-        set_commands,
+        get_command_route as _get_command_route,
+        get_command_template as _get_command_template,
+        set_commands as _set_commands,
     )
 
     # Assign modules to global namespace
+    global numpy, audioop, subprocess, build_llm_profile
+    global process_files, handle_tts_response, safe_execution
+    global get_command_route, get_command_template, set_commands
+    global handle_conversation, handle_files_attachment, handle_thinking_conversation
+    global handle_reasoning_conversation, DictToObject, config_chat_session
+
     numpy = np
+    audioop = _audioop
+    subprocess = _subprocess
+    build_llm_profile = _build_llm_profile
+    process_files = _process_files
+    handle_tts_response = _handle_tts_response
+    safe_execution = _safe_execution
+    get_command_route = _get_command_route
+    get_command_template = _get_command_template
+    set_commands = _set_commands
+    handle_conversation = _handle_conversation
+    handle_files_attachment = _handle_files_attachment
+    handle_thinking_conversation = _handle_thinking_conversation
+    handle_reasoning_conversation = _handle_reasoning_conversation
+    DictToObject = _DictToObject
+    config_chat_session = _config_chat_session
 
     logger.debug(f"Deferred imports loaded in {time.time() - import_start:.2f} seconds")
     _imports_loaded = True

@@ -4,12 +4,8 @@ Constants for the semantic router component.
 
 from typing import List
 
-# semantic_router 0.1.x uses SemanticRouter instead of RouteLayer
-try:
-    from semantic_router import RouteLayer as SRRouteLayer
-except ImportError:
-    # Fallback for semantic_router >= 0.1.0
-    from semantic_router import SemanticRouter as SRRouteLayer
+# semantic_router uses SemanticRouter (RouteLayer was removed in newer versions)
+from semantic_router import SemanticRouter as SRRouteLayer
 
 # Export RouteLayer directly to fix import issues
 RouteLayer = SRRouteLayer
@@ -39,12 +35,12 @@ class SemanticRouterType(str, Enum):
     different processing or model selection.
     """
 
-    IMAGE_GENERATION: Final[str] = "image-generation"
-    TEXT_PROCESSING: Final[str] = "text-processing"
-    CASUAL_CONVERSATION: Final[str] = "casual-conversation"
-    CURIOUS: Final[str] = "curious"
-    VISION_IMAGE_PROCESSING: Final[str] = "vision-image-processing"
-    WEB_SEARCH: Final[str] = "web-search"
+    IMAGE_GENERATION = "image-generation"
+    TEXT_PROCESSING = "text-processing"
+    CASUAL_CONVERSATION = "casual-conversation"
+    CURIOUS = "curious"
+    VISION_IMAGE_PROCESSING = "vision-image-processing"
+    WEB_SEARCH = "web-search"
 
     @classmethod
     def values(cls) -> List[str]:
@@ -54,9 +50,9 @@ class SemanticRouterType(str, Enum):
     @classmethod
     def requires_image_processing(cls) -> Set[str]:
         """Get the set of routes that require image processing capabilities."""
-        return {cls.VISION_IMAGE_PROCESSING.value}
+        return {"vision-image-processing"}
 
     @classmethod
     def requires_image_generation(cls) -> Set[str]:
         """Get the set of routes that require image generation capabilities."""
-        return {cls.IMAGE_GENERATION.value}
+        return {"image-generation"}

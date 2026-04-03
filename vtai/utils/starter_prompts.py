@@ -8,9 +8,10 @@ starter prompts and commands as alternative approaches.
 
 import random
 from random import choice, shuffle
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import chainlit as cl
+from chainlit.types import CommandDict
 
 from ..router.constants import SemanticRouterType
 from ..router.trainer import create_routes
@@ -321,7 +322,7 @@ COMMAND_TEMPLATES = {
 
 
 async def set_commands(
-    use_all: bool = True, custom_commands: List[Dict] = None
+    use_all: bool = True, custom_commands: List[Dict] | None = None
 ) -> None:
     """
     Set available commands in the Chainlit UI.
@@ -330,7 +331,7 @@ async def set_commands(
             use_all: Whether to use all predefined commands or not
             custom_commands: Optional list of custom command dictionaries to use instead
     """
-    commands_to_set = []
+    commands_to_set: List[Dict[str, Any]] = []
 
     if custom_commands:
         commands_to_set = custom_commands
@@ -348,7 +349,8 @@ async def set_commands(
             {k: v for k, v in cmd.items() if k != "route"} for cmd in subset
         ]
 
-    await cl.context.emitter.set_commands(commands_to_set)
+    # Cast to satisfy CommandDict type
+    await cl.context.emitter.set_commands(commands_to_set)  # ty: ignore[invalid-argument-type]
 
 
 def get_command_template(command_id: str) -> Optional[str]:
@@ -380,7 +382,11 @@ def get_command_route(command_id: str) -> Optional[str]:
     """
     for command in COMMANDS:
         if command["id"] == command_id:
-            return command.get("route")
+            route = command.get("route")
+            # Ensure we return a string or None, not bool
+            if isinstance(route, str):
+                return route
+            return None
     return None
 
 
@@ -399,7 +405,7 @@ def build_commands_from_routes(max_count: int = 5) -> List[Dict]:
     create_routes()
 
     # Create mapping for route commands
-    route_commands = {
+    route_commands: Dict[str, Dict[str, Any]] = {
         "text-processing": {
             "id": "Analyze",
             "icon": "file-text",

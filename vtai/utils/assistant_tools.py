@@ -88,7 +88,6 @@ async def process_thread_message(
                         name="change_model_action",
                         payload={"value": res_message},
                         label=f"Using: {current_model}",
-                        description="Click to change model in settings",
                     )
                 )
 
@@ -145,7 +144,6 @@ async def process_thread_message(
                             name="change_model_action",
                             payload={"value": res_message},
                             label=f"Using: {current_model}",
-                            description="Click to change model in settings",
                         )
                     )
 
@@ -196,7 +194,7 @@ async def process_tool_call(
             parent_id=cl.context.current_step.id if cl.context.current_step else None,
             language=show_input,
         )
-        step_references[tool_call_id] = cl_step
+        step_references[tool_call_id] = cl_step  # ty: ignore[invalid-assignment]
     else:
         update = True
         cl_step = step_references[tool_call_id]

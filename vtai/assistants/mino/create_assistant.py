@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
@@ -10,7 +11,7 @@ load_dotenv()
 api_key = os.environ.get("OPENAI_API_KEY")
 client = AsyncOpenAI(api_key=api_key)
 
-tools = [
+tools: List[Dict[str, Any]] = [
     {"type": "code_interpreter"},
     {
         "type": "function",
@@ -93,10 +94,10 @@ Given a formula below $$ s = ut + \frac{1}{2}at^{2} $$ Calculate the value of $s
 You can also answer weather questions!
 """
 
-    assistant = await client.beta.assistants.create(
+    assistant = await client.beta.assistants.create(  # ty: ignore[deprecated]
         name="Math Tutor And Weather Bot",
         instructions=instructions,
-        tools=tools,
+        tools=tools,  # ty: ignore[invalid-argument-type]
         model="gpt-4-1106-preview",
     )
     assistant_name = "math_tutor_and_weather_bot"

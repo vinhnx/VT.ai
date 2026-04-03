@@ -70,7 +70,6 @@ def create_message_actions(content: str, model: str) -> List[cl.Action]:
             name="change_model_action",
             payload={"value": content},
             label=f"Using: {model}",
-            description="Click to change model in settings",
         )
     )
 
@@ -508,7 +507,7 @@ async def handle_deepseek_reasoner_conversation(
         deepseek_messages.append({"role": "user", "content": query})
 
         # Create the stream
-        stream = await client.chat.completions.create(
+        stream = await client.chat.completions.create(  # ty: ignore[no-matching-overload]
             model=model,
             messages=deepseek_messages,
             stream=True,

@@ -155,12 +155,15 @@ class WebSearchTool:
         except Exception as e:
             logger.error(f"Error summarizing search results: {str(e)}")
             # Fall back to combining results without LLM summarization
+            def is_valid_result(result):
+                content = result.get("content")
+                return isinstance(content, str) and content.lower() != "failed"
+
             return f"Here's what I found about '{query}':\n\n" + "\n\n".join(
                 [
                     f"• {result.get('title', 'Result')}: {result.get('content', 'No content')}"
                     for result in results
-                    if result.get("content")
-                    and result.get("content").lower() != "failed"
+                    if is_valid_result(result)
                 ]
             )
 
@@ -362,7 +365,7 @@ class WebSearchTool:
                             "description": "The size of the search context",
                         }
                     }
-                    web_search_tools[0]["function"]["parameters"]["properties"].update(
+                    web_search_tools[0]["function"]["parameters"]["properties"].update(  # ty: ignore[no-matching-overload]
                         search_context_property
                     )
 
