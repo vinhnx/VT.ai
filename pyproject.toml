@@ -13,7 +13,7 @@ dependencies = [
     "google-generativeai==0.8.6",
     "tavily-python==0.7.23",
     "httpx==0.28.1",
-    "aiohttp>=3.13.4",  # Security fix: Multiple CVEs
+    "aiohttp>=3.13.5",  # Security fix: Multiple CVEs
     "cryptography>=46.0.7",  # Security fix: GHSA-r6ph-v2qm-q3c2 (buffer overflow)
     "mcp>=1.23.0",  # Security fix: GHSA-9h52-p55h-vw2f
     "PyJWT>=2.12.0",  # Security fix: GHSA-752w-5fwx-jx9f
