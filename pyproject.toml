@@ -16,7 +16,7 @@ dependencies = [
     "aiohttp>=3.13.5",  # Security fix: Multiple CVEs
     "cryptography>=46.0.7",  # Security fix: GHSA-r6ph-v2qm-q3c2 (buffer overflow)
     "mcp>=1.27.0",  # Security fix: GHSA-9h52-p55h-vw2f
-    "PyJWT>=2.12.0",  # Security fix: GHSA-752w-5fwx-jx9f
+    "PyJWT>=2.12.1",  # Security fix: GHSA-752w-5fwx-jx9f
 ]
 readme = "README.md"
 requires-python = ">= 3.11, < 3.12"
