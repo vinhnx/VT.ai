@@ -68,7 +68,7 @@ dev = [
 
 docs = ["mkdocs-llmstxt>=0.2.0"]
 
-http2 = ["h2>=4.1.0", "httpx[http2]>=0.26.0"]
+http2 = ["h2>=4.3.0", "httpx[http2]>=0.26.0"]
 
 [tool.uv]
 # Security overrides for transitive dependencies
