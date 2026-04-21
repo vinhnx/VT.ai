@@ -5,9 +5,9 @@ description = " VT.ai - Minimal multimodal AI chat app with dynamic conversation
 authors = [{ name = "Vinh Nguyen" }]
 dependencies = [
     "chainlit==2.11.0",
-    "litellm==1.83.7",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
-    "openai==2.31.0",
-    "pydantic==2.13.0",  # Specific version due to compatibility issues with chainlit
+    "litellm==1.83.10",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
+    "openai==2.32.0",
+    "pydantic==2.13.3",  # Specific version due to compatibility issues with chainlit
     "python-dotenv>=1.2.2",  # Flexible version to resolve conflicts
     "semantic-router[fastembed]==0.1.12",
     "google-generativeai==0.8.6",
