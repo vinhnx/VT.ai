@@ -1,3 +1,10 @@
+## v0.7.15 (2026-04-25)
+
+### Release Notes
+
+- Tagged the release from the updated publish workflow with a `pypi` environment
+- Retained the dependency floor and packaging fixes from the previous patch releases
+
 ## v0.7.14 (2026-04-25)
 
 ### Release Notes
