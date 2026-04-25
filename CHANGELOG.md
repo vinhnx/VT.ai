@@ -1,3 +1,10 @@
+## v0.7.14 (2026-04-25)
+
+### Release Notes
+
+- Retried the PyPI deployment with trusted publishing enabled
+- Kept the dependency floor updates from the previous patch release
+
 ## v0.7.13 (2026-04-25)
 
 ### Dependency Updates
