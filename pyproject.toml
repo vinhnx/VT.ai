@@ -8,7 +8,7 @@ dependencies = [
     "litellm==1.83.10",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
     "openai>=2.24.0",
     "pydantic>=2.12.5",  # Flexible version to resolve conflicts with litellm/chainlit
-    "python-dotenv>=1.0.1",  # Flexible version to resolve conflicts
+    "python-dotenv>=1.2.2",  # Flexible version to resolve conflicts
     "semantic-router[fastembed]==0.1.12",
     "google-generativeai==0.8.6",
     "tavily-python==0.7.23",
@@ -79,7 +79,7 @@ override-dependencies = [
     "aiohttp>=3.13.5",  # Security fix: Multiple CVEs (override litellm pin)
     "openai>=2.24.0",  # Override litellm pin
     "pydantic>=2.12.5",  # Override litellm pin
-    "python-dotenv>=1.0.1",  # Override litellm pin
+    "python-dotenv>=1.2.2",  # Override litellm pin
 ]
 
 [tool.ruff]
