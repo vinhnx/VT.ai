@@ -1,3 +1,10 @@
+## v0.7.13 (2026-04-25)
+
+### Dependency Updates
+
+- **python-dotenv**: Raised the minimum version from `1.0.1` to `1.2.2`
+- Refreshed the lockfile to align with the updated dependency floor
+
 ## v0.7.7 (2026-04-02)
 
 ### Bug Fixes
