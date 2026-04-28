@@ -7,7 +7,7 @@ dependencies = [
     "chainlit==2.11.0",
     "litellm==1.83.10",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
     "openai>=2.24.0",
-    "pydantic>=2.12.5",  # Flexible version to resolve conflicts with litellm/chainlit
+    "pydantic>=2.13.3",  # Flexible version to resolve conflicts with litellm/chainlit
     "python-dotenv>=1.2.2",  # Flexible version to resolve conflicts
     "semantic-router[fastembed]==0.1.12",
     "google-generativeai==0.8.6",
@@ -78,7 +78,7 @@ override-dependencies = [
     "python-multipart>=0.0.26",  # Fix Dependabot #28: DoS via large multipart preamble/epilogue
     "aiohttp>=3.13.5",  # Security fix: Multiple CVEs (override litellm pin)
     "openai>=2.24.0",  # Override litellm pin
-    "pydantic>=2.12.5",  # Override litellm pin
+    "pydantic>=2.13.3",  # Override litellm pin
     "python-dotenv>=1.2.2",  # Override litellm pin
 ]
 
