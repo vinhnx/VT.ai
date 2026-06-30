@@ -49,16 +49,16 @@ packages = ["vtai"]
 
 [dependency-groups]
 dev = [
-    "pytest==9.1.0",
+    "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
-    "ruff==0.15.17",
+    "ruff==0.15.18",
     "twine==6.2.0",
     "ty>=0.0.51",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest==9.1.0",
+    "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
     "twine==6.2.0",
     "black>=26.5.1",
