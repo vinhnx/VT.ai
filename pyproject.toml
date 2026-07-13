@@ -53,7 +53,7 @@ dev = [
     "pytest-asyncio==1.4.0",
     "ruff==0.15.20",
     "twine==6.2.0",
-    "ty>=0.0.56",
+    "ty>=0.0.59",
 ]
 
 [project.optional-dependencies]
