@@ -20,7 +20,7 @@ VT.ai comes with built-in support for several providers:
 - OpenAI (GPT-o1, GPT-o3, GPT-4o)
 - Anthropic (Claude models)
 - Google (Gemini models)
-- Local models via Ollama
+- Local models via Ollama or [llmman](https://github.com/llmmanorg/llmman) (Ollama API on port 17434, set `OLLAMA_API_BASE`)
 - And others (DeepSeek, Cohere, etc.)
 
 ### Provider Configuration

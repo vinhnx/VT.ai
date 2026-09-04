@@ -67,6 +67,19 @@ Run models locally for privacy and offline use:
 - **Mistral**: Various versions
 - **Many other open source models**
 
+### Local Models (via llmman)
+
+[llmman](https://github.com/llmmanorg/llmman) is a local model runner that serves the Ollama API on port 17434 and pulls models from OCI registries or Hugging Face (`hf.co/org/model`). VT.ai uses the same `ollama/` provider; only the base URL changes:
+
+```bash
+llmman serve                                    # start the server
+llmman pull gemma4                              # pull a model
+export OLLAMA_API_BASE="http://localhost:17434" # point VT.ai at llmman
+vtai
+```
+
+Then pick one of the `llmman - ...` models (Gemma 4, Qwen3.8, Qwen3.5 0.8B) in the settings. No API key is required.
+
 ## Model Selection
 
 You can select models in several ways:
@@ -140,7 +153,7 @@ When choosing models, consider these factors:
 - **Quality**: Models like GPT-o1, GPT-4o, and Claude 3 Opus offer higher quality
 - **Cost**: Smaller models generally cost less to use
 - **Multimodal Needs**: Only some models support image analysis
-- **Local Computation**: Ollama models run locally but require more resources
+- **Local Computation**: Ollama and llmman models run locally but require more resources
 - **API Availability**: Some models may require specific API keys
 
 ## API Key Configuration

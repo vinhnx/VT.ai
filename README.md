@@ -104,13 +104,14 @@ For more information about capabilities, see [Usage Guide](docs/user/getting-sta
 
 ### Supported Providers
 
-VT.ai works with OpenAI, Anthropic, Google Gemini, DeepSeek, Cohere, Ollama (local), and more. Set the corresponding environment variable for your provider:
+VT.ai works with OpenAI, Anthropic, Google Gemini, DeepSeek, Cohere, Ollama and [llmman](https://github.com/llmmanorg/llmman) (local), and more. Set the corresponding environment variable for your provider:
 
 ```bash
 export OPENAI_API_KEY="sk-..."        # OpenAI (GPT-o1, GPT-o3, GPT-4o)
 export ANTHROPIC_API_KEY="sk-ant-..." # Anthropic (Claude 3.5/3.7)
 export GEMINI_API_KEY="..."           # Google (Gemini 2.0/2.5)
 export DEEPSEEK_API_KEY="..."         # DeepSeek models
+export OLLAMA_API_BASE="http://localhost:17434" # llmman (Ollama API; default is Ollama on 11434)
 ```
 
 See [Provider Configuration](docs/user/getting-started.md#api-key-configuration) for complete setup instructions.
@@ -251,7 +252,7 @@ vtai
 | **Vision**    | GPT-4o, Gemini 1.5 Pro/Flash, Claude 3, Llama3.2 Vision     |
 | **Image Gen** | GPT-Image-1 with custom parameters                          |
 | **TTS**       | GPT-4o mini TTS, TTS-1, TTS-1-HD                            |
-| **Local**     | Llama3, Mistral, DeepSeek R1 (1.5B to 70B via Ollama)       |
+| **Local**     | Llama3, Mistral, DeepSeek R1 (1.5B to 70B via Ollama); Gemma 4, Qwen3.8, Qwen3.5 (via llmman) |
 
 See [Models Documentation](docs/user/models.md) for detailed model capabilities and configuration.
 

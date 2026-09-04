@@ -10,7 +10,7 @@ VT.ai is a sophisticated multimodal AI chat application that integrates multiple
 
 ## Key Features
 
-- **Multi-Provider AI Integration**: Supports OpenAI (o1, o3, 4o), Anthropic (Claude), Google (Gemini), DeepSeek, Meta (Llama), Cohere, local models via Ollama, and more.
+- **Multi-Provider AI Integration**: Supports OpenAI (o1, o3, 4o), Anthropic (Claude), Google (Gemini), DeepSeek, Meta (Llama), Cohere, local models via Ollama or llmman, and more.
 - **Semantic-Based Routing**: Smart routing system that automatically directs queries to specialized handlers based on vector-based classification.
 - **Multimodal Capabilities**: Support for text, image, and audio inputs with vision analysis for images and URLs.
 - **Advanced Image Generation**: Create custom images using DALL-E 3 and GPT-Image-1 with support for transparent backgrounds and multiple output formats.
