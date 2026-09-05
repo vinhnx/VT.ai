@@ -260,7 +260,7 @@ VT.ai supports a wide range of models:
 - **Google**: Gemini 1.5 Pro/Flash, Gemini 2.0, Gemini 2.5 Pro/Flash
 - **Vision Models**: GPT-4o, Gemini 1.5 Pro/Flash, Gemini 2.5 Pro/Flash, Claude 3 models, Llama 3.2 Vision
 - **TTS Models**: GPT-4o mini TTS, TTS-1, TTS-1-HD
-- **Local Models**: Llama3, Mistral, DeepSeek R1, Qwen2.5-coder (via Ollama)
+- **Local Models**: Llama3, Mistral, DeepSeek R1, Qwen2.5-coder (via Ollama); Gemma 4, Qwen3.8, Qwen3.5 (via llmman)
 
 You can select models in several ways:
 

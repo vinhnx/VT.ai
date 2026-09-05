@@ -180,6 +180,7 @@ def load_api_keys() -> None:
         "TAVILY_API_KEY",
         "LM_STUDIO_API_BASE",
         "LM_STUDIO_API_KEY",
+        "OLLAMA_API_BASE",
     ]
 
     # Set API keys in environment

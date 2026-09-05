@@ -237,6 +237,11 @@ MODEL_ALIAS_MAP: Dict[str, str] = {
     "Ollama - Command R+": "ollama/command-r-plus",
     "Ollama - Mistral 7B Instruct": "ollama/mistral",
     "Ollama - Mixtral 8x7B Instruct": "ollama/mixtral",
+    # llmman (https://github.com/llmmanorg/llmman) serves the Ollama API;
+    # set OLLAMA_API_BASE=http://localhost:17434 to use these.
+    "llmman - Gemma 4": "ollama/gemma4",
+    "llmman - Qwen3.8": "ollama/qwen3.8",
+    "llmman - Qwen3.5 0.8B (hf.co)": "ollama/hf.co/unsloth/Qwen3.5-0.8B-GGUF",
     # Mistral
     "Mistral Small": "mistral/mistral-small-latest",
     "Mistral Large": "mistral/mistral-large-latest",
