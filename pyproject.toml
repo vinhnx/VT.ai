@@ -7,7 +7,7 @@ dependencies = [
     "chainlit==2.12.0",
     "litellm==1.98.0",  # Pinned to avoid malicious versions 1.82.7, 1.82.8 (supply chain attack)
     "openai>=3.8.0",
-    "pydantic>=2.13.4",  # Flexible version to resolve conflicts with litellm/chainlit
+    "pydantic>=2.13.5",  # Flexible version to resolve conflicts with litellm/chainlit
     "python-dotenv>=1.2.3",  # Flexible version to resolve conflicts
     "semantic-router[fastembed]==0.1.16",
     "google-generativeai==0.8.6",
@@ -78,7 +78,7 @@ override-dependencies = [
     "python-multipart>=0.0.26",  # Fix Dependabot #28: DoS via large multipart preamble/epilogue
     "openai>=3.8.0",  # Override litellm pin
     "aiohttp>=3.14.3",  # Security fix: Multiple CVEs (override litellm pin)
-    "pydantic>=2.13.4",  # Override litellm pin
+    "pydantic>=2.13.5",  # Override litellm pin
     "python-dotenv>=1.2.3",  # Override litellm pin
     "click>=8.3.3",  # Fix Dependabot #82: PYSEC-2026-2132 command injection in click.edit()
 ]
