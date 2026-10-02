@@ -51,7 +51,7 @@ packages = ["vtai"]
 dev = [
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
-    "ruff==0.16.2",
+    "ruff==0.16.9",
     "twine==7.0.0",
     "ty>=0.0.69",
 ]
@@ -63,7 +63,7 @@ dev = [
     "twine==7.0.0",
     "black>=26.5.1",
     "isort==8.0.1",
-    "flake8==7.3.0",
+    "flake8==7.4.1",
 ]
 
 docs = ["mkdocs-llmstxt>=0.5.0"]
