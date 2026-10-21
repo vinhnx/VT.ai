@@ -7,7 +7,7 @@ dependencies = [
     "chainlit==2.12.0",
     "litellm==1.106.2",  # Exact pin: avoids malicious versions 1.82.7, 1.82.8 and 1.107.0 (supply chain attacks)
     "openai>=3.24.0",
-    "pydantic>=2.13.5",  # Flexible version to resolve conflicts with litellm/chainlit
+    "pydantic>=2.14.1",  # Flexible version to resolve conflicts with litellm/chainlit
     "python-dotenv>=1.2.4",  # Flexible version to resolve conflicts
     "semantic-router[fastembed]==0.1.16",
     "google-generativeai==0.8.6",
@@ -78,7 +78,7 @@ override-dependencies = [
     "python-multipart>=0.0.26",  # Fix Dependabot #28: DoS via large multipart preamble/epilogue
     "openai>=3.24.0",  # Override litellm pin
     "aiohttp>=3.14.4",  # Security fix: Multiple CVEs (override litellm pin) + Dependabot #113-#124
-    "pydantic>=2.13.5",  # Override litellm pin
+    "pydantic>=2.14.1",  # Override litellm pin
     "python-dotenv>=1.2.4",  # Override litellm pin
     "click>=8.3.3",  # Fix Dependabot #82: PYSEC-2026-2132 command injection in click.edit()
     "anyio>=4.14.2",  # Fix Dependabot #90-#91 (TLS cert spoofing / undrained stderr deadlock)
