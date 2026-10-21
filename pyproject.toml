@@ -6,7 +6,7 @@ authors = [{ name = "Vinh Nguyen" }]
 dependencies = [
     "chainlit==2.12.0",
     "litellm==1.106.2",  # Exact pin: avoids malicious versions 1.82.7, 1.82.8 and 1.107.0 (supply chain attacks)
-    "openai>=3.24.0",
+    "openai>=3.35.1",
     "pydantic>=2.13.5",  # Flexible version to resolve conflicts with litellm/chainlit
     "python-dotenv>=1.2.4",  # Flexible version to resolve conflicts
     "semantic-router[fastembed]==0.1.16",
@@ -76,7 +76,7 @@ override-dependencies = [
     "onnx>=1.21.0",  # Fix GHSA-q56x-g2fj-4rj6 (TOCTOU vulnerability)
     "pillow>=13.0.0",  # Fix Dependabot #125-#133 (heap overflow / OOB reads in Pillow)
     "python-multipart>=0.0.26",  # Fix Dependabot #28: DoS via large multipart preamble/epilogue
-    "openai>=3.24.0",  # Override litellm pin
+    "openai>=3.35.1",  # Override litellm pin
     "aiohttp>=3.14.4",  # Security fix: Multiple CVEs (override litellm pin) + Dependabot #113-#124
     "pydantic>=2.13.5",  # Override litellm pin
     "python-dotenv>=1.2.4",  # Override litellm pin
