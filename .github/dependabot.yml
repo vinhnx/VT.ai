@@ -29,6 +29,12 @@ updates:
     ignore:
       - dependency-name: "litellm"
         update-types: ["version-update:semver-major"]
+      # Explicitly block known-malicious litellm releases. These were minor/patch
+      # bumps, so the semver-major rule above never covered them.
+      #   1.82.7 / 1.82.8 - malicious versions (2024 supply chain attack)
+      #   1.107.0           - malicious version (Oct 2026, credential stealer)
+      - dependency-name: "litellm"
+        versions: ["1.82.7", "1.82.8", "1.107.0"]
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
