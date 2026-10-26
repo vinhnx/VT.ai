@@ -9,7 +9,7 @@ dependencies = [
     "openai>=3.24.0",
     "pydantic>=2.13.5",  # Flexible version to resolve conflicts with litellm/chainlit
     "python-dotenv>=1.2.4",  # Flexible version to resolve conflicts
-    "semantic-router[fastembed]==0.1.16",
+    "semantic-router[fastembed]==1.1.1",
     "google-generativeai==0.8.6",
     "tavily-python==0.8.5",
     "httpx==0.28.1",
