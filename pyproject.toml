@@ -49,21 +49,21 @@ packages = ["vtai"]
 
 [dependency-groups]
 dev = [
-    "pytest==9.1.1",
-    "pytest-asyncio==1.4.0",
-    "ruff==0.16.10",
+    "pytest==9.2.0",
+    "pytest-asyncio==1.4.1",
+    "ruff==0.17.3",
     "twine==7.0.0",
     "ty>=0.0.84",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest==9.1.1",
-    "pytest-asyncio==1.4.0",
+    "pytest==9.2.0",
+    "pytest-asyncio==1.4.1",
     "twine==7.0.0",
     "black>=26.5.1",
     "isort==9.0.2",
-    "flake8==7.4.1",
+    "flake8==7.5.0",
 ]
 
 docs = ["mkdocs-llmstxt>=0.5.0"]
